@@ -8,7 +8,7 @@ import {type ActiveBinding, type ActiveBindings} from '@antha/input';
 import {clamp} from '@augment-vir/common';
 import {defineShape, enumShape} from 'object-shape-tester';
 import {PlayerPosition} from '../data/asteroids-game-state.js';
-import {PlayerInputAction} from '../data/player-input.js';
+import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/asteroids-entity.mod.js';
 
 const playerSize = 24;
@@ -49,7 +49,7 @@ export class PlayerEntity extends defineEntity({
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (!this.state.modifiers.allowPlayerCardinalMovement) {
+        if (this.state.isPaused || !this.state.modifiers.allowPlayerCardinalMovement) {
             return;
         }
 
@@ -72,13 +72,13 @@ function calculateCardinalMovement({
     activeBindings,
     msSinceLastUpdate,
 }: Readonly<{
-    activeBindings: ActiveBindings<PlayerInputAction> | undefined;
+    activeBindings: ActiveBindings<GameInputAction> | undefined;
     msSinceLastUpdate: number;
 }>) {
-    const upMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveUp]);
-    const downMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveDown]);
-    const leftMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveLeft]);
-    const rightMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveRight]);
+    const upMovement = createMovementInput(activeBindings?.[PlayerAction.MoveUp]);
+    const downMovement = createMovementInput(activeBindings?.[PlayerAction.MoveDown]);
+    const leftMovement = createMovementInput(activeBindings?.[PlayerAction.MoveLeft]);
+    const rightMovement = createMovementInput(activeBindings?.[PlayerAction.MoveRight]);
 
     const movementY =
         upMovement.value && upMovement.durationMs < downMovement.durationMs

@@ -1,5 +1,6 @@
 import {css, defineElement, html, nothing, type HtmlInterpolation} from 'element-vir';
 import {getMappedPathTreeValue, mapPathTree} from 'spa-router-vir';
+import {ViraThemeClient, ViraThemeSelection} from 'vira';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 import {defaultFrontendRoute} from '../../data/routing/frontend-route.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
@@ -38,9 +39,13 @@ export const VirApp = defineElement()({
         }
     `,
     state() {
+        const themeClient = new ViraThemeClient();
+        themeClient.setSelectedTheme(ViraThemeSelection.Dark);
+
         return {
             currentRoute: defaultFrontendRoute,
             router: createFrontendRouter(),
+            themeClient,
         };
     },
     init({state, updateState}) {
@@ -52,6 +57,7 @@ export const VirApp = defineElement()({
     },
     cleanup({state}) {
         state.router.destroy();
+        state.themeClient.destroy();
     },
     render({state}) {
         const templateCreator = getMappedPathTreeValue(state.currentRoute.paths, templatePathMap);
