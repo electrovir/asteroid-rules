@@ -1,0 +1,3 @@
+-   center player on screen no matter aspect ratio
+-   add pause menu
+-   add rule selector screen

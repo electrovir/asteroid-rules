@@ -1,7 +1,18 @@
+import {
+    position2dParamsMap,
+    position2dParamsShape,
+    type EntityUpdateParams,
+} from '@antha/entity-2d';
 import {Graphics} from '@antha/graphics-2d';
+import {type ActiveBinding, type ActiveBindings} from '@antha/input';
+import {clamp} from '@augment-vir/common';
+import {defineShape, enumShape} from 'object-shape-tester';
+import {PlayerPosition} from '../data/asteroids-game-state.js';
+import {PlayerInputAction} from '../data/player-input.js';
 import {defineEntity} from '../mods/asteroids-entity.mod.js';
 
 const playerSize = 24;
+const playerSpeedPixelsPerMillisecond = 0.4;
 
 export class PlayerEntity extends defineEntity({
     assets: {
@@ -25,20 +36,80 @@ export class PlayerEntity extends defineEntity({
         },
     },
     key: 'asteroids-player',
+    paramsMap: position2dParamsMap,
+    paramsShape: defineShape({
+        ...position2dParamsShape.default,
+        inputPlayerPosition: enumShape(PlayerPosition),
+    }),
 }) {
     public override async createView() {
-        const view = await this.getAsset.player();
-
-        view.x = this.pixi.screen.width / 2;
-        view.y = this.pixi.screen.height / 2;
-
         return {
-            view,
+            view: (await this.getAsset.player()).clone(),
         };
     }
 
-    public override update() {
-        this.view.x = this.pixi.screen.width / 2;
-        this.view.y = this.pixi.screen.height / 2;
+    public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
+        if (!this.state.modifiers.allowPlayerCardinalMovement) {
+            return;
+        }
+
+        const movement = calculateCardinalMovement({
+            activeBindings: this.state.activeBindings[this.params.inputPlayerPosition],
+            msSinceLastUpdate,
+        });
+
+        if (!movement) {
+            return;
+        }
+
+        this.view.rotation = Math.atan2(movement.y, movement.x) + Math.PI / 2;
+        this.params.x += movement.x;
+        this.params.y += movement.y;
     }
+}
+
+function calculateCardinalMovement({
+    activeBindings,
+    msSinceLastUpdate,
+}: Readonly<{
+    activeBindings: ActiveBindings<PlayerInputAction> | undefined;
+    msSinceLastUpdate: number;
+}>) {
+    const upMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveUp]);
+    const downMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveDown]);
+    const leftMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveLeft]);
+    const rightMovement = createMovementInput(activeBindings?.[PlayerInputAction.MoveRight]);
+
+    const movementY =
+        upMovement.value && upMovement.durationMs < downMovement.durationMs
+            ? -upMovement.value
+            : downMovement.value && downMovement.durationMs < upMovement.durationMs
+              ? downMovement.value
+              : 0;
+    const movementX =
+        leftMovement.value && leftMovement.durationMs < rightMovement.durationMs
+            ? -leftMovement.value
+            : rightMovement.value && rightMovement.durationMs < leftMovement.durationMs
+              ? rightMovement.value
+              : 0;
+    const movementMagnitude = Math.hypot(movementX, movementY);
+
+    if (!movementMagnitude) {
+        return undefined;
+    }
+
+    return {
+        x: (movementX / movementMagnitude) * msSinceLastUpdate * playerSpeedPixelsPerMillisecond,
+        y: (movementY / movementMagnitude) * msSinceLastUpdate * playerSpeedPixelsPerMillisecond,
+    };
+}
+
+function createMovementInput(activeBinding: ActiveBinding | undefined) {
+    return {
+        durationMs: activeBinding?.holdDuration.milliseconds ?? Infinity,
+        value: clamp(activeBinding?.value || 0, {
+            min: 0,
+            max: 1,
+        }),
+    };
 }

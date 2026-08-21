@@ -13,3 +13,24 @@ export const playerCardinalMovementRule: GameRule = {
 export const allGameRules: GameRule[] = [
     playerCardinalMovementRule,
 ];
+
+/**
+ * Ideas:
+ *
+ * - Guns
+ * - Points per kill
+ * - Dramatically increase points per kill, lose points per shot (discourages missing)
+ * - You become the asteroids
+ * - More asteroids
+ * - Change asteroids to something cute or whatever
+ * - Stronger asteroids (make sure xp is earned per health killed)
+ * - More weapons at once
+ * - Weapon leveling
+ * - Dash
+ * - Level counts for 100x
+ * - Player level determines rule pool
+ * - Decrease rule cost
+ * - Different ships
+ * - Explore beyond the static map
+ * - Rules manager (better UI)
+ */

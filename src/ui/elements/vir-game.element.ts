@@ -1,7 +1,10 @@
 import {AnthaEngine, AnthaUi} from '@antha/engine';
 import {createAnthaFpsMod} from '@antha/fps';
 import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
+import {createAnthaInputBindingsMod, createAnthaReadRawInputMod} from '@antha/input';
 import {css, defineElement, html} from 'element-vir';
+import {type AsteroidsEngineState} from '../../data/asteroids-game-state.js';
+import {defaultPlayerInputBindings, type PlayerInputAction} from '../../data/player-input.js';
 import {asteroidsEntityMod} from '../../mods/asteroids-entity.mod.js';
 import {asteroidsGameMod} from '../../mods/asteroids-game.mod.js';
 
@@ -26,7 +29,13 @@ export const VirGame = defineElement()({
         }
     `,
     state() {
-        const engine = new AnthaEngine({
+        const engine = new AnthaEngine<AsteroidsEngineState>({
+            initState: {
+                bindingAssignments: defaultPlayerInputBindings,
+                modifiers: {
+                    allowPlayerCardinalMovement: true,
+                },
+            },
             mods: [
                 createAnthaGraphics2dMod({
                     extraCanvasWrapperStyles: css`
@@ -36,6 +45,8 @@ export const VirGame = defineElement()({
                         background: 'black',
                     },
                 }),
+                createAnthaReadRawInputMod(),
+                createAnthaInputBindingsMod<PlayerInputAction>(),
                 asteroidsEntityMod,
                 asteroidsGameMod,
                 createAnthaFpsMod({
