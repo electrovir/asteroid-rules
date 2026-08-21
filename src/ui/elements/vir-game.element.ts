@@ -3,7 +3,7 @@ import {createAnthaFpsMod} from '@antha/fps';
 import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
 import {css, defineElement, html} from 'element-vir';
 import {asteroidsEntityMod} from '../../mods/asteroids-entity.mod.js';
-import {type AsteroidsEngineState, asteroidsGameMod} from '../../mods/asteroids-game.mod.js';
+import {asteroidsGameMod} from '../../mods/asteroids-game.mod.js';
 
 export const VirGame = defineElement()({
     tagName: 'vir-game',
@@ -26,7 +26,7 @@ export const VirGame = defineElement()({
         }
     `,
     state() {
-        const engine = new AnthaEngine<AsteroidsEngineState>({
+        const engine = new AnthaEngine({
             mods: [
                 createAnthaGraphics2dMod({
                     extraCanvasWrapperStyles: css`
