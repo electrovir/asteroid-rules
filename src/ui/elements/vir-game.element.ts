@@ -1,24 +1,10 @@
-import {createAnthaAssetMod} from '@antha/asset';
+import {AnthaAssetLoadingScreen, createAnthaAssetMod} from '@antha/asset';
 import {AnthaEngine, AnthaUi} from '@antha/engine';
-import {createAnthaFpsMod} from '@antha/fps';
-import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
-import {
-    createAnthaInputBindingsMod,
-    createAnthaMenuNavMod,
-    createAnthaReadRawInputMod,
-} from '@antha/input';
-import {css, defineElement, html} from 'element-vir';
-import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
+import {type EmptyFunction} from '@augment-vir/common';
+import {css, defineElement, html, nothing} from 'element-vir';
 import {type AsteroidsEngineState} from '../../data/game-state.js';
-import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
-import {GameZIndex} from '../../data/z-index.js';
-import {asteroidsEntityMod} from '../../mods/asteroids-entity.mod.js';
-import {mainMenuMod} from '../../mods/main-menu.mod.js';
-import {missionMod} from '../../mods/mission.mod.js';
-import {pauseMenuMod} from '../../mods/pause-menu.mod.js';
-import {isOnDebugPage, ruleDebugMod} from '../../mods/rule-debug.mod.js';
-import {saveStateMod} from '../../mods/save-state.mod.js';
+import {createGameLoaderMod} from '../../mods/game-loader.mod.js';
 
 export const VirGame = defineElement<{
     router: FrontendRouter;
@@ -45,7 +31,6 @@ export const VirGame = defineElement<{
     state({inputs}) {
         const engine = new AnthaEngine<AsteroidsEngineState>({
             initState: {
-                bindingAssignments: defaultPlayerInputBindings,
                 isShowingLoadingScreen: true,
                 loadingScreenState: {
                     completedAt: undefined,
@@ -53,49 +38,52 @@ export const VirGame = defineElement<{
                     currentResourceName: undefined,
                     total: -1,
                 },
-                missionState: undefined,
-                router: inputs.router,
-                menuState: {
-                    isPaused: false,
-                    onMainMenu: !isOnDebugPage(inputs.router),
-                },
             },
             mods: [
                 createAnthaAssetMod(),
-                saveStateMod,
-                createAnthaGraphics2dMod({
-                    extraCanvasWrapperStyles: css`
-                        z-index: ${GameZIndex.Game};
-                    `,
-                    pixiOptions: {
-                        background: 'black',
-                    },
+                createGameLoaderMod({
+                    router: inputs.router,
                 }),
-                createAnthaReadRawInputMod(),
-                createAnthaInputBindingsMod<GameInputAction>(),
-                pauseMenuMod,
-                mainMenuMod,
-                ruleDebugMod,
-                createAnthaMenuNavMod({
-                    allowWrapping: true,
-                    alwaysRequireFocused: true,
-                    blockPerpendicularNavigation: true,
-                }),
-                asteroidsEntityMod,
-                missionMod,
-                createAnthaFpsMod(),
             ],
         });
 
         return {
             engine,
+            hasRenderedFirstEngineFrame: false,
+            removeEngineObservableListener: undefined as undefined | EmptyFunction,
         };
+    },
+    init({state, updateState}) {
+        const removeEngineObservableListener = state.engine.observable.listen(false, () => {
+            removeEngineObservableListener();
+            updateState({
+                hasRenderedFirstEngineFrame: true,
+                removeEngineObservableListener: undefined,
+            });
+        });
+
+        updateState({
+            removeEngineObservableListener,
+        });
+    },
+    cleanup({state}) {
+        state.removeEngineObservableListener?.();
     },
     render({state}) {
         return html`
             <${AnthaUi.assign({
                 engine: state.engine,
             })}></${AnthaUi}>
+            ${state.hasRenderedFirstEngineFrame
+                ? nothing
+                : html`
+                      <${AnthaAssetLoadingScreen.assign({
+                          completed: false,
+                          currentResourceName: undefined,
+                          dotCount: 0,
+                          progressPercent: 0,
+                      })}></${AnthaAssetLoadingScreen}>
+                  `}
         `;
     },
 });
