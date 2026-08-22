@@ -8,12 +8,16 @@ import {
 } from '@antha/input';
 import {css, defineElement, html} from 'element-vir';
 import {type AsteroidsEngineState} from '../../data/asteroids-game-state.js';
-import {defaultPlayerInputBindings, type GameInputAction} from '../../data/player-action.js';
+import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
+import {type GameInputAction} from '../../data/player-action.js';
+import {type FrontendRouter} from '../../data/routing/frontend-router.js';
 import {asteroidsEntityMod} from '../../mods/asteroids-entity.mod.js';
 import {asteroidsGameMod} from '../../mods/asteroids-game.mod.js';
 import {pauseMenuMod} from '../../mods/pause-menu.mod.js';
 
-export const VirGame = defineElement()({
+export const VirGame = defineElement<{
+    router: FrontendRouter;
+}>()({
     tagName: 'vir-game',
     styles: css`
         :host {
@@ -33,13 +37,14 @@ export const VirGame = defineElement()({
             width: 100%;
         }
     `,
-    state() {
+    state({inputs}) {
         const engine = new AnthaEngine<AsteroidsEngineState>({
             initState: {
                 bindingAssignments: defaultPlayerInputBindings,
                 modifiers: {
                     allowPlayerCardinalMovement: true,
                 },
+                router: inputs.router,
             },
             mods: [
                 createAnthaGraphics2dMod({
@@ -56,6 +61,7 @@ export const VirGame = defineElement()({
                 createAnthaMenuNavMod({
                     allowWrapping: false,
                     alwaysRequireFocused: true,
+                    blockPerpendicularNavigation: true,
                 }),
                 asteroidsEntityMod,
                 asteroidsGameMod,

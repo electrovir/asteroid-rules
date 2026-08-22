@@ -5,6 +5,7 @@ import {type PlayerEntity} from '../entities/player.entity.js';
 import {type GameRule} from './game-rule.js';
 import {type GameModifiers} from './modifiers.js';
 import {type GameInputAction} from './player-action.js';
+import {type FrontendRouter} from './routing/frontend-router.js';
 
 export const PlayerPosition = {
     '1': '1',
@@ -17,6 +18,7 @@ export type PlayerPosition = Values<typeof PlayerPosition>;
 export type AsteroidsGameState = {
     isPaused: boolean;
     players: Partial<Record<PlayerPosition, PlayerEntity>>;
+    router: FrontendRouter;
     activeRules: GameRule[];
     unlockedGameRules: GameRule[];
     modifiers: GameModifiers;

@@ -1,47 +1,53 @@
 import {css, defineElement, html} from 'element-vir';
-import {ViraIcon} from 'vira';
+import {themeDefaultKey} from 'theme-vir/dist/color-theme/color-theme.js';
+import {noNativeSpacing, ViraIcon, viraTheme} from 'vira';
 import {type GameRule} from '../../data/game-rule.js';
 
 export const VirGameRule = defineElement<{
     rule: Readonly<GameRule>;
+    isActive: boolean;
 }>()({
     tagName: 'vir-game-rule',
-    styles: css`
-        :host {
-            color: white;
-            display: block;
-        }
+    hostClasses: {
+        'vir-game-rule-active': ({inputs}) => inputs.isActive,
+    },
+    styles({hostClasses}) {
+        return css`
+            :host {
+                display: flex;
+                border: 1px solid currentColor;
+                border-radius: 8px;
+                padding: 4px 8px;
+                gap: 8px;
+                background-color: ${viraTheme.colors[themeDefaultKey].background.value};
+            }
 
-        .rule-header {
-            align-items: center;
-            display: flex;
-            gap: 8px;
-        }
+            ${hostClasses['vir-game-rule-active'].selector} {
+                opacity: 1;
+                background-color: ${viraTheme.colors['vira-green-behind-fg-non-body'].background
+                    .value};
+            }
 
-        ${ViraIcon} {
-            height: 24px;
-            width: 24px;
-        }
+            .text {
+                display: flex;
+                gap: 8px;
+                flex-direction: column;
+            }
 
-        & h2,
-        & p {
-            margin: 0;
-        }
-
-        & p {
-            margin-top: 4px;
-        }
-    `,
+            h2,
+            p {
+                ${noNativeSpacing}
+            }
+        `;
+    },
     render({inputs}) {
         return html`
-            <div>
-                <div class="rule-header">
-                    <${ViraIcon.assign({
-                        icon: inputs.rule.icon,
-                        fitContainer: true,
-                    })}></${ViraIcon}>
-                    <h2>${inputs.rule.ruleTitle}</h2>
-                </div>
+            <${ViraIcon.assign({
+                icon: inputs.rule.icon,
+                fitContainer: true,
+            })}></${ViraIcon}>
+            <div class="text">
+                <h2>${inputs.rule.ruleTitle}</h2>
                 <p>${inputs.rule.description}</p>
             </div>
         `;

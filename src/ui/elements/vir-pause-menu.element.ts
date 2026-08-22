@@ -4,6 +4,7 @@ import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {ViraButton, ViraColorVariant, ViraSize} from 'vira';
 import {type AsteroidsGameState} from '../../data/asteroids-game-state.js';
+import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 
 export const VirPauseMenu = defineElement<{
     gameState: Partial<AsteroidsGameState>;
@@ -43,7 +44,6 @@ export const VirPauseMenu = defineElement<{
             }
 
             h1 {
-                color: white;
                 font-size: 48px;
                 font-weight: 700;
                 margin: 0;
@@ -74,8 +74,12 @@ export const VirPauseMenu = defineElement<{
     },
     render({inputs, state}) {
         const navController = inputs.gameState.navController;
+        const router = inputs.gameState.router;
+        const debugRoute = {
+            paths: frontendPathTree.paths.children.debug.children.rules.fullPaths,
+        };
 
-        if (!state.showPauseMenu || !navController) {
+        if (!state.showPauseMenu || !navController || !router) {
             return nothing;
         }
 
@@ -88,6 +92,7 @@ export const VirPauseMenu = defineElement<{
                     text: 'Resume',
                 })}
                     ${nav(navController, {
+                        y: 0,
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
@@ -100,9 +105,28 @@ export const VirPauseMenu = defineElement<{
                 <${ViraButton.assign({
                     buttonSize: ViraSize.Large,
                     color: ViraColorVariant.Neutral,
+                    text: 'Debug',
+                })}
+                    data-test-id="debug-button"
+                    ${nav(navController, {
+                        y: 1,
+                        listeners: {
+                            activate: ({enabled}) => {
+                                if (enabled) {
+                                    router.setRoute(debugRoute);
+                                }
+                            },
+                        },
+                    })}
+                ></${ViraButton}>
+                <${ViraButton.assign({
+                    buttonSize: ViraSize.Large,
+                    color: ViraColorVariant.Neutral,
                     text: 'End Mission',
                 })}
-                    ${nav(navController)}
+                    ${nav(navController, {
+                        y: 2,
+                    })}
                 ></${ViraButton}>
             </div>
         `;
