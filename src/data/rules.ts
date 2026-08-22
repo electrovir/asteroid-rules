@@ -2,8 +2,9 @@ import {lucideIcons} from 'vira';
 import {type GameRule} from './game-rule.js';
 
 export const playerCardinalMovementRule: GameRule = {
+    cost: 1,
     id: 'cardinal-move',
-    unlockLevel: 1,
+    unlockLevel: 2,
     ruleTitle: 'Cardinal Movement',
     description: 'The player can move in cardinal directions.',
     effects: {
@@ -13,6 +14,7 @@ export const playerCardinalMovementRule: GameRule = {
 };
 
 export const timedXpRule: GameRule = {
+    cost: 1,
     id: 'timed-xp',
     unlockLevel: 0,
     ruleTitle: 'Earn XP Over Time',

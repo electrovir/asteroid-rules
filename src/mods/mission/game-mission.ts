@@ -39,7 +39,6 @@ export async function ensureGameMission({
         lastAsteroidSpawnedAt: -asteroidSpawnIntervalMilliseconds,
         lastTimedExperienceEarnedAt: StableMath.round(currentTime),
         levelUpAnimation: undefined,
-        pendingRuleUnlocks: [],
         players,
         seededRandom: createStableRandom(createCuid2()),
     };

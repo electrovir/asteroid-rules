@@ -5,12 +5,16 @@ import {type GameRule} from '../../data/game-rule.js';
 import {virGameButtonStyles} from './vir-game-button.element.js';
 
 export const VirGameRule = defineElement<{
+    isNew: boolean;
+    isUnaffordable: boolean;
     rule: Readonly<GameRule>;
     isActive: boolean;
 }>()({
     tagName: 'vir-game-rule',
     hostClasses: {
         'vir-game-rule-active': ({inputs}) => inputs.isActive,
+        'vir-game-rule-new': ({inputs}) => inputs.isNew,
+        'vir-game-rule-unaffordable': ({inputs}) => inputs.isUnaffordable,
     },
     styles({hostClasses}) {
         return css`
@@ -20,6 +24,24 @@ export const VirGameRule = defineElement<{
                 box-sizing: border-box;
                 display: flex;
                 outline: none;
+            }
+
+            @keyframes vir-game-rule-new-glow {
+                from {
+                    box-shadow:
+                        inset 0 0 3px 1px
+                            ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value},
+                        0 0 5px 1px
+                            ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value};
+                }
+
+                to {
+                    box-shadow:
+                        inset 0 0 12px 3px
+                            ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value},
+                        0 0 10px 3px
+                            ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value};
+                }
             }
 
             ${virGameButtonStyles({
@@ -41,10 +63,26 @@ export const VirGameRule = defineElement<{
                 ${colorCss(viraTheme.colors['vira-green-behind-fg-non-body'])}
             }
 
+            ${hostClasses['vir-game-rule-unaffordable'].selector} .wrapper {
+                color: ${viraTheme.colors['vira-grey-foreground-body'].foreground.value};
+                background-color: ${viraTheme.colors['vira-red-behind-fg-small-body'].background
+                    .value};
+            }
+
+            ${hostClasses['vir-game-rule-new'].selector} .wrapper {
+                animation: vir-game-rule-new-glow 700ms ease-in infinite alternate;
+                border-color: ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value};
+            }
+
             .text {
                 display: flex;
                 gap: 8px;
                 flex-direction: column;
+                flex-grow: 1;
+            }
+
+            .cost {
+                align-self: center;
             }
 
             h2,
@@ -73,6 +111,7 @@ export const VirGameRule = defineElement<{
                     <h2>${inputs.rule.ruleTitle}</h2>
                     <p>${inputs.rule.description}</p>
                 </div>
+                <span class="cost">${inputs.rule.cost}</span>
             </div>
         `;
     },

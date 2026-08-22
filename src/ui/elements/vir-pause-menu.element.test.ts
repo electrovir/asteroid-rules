@@ -35,7 +35,6 @@ function createGameState({
             lastAsteroidSpawnedAt: 0,
             lastTimedExperienceEarnedAt: 0,
             levelUpAnimation: undefined,
-            pendingRuleUnlocks: [],
             players: {},
             seededRandom: SeededRandom.fromSeed('pause-menu-test'),
         },
@@ -44,6 +43,7 @@ function createGameState({
         saveState: {
             activeRules: [],
             modifiers: {},
+            newGameRules: [],
             playerLevel: 0,
             playerLevelExperience: 0,
             unlockedGameRules: [...unlockedGameRules],

@@ -34,8 +34,9 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
         }
 
         if (
-            state.missionState?.pendingRuleUnlocks.length &&
-            (!state.missionState.levelUpAnimation ||
+            state.saveState?.newGameRules.length &&
+            !state.menuState &&
+            (!state.missionState?.levelUpAnimation ||
                 state.missionState.levelUpAnimation.endsAt <= engine.totalMs)
         ) {
             updateMenuState(state, {

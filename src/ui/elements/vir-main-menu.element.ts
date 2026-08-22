@@ -3,7 +3,7 @@ import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {noNativeSpacing} from 'vira';
-import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
+import {updateMenuState, type AsteroidsGameEngineState} from '../../data/game-state.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
 
@@ -113,6 +113,9 @@ export const VirMainMenu = defineElement<{
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
+                                    if (inputs.gameState.saveState) {
+                                        inputs.gameState.saveState.newGameRules = [];
+                                    }
                                     updateMenuState(inputs.gameState, undefined);
                                 }
                             },

@@ -1,28 +1,14 @@
 import {nav} from '@antha/input';
-import {wait} from '@augment-vir/common';
-import {css, defineElement, html, nothing, testId} from 'element-vir';
+import {css, defineElement, html, nothing} from 'element-vir';
 import {noNativeSpacing} from 'vira';
-import {type GameRule} from '../../data/game-rule.js';
-import {
-    updateAsteroidsSaveStateRules,
-    updateMenuState,
-    type AsteroidsGameEngineState,
-} from '../../data/game-state.js';
+import {updateMenuState, type AsteroidsGameEngineState} from '../../data/game-state.js';
 import {VirGameButton} from './vir-game-button.element.js';
-import {VirGameRule} from './vir-game-rule.element.js';
+import {VirGameRuleList} from './vir-game-rule-list.element.js';
 
 export const VirRuleUnlockMenu = defineElement<{
     gameState: Partial<AsteroidsGameEngineState>;
 }>()({
     tagName: 'vir-rule-unlock-menu',
-    testIds: [
-        'enableButton',
-    ],
-    state() {
-        return {
-            isEnablingRule: false,
-        };
-    },
     styles: css`
         :host {
             align-items: center;
@@ -37,128 +23,52 @@ export const VirRuleUnlockMenu = defineElement<{
             width: 100%;
         }
 
-        h1,
-        p {
-            ${noNativeSpacing}
-        }
-
         h1 {
+            ${noNativeSpacing}
             font-size: 48px;
         }
 
         .menu-options {
+            align-items: flex-start;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            gap: 16px;
+            max-width: 100%;
         }
     `,
-    render({inputs, state, testIds, updateState}) {
+    render({inputs}) {
         const navController = inputs.gameState.navController;
-        const unlockedRule = inputs.gameState.missionState?.pendingRuleUnlocks.at(0);
 
-        if (!navController || !unlockedRule) {
+        if (!navController) {
             return nothing;
         }
 
         return html`
-            <h1>Rule Unlocked</h1>
-            <${VirGameRule.assign({
-                isActive: state.isEnablingRule,
-                rule: unlockedRule,
-            })}></${VirGameRule}>
-            <p>Enable this rule now?</p>
+            <h1>Rules Unlocked</h1>
             <div class="menu-options">
+                <${VirGameRuleList.assign({
+                    gameState: inputs.gameState,
+                })}></${VirGameRuleList}>
                 <${VirGameButton}
-                    ${testId(testIds.enableButton)}
                     ${nav(navController, {
+                        autoFocus: true,
+                        height: Infinity,
+                        x: 1,
                         y: 0,
                         listeners: {
-                            activate: async ({enabled}) => {
-                                if (enabled && !state.isEnablingRule) {
-                                    updateState({
-                                        isEnablingRule: true,
-                                    });
-                                    await wait({
-                                        milliseconds: 500,
-                                    });
-                                    resolveRuleUnlock({
-                                        enableRule: true,
-                                        gameState: inputs.gameState,
-                                        rule: unlockedRule,
-                                    });
-                                    updateState({
-                                        isEnablingRule: false,
-                                    });
-                                }
-                            },
-                        },
-                    })}
-                >
-                    Enable
-                </${VirGameButton}>
-                <${VirGameButton}
-                    ${nav(navController, {
-                        y: 1,
-                        listeners: {
                             activate: ({enabled}) => {
-                                if (enabled && !state.isEnablingRule) {
-                                    resolveRuleUnlock({
-                                        enableRule: false,
-                                        gameState: inputs.gameState,
-                                        rule: unlockedRule,
-                                    });
+                                if (enabled) {
+                                    if (inputs.gameState.saveState) {
+                                        inputs.gameState.saveState.newGameRules = [];
+                                    }
+                                    updateMenuState(inputs.gameState, undefined);
                                 }
                             },
                         },
                     })}
                 >
-                    Not Now
+                    Resume
                 </${VirGameButton}>
             </div>
         `;
     },
 });
-
-function resolveRuleUnlock({
-    enableRule,
-    gameState,
-    rule,
-}: Readonly<{
-    enableRule: boolean;
-    gameState: Partial<AsteroidsGameEngineState>;
-    rule: Readonly<GameRule>;
-}>) {
-    const missionState = gameState.missionState;
-    const saveState = gameState.saveState;
-
-    if (!missionState || !saveState) {
-        return;
-    }
-
-    const pendingRuleUnlocks = missionState.pendingRuleUnlocks.filter((pendingRule) => {
-        return pendingRule !== rule;
-    });
-
-    gameState.missionState = {
-        ...missionState,
-        pendingRuleUnlocks,
-    };
-
-    if (enableRule) {
-        gameState.saveState = updateAsteroidsSaveStateRules({
-            activeRules: saveState.activeRules.includes(rule)
-                ? saveState.activeRules
-                : saveState.activeRules.concat(rule),
-            saveState,
-        });
-    }
-
-    updateMenuState(
-        gameState,
-        pendingRuleUnlocks.length
-            ? {
-                  isOnRuleUnlock: true,
-              }
-            : undefined,
-    );
-}

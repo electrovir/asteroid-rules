@@ -103,6 +103,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
             state.saveState = {
                 ...saveState,
                 ...updatedExperience,
+                newGameRules: saveState.newGameRules.concat(newlyUnlockedRules),
                 unlockedGameRules: saveState.unlockedGameRules.concat(newlyUnlockedRules),
             };
             state.missionState = {
@@ -120,7 +121,6 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
                               playerLevel: saveState.playerLevel,
                           }
                         : activeLevelUpAnimation,
-                pendingRuleUnlocks: missionState.pendingRuleUnlocks.concat(newlyUnlockedRules),
             };
         } else if (state.menuState || !state.saveState.modifiers.timedXp) {
             state.missionState = {

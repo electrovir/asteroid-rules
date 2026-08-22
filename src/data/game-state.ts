@@ -26,6 +26,7 @@ export type PlayerPosition = Values<typeof PlayerPosition>;
 export type AsteroidsSaveState = {
     activeRules: GameRule[];
     modifiers: GameModifiers;
+    newGameRules: GameRule[];
     unlockedGameRules: GameRule[];
     playerLevel: number;
     playerLevelExperience: number;
@@ -96,7 +97,6 @@ export type FullGameState = {
                         playerLevel: number;
                     }
                   | undefined;
-              pendingRuleUnlocks: GameRule[];
               seededRandom: SeededRandom;
               players: Partial<Record<PlayerPosition, PlayerEntity>>;
           }

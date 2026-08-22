@@ -45,7 +45,6 @@ function createGameState({
             lastAsteroidSpawnedAt: 0,
             lastTimedExperienceEarnedAt: 0,
             levelUpAnimation: undefined,
-            pendingRuleUnlocks: [],
             players: {},
             seededRandom: SeededRandom.fromSeed('test-seed'),
         },
@@ -54,7 +53,8 @@ function createGameState({
         saveState: {
             activeRules: [],
             modifiers: {},
-            playerLevel: 0,
+            newGameRules: [],
+            playerLevel: 1,
             playerLevelExperience: 0,
             unlockedGameRules: allGameRules,
         },
@@ -69,6 +69,7 @@ function createRestrictedSaveState() {
         modifiers: {
             allowPlayerCardinalMovement: true,
         },
+        newGameRules: [],
         playerLevel: 3,
         playerLevelExperience: 900,
         unlockedGameRules: [
