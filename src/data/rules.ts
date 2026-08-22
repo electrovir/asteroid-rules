@@ -3,6 +3,7 @@ import {type GameRule} from './game-rule.js';
 
 export const playerCardinalMovementRule: GameRule = {
     id: 'cardinal-move',
+    unlockLevel: 1,
     ruleTitle: 'Cardinal Movement',
     description: 'The player can move in cardinal directions.',
     effects: {
@@ -13,6 +14,7 @@ export const playerCardinalMovementRule: GameRule = {
 
 export const timedXpRule: GameRule = {
     id: 'timed-xp',
+    unlockLevel: 0,
     ruleTitle: 'Earn XP Over Time',
     description: 'The player earns experience over time.',
     effects: {
@@ -26,27 +28,22 @@ export const allGameRules: GameRule[] = [
     timedXpRule,
 ];
 
-export const initialGameRules: GameRule[] = [
-    timedXpRule,
-];
+export function getGameRulesUnlockedAtLevel(level: number) {
+    return allGameRules.filter((rule) => {
+        return rule.unlockLevel <= level;
+    });
+}
 
 /**
+ * - Player level determines rule pool
+ *
  * Ideas:
  *
- * - Guns
- * - Points per kill
- * - Dramatically increase points per kill, lose points per shot (discourages missing)
- * - You become the asteroids
- * - More asteroids
- * - Change asteroids to something cute or whatever
- * - Stronger asteroids (make sure xp is earned per health killed)
- * - More weapons at once
- * - Weapon leveling
- * - Dash
- * - Level counts for 100x
- * - Player level determines rule pool
- * - Decrease rule cost
- * - Different ships
- * - Explore beyond the static map
- * - Rules manager (better UI)
+ * 1. Guns
+ * 2. More asteroids
+ * 3. Xp from asteroid kills (xp per health)
+ * 4. Combos (the longer you last, the more xp you get, per time, per kill, etc.)
+ * 5. Stronger asteroids
+ * 6. Another gun (both firing forwards)
+ * 7. Dramatically increase points per kill, lose points per shot (discourages missing)
  */

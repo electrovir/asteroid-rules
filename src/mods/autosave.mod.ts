@@ -4,7 +4,7 @@ import {type LocalDbClient} from 'local-db-client';
 import {defineShape, enumShape} from 'object-shape-tester';
 import {createGameModifiers} from '../data/game-rule.js';
 import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
-import {allGameRules, initialGameRules} from '../data/rules.js';
+import {allGameRules, getGameRulesUnlockedAtLevel} from '../data/rules.js';
 
 export enum SavedGameStateVersion {
     Initial = 1,
@@ -37,6 +37,8 @@ export type AutosaveModState = {
 export const autosaveModName = 'autosave';
 
 export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
+    const initialGameRules = getGameRulesUnlockedAtLevel(0);
+
     return {
         activeRules: initialGameRules,
         modifiers: createGameModifiers(initialGameRules),
@@ -46,7 +48,7 @@ export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
     };
 }
 
-export function createAsteroidsSaveState(
+export function createGameSaveState(
     savedGameState: SavedGameState | undefined,
 ): AsteroidsSaveState {
     if (!savedGameState) {
@@ -54,7 +56,10 @@ export function createAsteroidsSaveState(
     }
 
     const unlockedGameRules = allGameRules.filter((rule) => {
-        return savedGameState.unlockedGameRuleIds.includes(rule.id);
+        return (
+            savedGameState.unlockedGameRuleIds.includes(rule.id) ||
+            rule.unlockLevel <= savedGameState.playerLevel
+        );
     });
 
     const activeRules = unlockedGameRules.filter((rule) => {
@@ -85,7 +90,7 @@ function createSavedGameState({
     };
 }
 
-function persistSaveState({
+async function persistSaveState({
     engine,
     localDbClient,
     saveState,
@@ -94,9 +99,11 @@ function persistSaveState({
     localDbClient: SaveStateDbClient;
     saveState: AsteroidsSaveState;
 }>) {
-    return localDbClient.set.saveState(createSavedGameState(saveState)).catch((error: unknown) => {
+    try {
+        await localDbClient.set.saveState(createSavedGameState(saveState));
+    } catch (error) {
         engine.log.error(ensureErrorAndPrependMessage(error, 'Failed to save game state.'));
-    });
+    }
 }
 
 export const autosaveMod = defineAnthaMod<AsteroidsGameEngineState & AutosaveModState>({
@@ -126,7 +133,7 @@ export const autosaveMod = defineAnthaMod<AsteroidsGameEngineState & AutosaveMod
         if (
             state.localDbClient &&
             state.saveState &&
-            (state.lastSavedAt == undefined || currentTime - state.lastSavedAt >= 5000)
+            (state.lastSavedAt == undefined || currentTime - state.lastSavedAt >= 2000)
         ) {
             state.lastSavedAt = currentTime;
             void persistSaveState({

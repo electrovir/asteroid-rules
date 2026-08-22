@@ -41,6 +41,7 @@ export function checkIfMainMenuAllowed({
 
 export type GameMenuState = PartialWithUndefined<{
     isOnRuleDebug: true;
+    isOnRuleUnlock: true;
     isPaused: true;
     onMainMenu: true;
 }>;
@@ -89,6 +90,13 @@ export type FullGameState = {
         | {
               lastAsteroidSpawnedAt: number;
               lastTimedExperienceEarnedAt: number;
+              levelUpAnimation:
+                  | {
+                        endsAt: number;
+                        playerLevel: number;
+                    }
+                  | undefined;
+              pendingRuleUnlocks: GameRule[];
               seededRandom: SeededRandom;
               players: Partial<Record<PlayerPosition, PlayerEntity>>;
           }

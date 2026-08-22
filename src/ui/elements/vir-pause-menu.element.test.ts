@@ -34,6 +34,8 @@ function createGameState({
         missionState: {
             lastAsteroidSpawnedAt: 0,
             lastTimedExperienceEarnedAt: 0,
+            levelUpAnimation: undefined,
+            pendingRuleUnlocks: [],
             players: {},
             seededRandom: SeededRandom.fromSeed('pause-menu-test'),
         },

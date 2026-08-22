@@ -3,6 +3,7 @@ import {type ViraIconSvg} from 'vira';
 import {type GameModifiers} from './modifiers.js';
 
 export type GameRule = {
+    unlockLevel: number;
     id: string;
     ruleTitle: string;
     icon: ViraIconSvg;

@@ -7,6 +7,7 @@ import {viraFormCssVars} from 'vira';
 
 export const VirGameProgress = defineElement<
     {
+        transitionDurationMilliseconds: number;
         value: number;
     } & PartialWithUndefined<{
         animateDecreases: boolean;
@@ -20,7 +21,7 @@ export const VirGameProgress = defineElement<
             background-color: ${viraFormCssVars['vira-form-filled-background-color'].value};
             border-radius: 99999999px;
             display: block;
-            height: 24px;
+            height: 12px;
             overflow: hidden;
             width: 100%;
         }
@@ -42,7 +43,7 @@ export const VirGameProgress = defineElement<
             min,
             max,
         });
-        const percentFull = clamp(Math.round(((value - min) / (max - min)) * 100), {
+        const percentFull = clamp(((value - min) / (max - min)) * 100, {
             min: 0,
             max: 100,
         });
@@ -70,7 +71,7 @@ export const VirGameProgress = defineElement<
                 style=${css`
                     ${shouldAnimate
                         ? css`
-                              transition: width 1s linear;
+                              transition: width ${inputs.transitionDurationMilliseconds}ms linear;
                           `
                         : css`
                               transition: none;

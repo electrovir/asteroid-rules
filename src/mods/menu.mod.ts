@@ -9,6 +9,7 @@ import {VirMainMenu} from '../ui/elements/vir-main-menu.element.js';
 import {VirMenuBackground} from '../ui/elements/vir-menu-background.element.js';
 import {VirPauseMenu} from '../ui/elements/vir-pause-menu.element.js';
 import {VirRuleDebug} from '../ui/elements/vir-rule-debug.element.js';
+import {VirRuleUnlockMenu} from '../ui/elements/vir-rule-unlock-menu.element.js';
 
 export function isOnDebugPage(router: FrontendRouter | undefined): boolean {
     return (
@@ -25,10 +26,20 @@ export function isOnDebugPage(router: FrontendRouter | undefined): boolean {
 
 export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
     modName: 'menu',
-    execute({state}) {
+    execute({engine, state}) {
         if (isOnDebugPage(state.router)) {
             updateMenuState(state, {
                 isOnRuleDebug: true,
+            });
+        }
+
+        if (
+            state.missionState?.pendingRuleUnlocks.length &&
+            (!state.missionState.levelUpAnimation ||
+                state.missionState.levelUpAnimation.endsAt <= engine.totalMs)
+        ) {
+            updateMenuState(state, {
+                isOnRuleUnlock: true,
             });
         }
 
@@ -76,6 +87,13 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
                           <${VirRuleDebug.assign({
                               gameState: state,
                           })}></${VirRuleDebug}>
+                      `
+                    : nothing}
+                ${state.menuState.isOnRuleUnlock
+                    ? html`
+                          <${VirRuleUnlockMenu.assign({
+                              gameState: state,
+                          })}></${VirRuleUnlockMenu}>
                       `
                     : nothing}
             </${VirMenuBackground}>

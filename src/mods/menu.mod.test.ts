@@ -34,6 +34,8 @@ describe(menuMod.modName, () => {
                 missionState: {
                     lastAsteroidSpawnedAt: 0,
                     lastTimedExperienceEarnedAt: 0,
+                    levelUpAnimation: undefined,
+                    pendingRuleUnlocks: [],
                     players: {},
                     seededRandom: SeededRandom.fromSeed('menu-mod-test'),
                 },

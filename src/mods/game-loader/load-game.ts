@@ -21,7 +21,7 @@ import {type FrontendRouter} from '../../data/routing/frontend-router.js';
 import {GameZIndex} from '../../data/z-index.js';
 import {
     autosaveMod,
-    createAsteroidsSaveState,
+    createGameSaveState,
     saveStateDbShapes,
     type SaveStateDbClient,
 } from '../autosave.mod.js';
@@ -53,7 +53,7 @@ export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
                 value: {
                     loadError: undefined,
                     localDbClient,
-                    saveState: createAsteroidsSaveState(localDbClient.value.saveState),
+                    saveState: createGameSaveState(localDbClient.value.saveState),
                 },
             };
         } catch (error) {
@@ -66,7 +66,7 @@ export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
                         'Failed to load game save state.',
                     ),
                     localDbClient: undefined,
-                    saveState: createAsteroidsSaveState(undefined),
+                    saveState: createGameSaveState(undefined),
                 },
             };
         }

@@ -8,6 +8,7 @@ import {VirGameProgress} from './vir-game-progress.element.js';
 export const VirMissionHud = defineElement<{
     playerLevel: number;
     playerLevelExperience: number;
+    progressTransitionDurationMilliseconds: number;
 }>()({
     tagName: 'vir-mission-hud',
     styles: css`
@@ -31,7 +32,15 @@ export const VirMissionHud = defineElement<{
             display: flex;
             align-items: center;
             justify-content: center;
-            text-shadow: 0 1px 2px black;
+            text-shadow:
+                -1px -1px 0 black,
+                0 -1px 0 black,
+                1px -1px 0 black,
+                -1px 0 0 black,
+                1px 0 0 black,
+                -1px 1px 0 black,
+                0 1px 0 black,
+                1px 1px 0 black;
         }
     `,
     render({inputs}) {
@@ -41,6 +50,7 @@ export const VirMissionHud = defineElement<{
             <${VirGameProgress.assign({
                 max: experienceRequired,
                 min: 0,
+                transitionDurationMilliseconds: inputs.progressTransitionDurationMilliseconds,
                 value: inputs.playerLevelExperience,
             })}></${VirGameProgress}>
             <div class="level-wrapper">

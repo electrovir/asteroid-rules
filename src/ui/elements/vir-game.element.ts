@@ -35,15 +35,6 @@ export const VirGame = defineElement<{
     `,
     state({inputs}) {
         const engine = new AnthaEngine<AsteroidsGameEngineState>({
-            initState: {
-                isShowingLoadingScreen: true,
-                loadingScreenState: {
-                    completedAt: undefined,
-                    current: 0,
-                    currentResourceName: undefined,
-                    total: -1,
-                },
-            },
             mods: [
                 createAnthaAssetMod({
                     loadingScreenFadeMs,
