@@ -12,6 +12,8 @@ import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/asteroids-entity.mod.js';
 
 const playerSize = 24;
+const playerHalfWidth = playerSize * 0.8;
+const playerHalfHeight = playerSize;
 const playerSpeedPixelsPerMillisecond = 0.4;
 
 export class PlayerEntity extends defineEntity({
@@ -66,8 +68,14 @@ export class PlayerEntity extends defineEntity({
         }
 
         this.view.rotation = Math.atan2(movement.y, movement.x) + Math.PI / 2;
-        this.params.x += movement.x;
-        this.params.y += movement.y;
+        this.params.x = clamp(this.params.x + movement.x, {
+            min: playerHalfWidth,
+            max: this.pixi.screen.width - playerHalfWidth,
+        });
+        this.params.y = clamp(this.params.y + movement.y, {
+            min: playerHalfHeight,
+            max: this.pixi.screen.height - playerHalfHeight,
+        });
     }
 }
 
