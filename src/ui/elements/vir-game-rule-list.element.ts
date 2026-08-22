@@ -1,17 +1,18 @@
-import {nav, type NavController} from '@antha/input';
-import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
-import {type GameRule} from '../../data/game-rule.js';
+import {nav} from '@antha/input';
+import {listenToObject} from '@antha/util';
+import {type EmptyFunction} from '@augment-vir/common';
+import {css, defineElement, html, nothing} from 'element-vir';
+import {toggleGameRule, type GameRule} from '../../data/game-rule.js';
+import {updateAsteroidsSaveStateRules, type AsteroidsEngineState} from '../../data/game-state.js';
+import {allGameRules} from '../../data/rules.js';
 import {VirGameRule} from './vir-game-rule.element.js';
 
 export const VirGameRuleList = defineElement<{
-    activeRules: ReadonlyArray<Readonly<GameRule>>;
-    availableRules: ReadonlyArray<Readonly<GameRule>>;
-    navController?: NavController | undefined;
+    gameState: Partial<AsteroidsEngineState>;
+    navX?: number | undefined;
+    showAllRules?: boolean | undefined;
 }>()({
     tagName: 'vir-game-rule-list',
-    events: {
-        ruleActivated: defineElementEvent<Readonly<GameRule>>(),
-    },
     styles: css`
         :host {
             display: flex;
@@ -24,36 +25,71 @@ export const VirGameRuleList = defineElement<{
             width: 100%;
         }
     `,
-    render({dispatch, events, inputs}) {
+    state() {
+        return {
+            cleanup: undefined as EmptyFunction | undefined,
+        };
+    },
+    init({host, inputs, updateState}) {
+        updateState({
+            cleanup: listenToObject(inputs.gameState, 'saveState', () => {
+                host.requestUpdate();
+            }),
+        });
+    },
+    cleanup({state}) {
+        state.cleanup?.();
+    },
+    render({host, inputs}) {
         function activateRule(this: void, rule: Readonly<GameRule>) {
-            dispatch(new events.ruleActivated(rule));
+            const saveState = inputs.gameState.saveState;
+
+            if (!saveState) {
+                return;
+            }
+
+            inputs.gameState.saveState = updateAsteroidsSaveStateRules({
+                activeRules: toggleGameRule({
+                    activeRules: saveState.activeRules,
+                    rule,
+                }),
+                saveState,
+            });
+            host.requestUpdate();
         }
 
-        return inputs.availableRules
+        const saveState = inputs.gameState.saveState;
+        const activeRules = saveState?.activeRules || [];
+        const availableRules = inputs.showAllRules
+            ? allGameRules
+            : saveState?.unlockedGameRules || [];
+        const navController = inputs.gameState.navController;
+
+        if (!navController) {
+            return nothing;
+        }
+
+        return availableRules
             .toSorted((firstRule, secondRule) => {
                 return firstRule.ruleTitle.localeCompare(secondRule.ruleTitle);
             })
             .map((rule, ruleIndex) => {
                 return html`
                     <${VirGameRule.assign({
-                        isActive: inputs.activeRules.includes(rule),
+                        isActive: activeRules.includes(rule),
                         rule,
                     })}
-                        ${inputs.navController
-                            ? nav(inputs.navController, {
-                                  x: 0,
-                                  y: ruleIndex,
-                                  listeners: {
-                                      activate: ({enabled}) => {
-                                          if (enabled) {
-                                              activateRule(rule);
-                                          }
-                                      },
-                                  },
-                              })
-                            : listen('click', () => {
-                                  activateRule(rule);
-                              })}
+                        ${nav(navController, {
+                            x: inputs.navX ?? 0,
+                            y: ruleIndex,
+                            listeners: {
+                                activate: ({enabled}) => {
+                                    if (enabled) {
+                                        activateRule(rule);
+                                    }
+                                },
+                            },
+                        })}
                     ></${VirGameRule}>
                 `;
             });

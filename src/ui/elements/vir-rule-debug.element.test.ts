@@ -1,13 +1,15 @@
-import {assert} from '@augment-vir/assert';
+import {assert, assertWrap} from '@augment-vir/assert';
 import {describe, it, testWeb} from '@augment-vir/test';
 import {waitForAnimationFrame} from '@augment-vir/web';
 import {NavController, NavDirection, extractNavEntry} from 'device-navigation';
+import {html, testIdSelector} from 'element-vir';
 import {ViraButton} from 'vira';
 import {type AsteroidsGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
 import {allGameRules, playerCardinalMovementRule} from '../../data/rules.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
+import {VirGameRule} from './vir-game-rule.element.js';
 import {VirPauseMenu} from './vir-pause-menu.element.js';
 import {VirRuleDebug} from './vir-rule-debug.element.js';
 
@@ -42,13 +44,13 @@ function createGameState({
             onMainMenu: false,
         },
         missionState: {
-            modifiers: {},
             players: {},
         },
         navController,
         router,
         saveState: {
             activeRules: [],
+            modifiers: {},
             playerLevel: 0,
             playerLevelExperience: 0,
             unlockedGameRules: allGameRules,
@@ -56,7 +58,77 @@ function createGameState({
     } satisfies TestGameState;
 }
 
+async function renderRuleDebug(gameState: Readonly<TestGameState>) {
+    const renderedElement = await testWeb.render(html`
+        <${VirRuleDebug.assign({
+            gameState,
+        })}></${VirRuleDebug}>
+    `);
+
+    return assertWrap.instanceOf(renderedElement, VirRuleDebug);
+}
+
 describe(VirRuleDebug.tagName, () => {
+    it('clears the save state', async () => {
+        const router = createFrontendRouter();
+        const navController = new NavController(document.body, {
+            alwaysRequireFocused: true,
+        });
+        const gameState = createGameState({
+            navController,
+            router,
+        });
+
+        gameState.missionState = {
+            players: {},
+        };
+        gameState.saveState = {
+            activeRules: [
+                playerCardinalMovementRule,
+            ],
+            modifiers: {
+                allowPlayerCardinalMovement: true,
+            },
+            playerLevel: 3,
+            playerLevelExperience: 900,
+            unlockedGameRules: [
+                playerCardinalMovementRule,
+            ],
+        };
+
+        try {
+            const ruleDebugElement = await renderRuleDebug(gameState);
+            const ruleListElement = assertWrap.instanceOf(
+                ruleDebugElement.shadowRoot.querySelector(VirGameRuleList.tagName),
+                VirGameRuleList,
+            );
+            const clearSaveStateButton = ruleDebugElement.shadowRoot.querySelector<HTMLElement>(
+                testIdSelector(VirRuleDebug.testIds.clearSaveStateButton),
+            );
+
+            assert.isLengthExactly(
+                ruleListElement.shadowRoot.querySelectorAll(VirGameRule.tagName),
+                allGameRules.length,
+            );
+            assert.isDefined(clearSaveStateButton);
+
+            const clearSaveStateNavEntry = extractNavEntry(clearSaveStateButton);
+
+            assert.isDefined(clearSaveStateNavEntry);
+            clearSaveStateNavEntry.activate(true);
+
+            assert.isUndefined(gameState.saveState);
+            assert.isDefined(
+                ruleDebugElement.shadowRoot.querySelector(
+                    testIdSelector(VirRuleDebug.testIds.resumeButton),
+                ),
+            );
+        } finally {
+            router.destroy();
+            testWeb.cleanupRender();
+        }
+    });
+
     it('restores pause-menu navigation when it is removed', async () => {
         const router = createFrontendRouter();
         const navController = new NavController(document.body, {
@@ -71,9 +143,7 @@ describe(VirRuleDebug.tagName, () => {
             const pauseMenuElement = await testWeb.renderElement(VirPauseMenu, {
                 gameState,
             });
-            const ruleDebugElement = await testWeb.renderElement(VirRuleDebug, {
-                gameState,
-            });
+            const ruleDebugElement = await renderRuleDebug(gameState);
             const exitDebugButton = ruleDebugElement.shadowRoot.querySelector<HTMLElement>(
                 ViraButton.tagName,
             );
@@ -146,11 +216,9 @@ describe(VirRuleDebug.tagName, () => {
         });
 
         try {
-            const ruleDebugElement = await testWeb.renderElement(VirRuleDebug, {
-                gameState,
-            });
+            const ruleDebugElement = await renderRuleDebug(gameState);
             const resumeButton = ruleDebugElement.shadowRoot.querySelector<HTMLElement>(
-                ViraButton.tagName,
+                testIdSelector(VirRuleDebug.testIds.resumeButton),
             );
 
             assert.isDefined(resumeButton);
@@ -180,7 +248,7 @@ describe(VirRuleDebug.tagName, () => {
         }
     });
 
-    it('updates the active mission when a debug rule is activated', async () => {
+    it('updates the active save state when a debug rule is activated', async () => {
         const router = createFrontendRouter();
         const navController = new NavController(document.body, {
             alwaysRequireFocused: true,
@@ -191,22 +259,30 @@ describe(VirRuleDebug.tagName, () => {
         });
 
         try {
-            const ruleDebugElement = await testWeb.renderElement(VirRuleDebug, {
-                gameState,
-            });
-            const ruleListElement = ruleDebugElement.shadowRoot.querySelector<HTMLElement>(
-                VirGameRuleList.tagName,
+            const ruleDebugElement = await renderRuleDebug(gameState);
+            const ruleListElement = assertWrap.instanceOf(
+                ruleDebugElement.shadowRoot.querySelector(VirGameRuleList.tagName),
+                VirGameRuleList,
             );
 
-            assert.isDefined(ruleListElement);
-            ruleListElement.dispatchEvent(
-                new VirGameRuleList.events.ruleActivated(playerCardinalMovementRule),
+            const playerRuleElement = assertWrap.isDefined(
+                Array.from(
+                    ruleListElement.shadowRoot.querySelectorAll<InstanceType<typeof VirGameRule>>(
+                        VirGameRule.tagName,
+                    ),
+                ).find((ruleElement) => {
+                    return ruleElement.instanceInputs.rule === playerCardinalMovementRule;
+                }),
             );
+            const playerRuleNavEntry = extractNavEntry(playerRuleElement);
+
+            assert.isDefined(playerRuleNavEntry);
+            playerRuleNavEntry.activate(true);
 
             assert.deepEquals(
                 {
                     activeRuleIds: gameState.saveState.activeRules.map((rule) => rule.id),
-                    modifiers: gameState.missionState.modifiers,
+                    modifiers: gameState.saveState.modifiers,
                 },
                 {
                     activeRuleIds: [

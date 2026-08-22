@@ -29,7 +29,6 @@ describe(pauseMenuMod.modName, () => {
                     },
                 },
                 missionState: {
-                    modifiers: {},
                     players: {},
                 },
             },

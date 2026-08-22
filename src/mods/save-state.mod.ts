@@ -3,8 +3,9 @@ import {defineAnthaMod, SkipExecution, type AnthaEngine} from '@antha/engine';
 import {ensureErrorAndPrependMessage} from '@augment-vir/common';
 import {LocalDbClient} from 'local-db-client';
 import {defineShape, enumShape} from 'object-shape-tester';
+import {createGameModifiers} from '../data/game-rule.js';
 import {type AsteroidsEngineState, type AsteroidsSaveState} from '../data/game-state.js';
-import {allGameRules} from '../data/rules.js';
+import {allGameRules, initialGameRules} from '../data/rules.js';
 import {PlayerEntity} from '../entities/player.entity.js';
 
 export enum SavedGameStateVersion {
@@ -36,18 +37,21 @@ type LoadedGameSaveState = {
 };
 
 export type SaveStateModState = {
+    hasFinishedLoadingSaveState: boolean;
     hasStartedLoadingSaveState: boolean;
+    lastSavedAt: number | undefined;
     localDbClient: SaveStateDbClient | undefined;
 };
 
 export const saveStateModName = 'save-state';
 
-export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
+function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
     return {
         activeRules: [],
+        modifiers: createGameModifiers([]),
         playerLevel: 0,
         playerLevelExperience: 0,
-        unlockedGameRules: allGameRules,
+        unlockedGameRules: initialGameRules,
     };
 }
 
@@ -62,10 +66,13 @@ export function createAsteroidsSaveState(
         return savedGameState.unlockedGameRuleIds.includes(rule.id);
     });
 
+    const activeRules = unlockedGameRules.filter((rule) => {
+        return savedGameState.activeRuleIds.includes(rule.id);
+    });
+
     return {
-        activeRules: unlockedGameRules.filter((rule) => {
-            return savedGameState.activeRuleIds.includes(rule.id);
-        }),
+        activeRules,
+        modifiers: createGameModifiers(activeRules),
         playerLevel: savedGameState.playerLevel,
         playerLevelExperience: savedGameState.playerLevelExperience,
         unlockedGameRules,
@@ -138,11 +145,10 @@ function persistSaveState({
 
 export const saveStateMod = defineAnthaMod<AsteroidsEngineState & SaveStateModState>({
     executeImmediately: true,
-    frequency: {
-        durationMs: 5000,
-    },
     initState: {
+        hasFinishedLoadingSaveState: false,
         hasStartedLoadingSaveState: false,
+        lastSavedAt: undefined,
         localDbClient: undefined,
     },
     modName: saveStateModName,
@@ -184,15 +190,29 @@ export const saveStateMod = defineAnthaMod<AsteroidsEngineState & SaveStateModSt
 
                     state.localDbClient = loadedSaveState.localDbClient;
                     state.saveState = loadedSaveState.saveState;
+                    state.hasFinishedLoadingSaveState = true;
                 })
                 .catch((error: unknown) => {
+                    state.hasFinishedLoadingSaveState = true;
+                    state.saveState = createDefaultAsteroidsSaveState();
                     engine.log.error(
                         ensureErrorAndPrependMessage(error, 'Failed to load game save state.'),
                     );
                 });
         }
 
-        if (state.localDbClient && state.saveState) {
+        if (state.hasFinishedLoadingSaveState && !state.saveState) {
+            state.saveState = createDefaultAsteroidsSaveState();
+        }
+
+        const currentTime = Date.now();
+
+        if (
+            state.localDbClient &&
+            state.saveState &&
+            (state.lastSavedAt == undefined || currentTime - state.lastSavedAt >= 5000)
+        ) {
+            state.lastSavedAt = currentTime;
             void persistSaveState({
                 engine,
                 localDbClient: state.localDbClient,

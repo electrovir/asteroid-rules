@@ -1,4 +1,3 @@
-import {createGameModifiers} from '../data/game-rule.js';
 import {PlayerPosition, type AsteroidsEngineState} from '../data/game-state.js';
 import {PlayerEntity} from '../entities/player.entity.js';
 
@@ -18,7 +17,6 @@ export async function ensureGameMission({
     }
 
     gameState.missionState = {
-        modifiers: createGameModifiers(gameState.saveState?.activeRules || []),
         players: {
             [PlayerPosition['1']]: await gameState.entityStore.addEntity(PlayerEntity, {
                 inputPlayerPosition: PlayerPosition['1'],

@@ -21,6 +21,7 @@ export const VirGameRule = defineElement<{
                 border: 1px solid currentColor;
                 border-radius: 8px;
                 padding: 4px 8px;
+                padding-right: 16px;
                 gap: 8px;
                 background-color: ${viraTheme.colors[themeDefaultKey].background.value};
             }

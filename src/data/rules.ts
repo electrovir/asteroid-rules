@@ -26,6 +26,10 @@ export const allGameRules: GameRule[] = [
     timedXpRule,
 ];
 
+export const initialGameRules: GameRule[] = [
+    timedXpRule,
+];
+
 /**
  * Ideas:
  *

@@ -1,5 +1,5 @@
 import {css, defineElement, html} from 'element-vir';
-import {viraTheme, ViraThemeClient, ViraThemeSelection} from 'vira';
+import {noUserSelect, viraTheme, ViraThemeClient, ViraThemeSelection} from 'vira';
 import {defaultFrontendRoute} from '../../data/routing/frontend-route.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
 import {VirGame} from './vir-game.element.js';
@@ -13,6 +13,7 @@ export const VirApp = defineElement()({
             height: 100%;
             width: 100%;
             font-family: sans-serif;
+            ${noUserSelect}
         }
     `,
     state() {

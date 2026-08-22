@@ -1,11 +1,7 @@
 import {nav} from '@antha/input';
-import {listenToObject} from '@antha/util';
-import {type EmptyFunction} from '@augment-vir/common';
-import {css, defineElement, html, listen, nothing} from 'element-vir';
+import {css, defineElement, html, nothing, testId} from 'element-vir';
 import {ViraButton, ViraColorVariant, ViraSize} from 'vira';
-import {createGameModifiers, type GameRule, toggleGameRule} from '../../data/game-rule.js';
-import {type AsteroidsEngineState, type AsteroidsGameState} from '../../data/game-state.js';
-import {allGameRules} from '../../data/rules.js';
+import {type AsteroidsEngineState} from '../../data/game-state.js';
 import {GameZIndex} from '../../data/z-index.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
 
@@ -13,6 +9,10 @@ export const VirRuleDebug = defineElement<{
     gameState: Partial<AsteroidsEngineState>;
 }>()({
     tagName: 'vir-rule-debug',
+    testIds: [
+        'clearSaveStateButton',
+        'resumeButton',
+    ],
     styles: css`
         :host {
             backdrop-filter: blur(3px);
@@ -32,80 +32,52 @@ export const VirRuleDebug = defineElement<{
             max-width: 100%;
         }
     `,
-    state(): {
-        activeRules: GameRule[];
-        cleanup: EmptyFunction | undefined;
-    } {
-        return {
-            activeRules: [] as GameRule[],
-            cleanup: undefined,
-        };
-    },
-    init({host, inputs, updateState}) {
-        function updateSaveState(
-            this: void,
-            saveState: AsteroidsGameState['saveState'] | undefined,
-        ) {
-            updateState({
-                activeRules: saveState?.activeRules || [],
-            });
-            host.requestUpdate();
-        }
-
-        updateSaveState(inputs.gameState.saveState);
-        updateState({
-            cleanup: listenToObject(inputs.gameState, 'saveState', updateSaveState),
-        });
-    },
-    cleanup({inputs, state}) {
-        state.cleanup?.();
+    cleanup({inputs}) {
         inputs.gameState.navController?.queueDefaultFocus(true);
     },
-    render({inputs, state, updateState}) {
-        const saveState = inputs.gameState.saveState;
+    render({inputs, testIds}) {
         const navController = inputs.gameState.navController;
         const router = inputs.gameState.router;
 
-        if (!saveState || !navController || !router) {
+        if (!navController || !router) {
             return nothing;
         }
 
         return html`
             <div class="menu-options">
-                <${VirGameRuleList.assign({
-                    activeRules: state.activeRules,
-                    availableRules: allGameRules,
-                    navController,
+                <${ViraButton.assign({
+                    buttonSize: ViraSize.Large,
+                    color: ViraColorVariant.Neutral,
+                    text: 'Clear Save State',
                 })}
-                    ${listen(VirGameRuleList.events.ruleActivated, ({detail: rule}) => {
-                        const activeRules = toggleGameRule({
-                            activeRules: state.activeRules,
-                            rule,
-                        });
-
-                        inputs.gameState.saveState = {
-                            ...saveState,
-                            activeRules,
-                        };
-                        inputs.gameState.missionState = inputs.gameState.missionState
-                            ? {
-                                  ...inputs.gameState.missionState,
-                                  modifiers: createGameModifiers(activeRules),
-                              }
-                            : undefined;
-                        updateState({
-                            activeRules,
-                        });
+                    ${testId(testIds.clearSaveStateButton)}
+                    ${nav(navController, {
+                        height: Infinity,
+                        x: 0,
+                        y: 0,
+                        listeners: {
+                            activate: ({enabled}) => {
+                                if (enabled) {
+                                    inputs.gameState.saveState = undefined;
+                                }
+                            },
+                        },
                     })}
-                ></${VirGameRuleList}>
+                ></${ViraButton}>
+                <${VirGameRuleList.assign({
+                    gameState: inputs.gameState,
+                    navX: 1,
+                    showAllRules: true,
+                })}></${VirGameRuleList}>
                 <${ViraButton.assign({
                     buttonSize: ViraSize.Large,
                     color: ViraColorVariant.Neutral,
                     text: 'Resume',
                 })}
+                    ${testId(testIds.resumeButton)}
                     ${nav(navController, {
                         height: Infinity,
-                        x: 1,
+                        x: 2,
                         y: 0,
                         listeners: {
                             activate: ({enabled}) => {

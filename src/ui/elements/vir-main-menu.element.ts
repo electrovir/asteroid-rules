@@ -1,11 +1,10 @@
 import {nav} from '@antha/input';
 import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
-import {css, defineElement, html, listen, nothing} from 'element-vir';
+import {css, defineElement, html, nothing} from 'element-vir';
 import {themeDefaultKey} from 'theme-vir';
 import {noNativeSpacing, ViraButton, ViraColorVariant, ViraSize, viraTheme} from 'vira';
-import {toggleGameRule, type GameRule} from '../../data/game-rule.js';
-import {type AsteroidsEngineState, type AsteroidsGameState} from '../../data/game-state.js';
+import {type AsteroidsEngineState} from '../../data/game-state.js';
 import {GameZIndex} from '../../data/z-index.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
 
@@ -14,12 +13,10 @@ export const VirMainMenu = defineElement<{
 }>()({
     tagName: 'vir-main-menu',
     state(): {
-        activeRules: GameRule[];
         cleanup: EmptyFunction | undefined;
         showMainMenu: boolean;
     } {
         return {
-            activeRules: [],
             cleanup: undefined,
             showMainMenu: false,
         };
@@ -60,13 +57,7 @@ export const VirMainMenu = defineElement<{
         `;
     },
     init({host, inputs, updateState}) {
-        function updateSaveState(
-            this: void,
-            saveState: AsteroidsGameState['saveState'] | undefined,
-        ) {
-            updateState({
-                activeRules: saveState?.activeRules || [],
-            });
+        function updateSaveState(this: void) {
             host.requestUpdate();
         }
 
@@ -79,7 +70,7 @@ export const VirMainMenu = defineElement<{
             host.requestUpdate();
         }
 
-        updateSaveState(inputs.gameState.saveState);
+        updateSaveState();
         updateMainMenuVisibility();
 
         const saveStateCleanup = listenToObject(inputs.gameState, 'saveState', updateSaveState);
@@ -99,7 +90,7 @@ export const VirMainMenu = defineElement<{
     cleanup({state}) {
         state.cleanup?.();
     },
-    render({inputs, state, updateState}) {
+    render({inputs, state}) {
         const saveState = inputs.gameState.saveState;
         if (!saveState) {
             return nothing;
@@ -115,25 +106,8 @@ export const VirMainMenu = defineElement<{
             <h1>Rules</h1>
             <div class="menu-options">
                 <${VirGameRuleList.assign({
-                    activeRules: state.activeRules,
-                    availableRules: saveState.unlockedGameRules,
-                    navController,
-                })}
-                    ${listen(VirGameRuleList.events.ruleActivated, ({detail: rule}) => {
-                        const activeRules = toggleGameRule({
-                            activeRules: state.activeRules,
-                            rule,
-                        });
-
-                        inputs.gameState.saveState = {
-                            ...saveState,
-                            activeRules,
-                        };
-                        updateState({
-                            activeRules,
-                        });
-                    })}
-                ></${VirGameRuleList}>
+                    gameState: inputs.gameState,
+                })}></${VirGameRuleList}>
                 <${ViraButton.assign({
                     buttonSize: ViraSize.Large,
                     color: ViraColorVariant.Neutral,
