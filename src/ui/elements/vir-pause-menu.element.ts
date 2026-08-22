@@ -5,6 +5,7 @@ import {css, defineElement, html, nothing} from 'element-vir';
 import {ViraButton, ViraColorVariant, ViraSize} from 'vira';
 import {type AsteroidsEngineState, type AsteroidsGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
+import {GameZIndex} from '../../data/z-index.js';
 
 export const VirPauseMenu = defineElement<{
     gameState: Partial<AsteroidsEngineState>;
@@ -36,7 +37,7 @@ export const VirPauseMenu = defineElement<{
                 justify-content: center;
                 padding: 16px;
                 position: fixed;
-                z-index: 1;
+                z-index: ${GameZIndex.Menu};
             }
 
             ${hostClasses['vir-pause-menu-visible'].selector} {
@@ -118,6 +119,10 @@ export const VirPauseMenu = defineElement<{
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
+                                    inputs.gameState.menuState = {
+                                        isPaused: false,
+                                        onMainMenu: !!inputs.gameState.menuState?.onMainMenu,
+                                    };
                                     router.setRoute(debugRoute);
                                 }
                             },

@@ -1,3 +1,4 @@
+import {createAnthaAssetMod} from '@antha/asset';
 import {AnthaEngine, AnthaUi} from '@antha/engine';
 import {createAnthaFpsMod} from '@antha/fps';
 import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
@@ -11,10 +12,13 @@ import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {type AsteroidsEngineState} from '../../data/game-state.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
-import {allGameRules} from '../../data/rules.js';
+import {GameZIndex} from '../../data/z-index.js';
 import {asteroidsEntityMod} from '../../mods/asteroids-entity.mod.js';
 import {mainMenuMod} from '../../mods/main-menu.mod.js';
+import {missionMod} from '../../mods/mission.mod.js';
 import {pauseMenuMod} from '../../mods/pause-menu.mod.js';
+import {isOnDebugPage, ruleDebugMod} from '../../mods/rule-debug.mod.js';
+import {saveStateMod} from '../../mods/save-state.mod.js';
 
 export const VirGame = defineElement<{
     router: FrontendRouter;
@@ -42,23 +46,26 @@ export const VirGame = defineElement<{
         const engine = new AnthaEngine<AsteroidsEngineState>({
             initState: {
                 bindingAssignments: defaultPlayerInputBindings,
+                isShowingLoadingScreen: true,
+                loadingScreenState: {
+                    completedAt: undefined,
+                    current: 0,
+                    currentResourceName: undefined,
+                    total: -1,
+                },
                 missionState: undefined,
                 router: inputs.router,
                 menuState: {
                     isPaused: false,
-                    onMainMenu: true,
-                },
-                saveState: {
-                    playerLevel: 0,
-                    playerLevelExperience: 0,
-                    activeRules: [],
-                    unlockedGameRules: allGameRules,
+                    onMainMenu: !isOnDebugPage(inputs.router),
                 },
             },
             mods: [
+                createAnthaAssetMod(),
+                saveStateMod,
                 createAnthaGraphics2dMod({
                     extraCanvasWrapperStyles: css`
-                        z-index: 0;
+                        z-index: ${GameZIndex.Game};
                     `,
                     pixiOptions: {
                         background: 'black',
@@ -68,15 +75,15 @@ export const VirGame = defineElement<{
                 createAnthaInputBindingsMod<GameInputAction>(),
                 pauseMenuMod,
                 mainMenuMod,
+                ruleDebugMod,
                 createAnthaMenuNavMod({
                     allowWrapping: true,
                     alwaysRequireFocused: true,
                     blockPerpendicularNavigation: true,
                 }),
                 asteroidsEntityMod,
-                createAnthaFpsMod({
-                    debugFps: true,
-                }),
+                missionMod,
+                createAnthaFpsMod(),
             ],
         });
 

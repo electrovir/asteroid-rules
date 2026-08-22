@@ -1,17 +1,13 @@
 import {nav} from '@antha/input';
 import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
-import {css, defineElement, html, nothing} from 'element-vir';
+import {css, defineElement, html, listen, nothing} from 'element-vir';
 import {themeDefaultKey} from 'theme-vir';
 import {noNativeSpacing, ViraButton, ViraColorVariant, ViraSize, viraTheme} from 'vira';
-import {createGameModifiers, toggleGameRule, type GameRule} from '../../data/game-rule.js';
-import {
-    PlayerPosition,
-    type AsteroidsEngineState,
-    type AsteroidsGameState,
-} from '../../data/game-state.js';
-import {PlayerEntity} from '../../entities/player.entity.js';
-import {VirGameRule} from './vir-game-rule.element.js';
+import {toggleGameRule, type GameRule} from '../../data/game-rule.js';
+import {type AsteroidsEngineState, type AsteroidsGameState} from '../../data/game-state.js';
+import {GameZIndex} from '../../data/z-index.js';
+import {VirGameRuleList} from './vir-game-rule-list.element.js';
 
 export const VirMainMenu = defineElement<{
     gameState: Partial<AsteroidsEngineState>;
@@ -43,7 +39,7 @@ export const VirMainMenu = defineElement<{
                 justify-content: center;
                 padding: 32px;
                 position: fixed;
-                z-index: 1;
+                z-index: ${GameZIndex.Menu};
             }
 
             ${hostClasses['vir-main-menu-visible'].selector} {
@@ -60,17 +56,6 @@ export const VirMainMenu = defineElement<{
                 display: flex;
                 gap: 16px;
                 max-width: 100%;
-            }
-
-            .rules {
-                display: flex;
-                flex-grow: 1;
-                flex-direction: column;
-                gap: 8px;
-                max-height: calc(100dvh - 128px);
-                max-width: 640px;
-                overflow-y: auto;
-                width: 100%;
             }
         `;
     },
@@ -129,41 +114,26 @@ export const VirMainMenu = defineElement<{
         return html`
             <h1>Rules</h1>
             <div class="menu-options">
-                <div class="rules">
-                    ${saveState.unlockedGameRules.map((rule, ruleIndex) => {
-                        const isActive = state.activeRules.includes(rule);
+                <${VirGameRuleList.assign({
+                    activeRules: state.activeRules,
+                    availableRules: saveState.unlockedGameRules,
+                    navController,
+                })}
+                    ${listen(VirGameRuleList.events.ruleActivated, ({detail: rule}) => {
+                        const activeRules = toggleGameRule({
+                            activeRules: state.activeRules,
+                            rule,
+                        });
 
-                        return html`
-                            <${VirGameRule.assign({
-                                isActive,
-                                rule,
-                            })}
-                                ${nav(navController, {
-                                    x: 0,
-                                    y: ruleIndex,
-                                    listeners: {
-                                        activate: ({enabled}) => {
-                                            if (enabled) {
-                                                const activeRules = toggleGameRule({
-                                                    activeRules: state.activeRules,
-                                                    rule,
-                                                });
-
-                                                inputs.gameState.saveState = {
-                                                    ...saveState,
-                                                    activeRules,
-                                                };
-                                                updateState({
-                                                    activeRules,
-                                                });
-                                            }
-                                        },
-                                    },
-                                })}
-                            ></${VirGameRule}>
-                        `;
+                        inputs.gameState.saveState = {
+                            ...saveState,
+                            activeRules,
+                        };
+                        updateState({
+                            activeRules,
+                        });
                     })}
-                </div>
+                ></${VirGameRuleList}>
                 <${ViraButton.assign({
                     buttonSize: ViraSize.Large,
                     color: ViraColorVariant.Neutral,
@@ -174,26 +144,8 @@ export const VirMainMenu = defineElement<{
                         x: 1,
                         y: 0,
                         listeners: {
-                            activate: async ({enabled}) => {
-                                const pixiApplication = inputs.gameState.pixi?.pixiApplication;
-
-                                if (enabled && inputs.gameState.entityStore && pixiApplication) {
-                                    inputs.gameState.missionState = {
-                                        modifiers: createGameModifiers(
-                                            inputs.gameState.saveState?.activeRules || [],
-                                        ),
-                                        players: {
-                                            [PlayerPosition['1']]:
-                                                await inputs.gameState.entityStore.addEntity(
-                                                    PlayerEntity,
-                                                    {
-                                                        inputPlayerPosition: PlayerPosition['1'],
-                                                        x: pixiApplication.screen.width / 2,
-                                                        y: pixiApplication.screen.height / 2,
-                                                    },
-                                                ),
-                                        },
-                                    };
+                            activate: ({enabled}) => {
+                                if (enabled) {
                                     inputs.gameState.menuState = {
                                         isPaused: false,
                                         onMainMenu: false,
