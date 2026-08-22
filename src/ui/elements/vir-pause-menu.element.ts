@@ -1,16 +1,26 @@
 import {nav} from '@antha/input';
 import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
-import {css, defineElement, html, nothing} from 'element-vir';
-import {ViraButton, ViraColorVariant, ViraSize} from 'vira';
-import {type AsteroidsEngineState, type AsteroidsGameState} from '../../data/game-state.js';
+import {css, defineElement, html, nothing, testId} from 'element-vir';
+import {
+    checkIfMainMenuAllowed,
+    updateMenuState,
+    type AsteroidsGameEngineState,
+    type FullGameState,
+} from '../../data/game-state.js';
+import {isDeployed} from '../../data/is-deployed.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
-import {GameZIndex} from '../../data/z-index.js';
+import {resetMission} from '../../mods/mission/reset-mission.js';
+import {VirGameButton} from './vir-game-button.element.js';
 
 export const VirPauseMenu = defineElement<{
-    gameState: Partial<AsteroidsEngineState>;
+    gameState: Partial<AsteroidsGameEngineState>;
 }>()({
     tagName: 'vir-pause-menu',
+    testIds: [
+        'restartMissionButton',
+        'endMissionButton',
+    ],
     state(): {
         cleanup: EmptyFunction | undefined;
         showPauseMenu: boolean;
@@ -27,17 +37,15 @@ export const VirPauseMenu = defineElement<{
         return css`
             :host {
                 align-items: center;
-                background: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(3px);
                 box-sizing: border-box;
                 display: none;
                 flex-direction: column;
+                flex-grow: 1;
                 gap: 24px;
-                inset: 0;
+                height: 100%;
                 justify-content: center;
                 padding: 16px;
-                position: fixed;
-                z-index: ${GameZIndex.Menu};
+                width: 100%;
             }
 
             ${hostClasses['vir-pause-menu-visible'].selector} {
@@ -60,7 +68,7 @@ export const VirPauseMenu = defineElement<{
     init({host, inputs, updateState}) {
         function updatePauseMenuVisibility(
             this: void,
-            menuState: AsteroidsGameState['menuState'] | undefined,
+            menuState: FullGameState['menuState'] | undefined,
         ) {
             updateState({
                 showPauseMenu: !!menuState?.isPaused,
@@ -76,9 +84,12 @@ export const VirPauseMenu = defineElement<{
     cleanup({state}) {
         state.cleanup?.();
     },
-    render({inputs, state}) {
+    render({inputs, state, testIds}) {
         const navController = inputs.gameState.navController;
         const router = inputs.gameState.router;
+        const mainMenuAllowed = checkIfMainMenuAllowed({
+            saveState: inputs.gameState.saveState,
+        });
         const debugRoute = {
             paths: frontendPathTree.paths.children.debug.children.rules.fullPaths,
         };
@@ -90,70 +101,83 @@ export const VirPauseMenu = defineElement<{
         return html`
             <h1>Paused</h1>
             <div class="menu-options">
-                <${ViraButton.assign({
-                    buttonSize: ViraSize.Large,
-                    color: ViraColorVariant.Neutral,
-                    text: 'Resume',
-                })}
+                <${VirGameButton}
                     ${nav(navController, {
                         y: 0,
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
-                                    inputs.gameState.menuState = {
-                                        isPaused: false,
-                                        onMainMenu: !!inputs.gameState.menuState?.onMainMenu,
-                                    };
+                                    updateMenuState(inputs.gameState, undefined);
                                 }
                             },
                         },
                     })}
-                ></${ViraButton}>
-                <${ViraButton.assign({
-                    buttonSize: ViraSize.Large,
-                    color: ViraColorVariant.Neutral,
-                    text: 'Debug',
-                })}
+                >
+                    Resume
+                </${VirGameButton}>
+                ${isDeployed
+                    ? nothing
+                    : html`
+                          <${VirGameButton}
+                              ${nav(navController, {
+                                  y: 1,
+                                  listeners: {
+                                      activate: ({enabled}) => {
+                                          if (enabled) {
+                                              updateMenuState(inputs.gameState, {
+                                                  isOnRuleDebug: true,
+                                              });
+                                              router.setRoute(debugRoute);
+                                          }
+                                      },
+                                  },
+                              })}
+                          >
+                              Debug
+                          </${VirGameButton}>
+                      `}
+                <${VirGameButton}
+                    ${testId(testIds.restartMissionButton)}
                     ${nav(navController, {
-                        y: 1,
-                        listeners: {
-                            activate: ({enabled}) => {
-                                if (enabled) {
-                                    inputs.gameState.menuState = {
-                                        isPaused: false,
-                                        onMainMenu: !!inputs.gameState.menuState?.onMainMenu,
-                                    };
-                                    router.setRoute(debugRoute);
-                                }
-                            },
-                        },
-                    })}
-                ></${ViraButton}>
-                <${ViraButton.assign({
-                    buttonSize: ViraSize.Large,
-                    color: ViraColorVariant.Neutral,
-                    text: 'End Mission',
-                })}
-                    ${nav(navController, {
-                        y: 2,
+                        y: isDeployed ? 1 : 2,
                         listeners: {
                             activate({enabled}) {
                                 if (enabled) {
-                                    inputs.gameState.entityStore?.currentEntityInstances.forEach(
-                                        (entity) => {
-                                            entity.immediatelyDestroy();
-                                        },
-                                    );
-                                    inputs.gameState.missionState = undefined;
-                                    inputs.gameState.menuState = {
-                                        isPaused: false,
-                                        onMainMenu: true,
-                                    };
+                                    resetMission({
+                                        gameState: inputs.gameState,
+                                    });
+                                    updateMenuState(inputs.gameState, undefined);
                                 }
                             },
                         },
                     })}
-                ></${ViraButton}>
+                >
+                    Restart Mission
+                </${VirGameButton}>
+                ${mainMenuAllowed
+                    ? html`
+                          <${VirGameButton}
+                              ${testId(testIds.endMissionButton)}
+                              ${nav(navController, {
+                                  y: isDeployed ? 2 : 3,
+                                  listeners: {
+                                      activate({enabled}) {
+                                          if (enabled) {
+                                              resetMission({
+                                                  gameState: inputs.gameState,
+                                              });
+                                              updateMenuState(inputs.gameState, {
+                                                  onMainMenu: true,
+                                              });
+                                          }
+                                      },
+                                  },
+                              })}
+                          >
+                              End Mission
+                          </${VirGameButton}>
+                      `
+                    : nothing}
             </div>
         `;
     },

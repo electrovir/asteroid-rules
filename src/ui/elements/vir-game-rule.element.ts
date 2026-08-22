@@ -1,8 +1,8 @@
-import {navAttribute, NavValue} from 'device-navigation';
+import {colorCss} from '@electrovir/color';
 import {css, defineElement, html} from 'element-vir';
-import {themeDefaultKey} from 'theme-vir/dist/color-theme/color-theme.js';
 import {noNativeSpacing, ViraIcon, viraTheme} from 'vira';
 import {type GameRule} from '../../data/game-rule.js';
+import {virGameButtonStyles} from './vir-game-button.element.js';
 
 export const VirGameRule = defineElement<{
     rule: Readonly<GameRule>;
@@ -14,37 +14,18 @@ export const VirGameRule = defineElement<{
     },
     styles({hostClasses}) {
         return css`
+            ${virGameButtonStyles}
+
             :host {
-                margin: 3px;
-                color: ${viraTheme.colors['vira-grey-foreground-header'].foreground.value};
-                display: flex;
-                border: 1px solid currentColor;
-                border-radius: 8px;
-                padding: 4px 8px;
-                padding-right: 16px;
                 gap: 8px;
-                background-color: ${viraTheme.colors[themeDefaultKey].background.value};
+                justify-content: flex-start;
+                padding-right: 16px;
+                text-align: left;
+                ${colorCss(viraTheme.colors['vira-grey-foreground-header'])}
             }
 
             ${hostClasses['vir-game-rule-active'].selector} {
-                color: inherit;
-                background-color: ${viraTheme.colors['vira-green-behind-fg-non-body'].background
-                    .value};
-            }
-
-            :host(
-                    ${navAttribute.css({
-                            navValue: NavValue.Focused,
-                        })}
-                ),
-            :host(
-                    ${navAttribute.css({
-                            navValue: NavValue.Active,
-                        })}
-                ) {
-                margin: 0;
-                border: 4px solid
-                    ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value};
+                ${colorCss(viraTheme.colors['vira-green-behind-fg-non-body'])}
             }
 
             .text {
@@ -56,6 +37,15 @@ export const VirGameRule = defineElement<{
             h2,
             p {
                 ${noNativeSpacing}
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            p {
+                font-size: 16px;
+                font-weight: 400;
             }
         `;
     },

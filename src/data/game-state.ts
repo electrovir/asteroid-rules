@@ -1,7 +1,14 @@
 import {type AnthaAssetModState} from '@antha/asset';
 import {type AnthaEntity2dModState} from '@antha/entity-2d';
 import {type AnthaInputBindingsModState, type MenuNavModState} from '@antha/input';
-import {type Values} from '@augment-vir/common';
+import {check} from '@augment-vir/assert';
+import {
+    mapObject,
+    type PartialWithUndefined,
+    type RequireOneOrNone,
+    type SeededRandom,
+    type Values,
+} from '@augment-vir/common';
 import {type PlayerEntity} from '../entities/player.entity.js';
 import {createGameModifiers, type GameRule} from './game-rule.js';
 import {type GameModifiers} from './modifiers.js';
@@ -24,6 +31,41 @@ export type AsteroidsSaveState = {
     playerLevelExperience: number;
 };
 
+export function checkIfMainMenuAllowed({
+    saveState,
+}: Readonly<{
+    saveState: AsteroidsSaveState | undefined;
+}>) {
+    return saveState?.unlockedGameRules.length !== 1;
+}
+
+export type GameMenuState = PartialWithUndefined<{
+    isOnRuleDebug: true;
+    isPaused: true;
+    onMainMenu: true;
+}>;
+
+export function updateMenuState(
+    gameState: Partial<FullGameState>,
+    newMenuState: RequireOneOrNone<GameMenuState> | undefined,
+) {
+    const nextMenuState = mapObject<GameMenuState, keyof GameMenuState, true>(
+        newMenuState || {},
+        (menuName, isMenuOpen) => {
+            if (isMenuOpen) {
+                return {
+                    key: menuName,
+                    value: true as const,
+                };
+            } else {
+                return undefined;
+            }
+        },
+    );
+
+    gameState.menuState = check.isEmpty(nextMenuState) ? undefined : nextMenuState;
+}
+
 export function updateAsteroidsSaveStateRules({
     activeRules,
     saveState,
@@ -38,16 +80,16 @@ export function updateAsteroidsSaveStateRules({
     };
 }
 
-export type AsteroidsGameState = {
+export type FullGameState = {
     isMouseMovementAllowed: boolean;
-    menuState: {
-        onMainMenu: boolean;
-        isPaused: boolean;
-    };
+    menuState: GameMenuState | undefined;
     router: FrontendRouter;
     saveState: AsteroidsSaveState | undefined;
     missionState:
         | {
+              lastAsteroidSpawnedAt: number;
+              lastTimedExperienceEarnedAt: number;
+              seededRandom: SeededRandom;
               players: Partial<Record<PlayerPosition, PlayerEntity>>;
           }
         | undefined;
@@ -55,4 +97,4 @@ export type AsteroidsGameState = {
     AnthaAssetModState &
     MenuNavModState;
 
-export type AsteroidsEngineState = AnthaEntity2dModState<AsteroidsGameState>;
+export type AsteroidsGameEngineState = AnthaEntity2dModState<FullGameState>;

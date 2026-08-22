@@ -3,7 +3,7 @@ import {ensureErrorAndPrependMessage} from '@augment-vir/common';
 import {type LocalDbClient} from 'local-db-client';
 import {defineShape, enumShape} from 'object-shape-tester';
 import {createGameModifiers} from '../data/game-rule.js';
-import {type AsteroidsEngineState, type AsteroidsSaveState} from '../data/game-state.js';
+import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
 import {allGameRules, initialGameRules} from '../data/rules.js';
 
 export enum SavedGameStateVersion {
@@ -38,8 +38,8 @@ export const autosaveModName = 'autosave';
 
 export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
     return {
-        activeRules: [],
-        modifiers: createGameModifiers([]),
+        activeRules: initialGameRules,
+        modifiers: createGameModifiers(initialGameRules),
         playerLevel: 0,
         playerLevelExperience: 0,
         unlockedGameRules: initialGameRules,
@@ -99,7 +99,7 @@ function persistSaveState({
     });
 }
 
-export const autosaveMod = defineAnthaMod<AsteroidsEngineState & AutosaveModState>({
+export const autosaveMod = defineAnthaMod<AsteroidsGameEngineState & AutosaveModState>({
     executeImmediately: true,
     initState: {
         hasFinishedLoadingSaveState: false,

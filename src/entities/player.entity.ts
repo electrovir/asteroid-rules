@@ -8,7 +8,7 @@ import {clamp} from '@augment-vir/common';
 import {defineShape, enumShape} from 'object-shape-tester';
 import {PlayerPosition} from '../data/game-state.js';
 import {calculatePlayerMovement, getMouseMovementTarget} from '../data/player-movement.js';
-import {defineEntity} from '../mods/asteroids-entity.mod.js';
+import {defineEntity} from '../mods/game-entity.mod.js';
 
 const playerSize = 24;
 const playerHalfWidth = playerSize * 0.8;
@@ -49,7 +49,7 @@ export class PlayerEntity extends defineEntity({
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (this.state.isInMenu || !this.state.saveState?.modifiers.allowPlayerCardinalMovement) {
+        if (this.state.menuState || !this.state.saveState?.modifiers.allowPlayerCardinalMovement) {
             return;
         }
 

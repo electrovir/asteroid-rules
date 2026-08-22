@@ -1,13 +1,14 @@
 import {assert, assertWrap} from '@augment-vir/assert';
+import {SeededRandom} from '@augment-vir/common';
 import {describe, it, testWeb} from '@augment-vir/test';
 import {waitForAnimationFrame} from '@augment-vir/web';
 import {NavController, NavDirection, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
-import {ViraButton} from 'vira';
-import {type AsteroidsGameState} from '../../data/game-state.js';
+import {type FullGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
 import {allGameRules, playerCardinalMovementRule} from '../../data/rules.js';
+import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
 import {VirGameRule} from './vir-game-rule.element.js';
 import {VirPauseMenu} from './vir-pause-menu.element.js';
@@ -15,20 +16,20 @@ import {VirRuleDebug} from './vir-rule-debug.element.js';
 
 function getPauseMenuButtons(pauseMenuElement: Readonly<HTMLElement>) {
     const buttons = Array.from(
-        pauseMenuElement.shadowRoot?.querySelectorAll<HTMLElement>(ViraButton.tagName) || [],
+        pauseMenuElement.shadowRoot?.querySelectorAll<HTMLElement>(VirGameButton.tagName) || [],
     );
 
-    assert.isLengthExactly(buttons, 3);
+    assert.isLengthExactly(buttons, 4);
 
     return buttons;
 }
 
 type TestGameState = {
-    menuState: AsteroidsGameState['menuState'];
-    missionState: NonNullable<AsteroidsGameState['missionState']>;
+    menuState: FullGameState['menuState'];
+    missionState: NonNullable<FullGameState['missionState']>;
     navController: NavController;
-    router: AsteroidsGameState['router'];
-    saveState: NonNullable<AsteroidsGameState['saveState']>;
+    router: FullGameState['router'];
+    saveState: NonNullable<FullGameState['saveState']>;
 };
 
 function createGameState({
@@ -39,12 +40,12 @@ function createGameState({
     router: ReturnType<typeof createFrontendRouter>;
 }>): TestGameState {
     return {
-        menuState: {
-            isPaused: false,
-            onMainMenu: false,
-        },
+        menuState: undefined,
         missionState: {
+            lastAsteroidSpawnedAt: 0,
+            lastTimedExperienceEarnedAt: 0,
             players: {},
+            seededRandom: SeededRandom.fromSeed('test-seed'),
         },
         navController,
         router,
@@ -56,6 +57,22 @@ function createGameState({
             unlockedGameRules: allGameRules,
         },
     } satisfies TestGameState;
+}
+
+function createRestrictedSaveState() {
+    return {
+        activeRules: [
+            playerCardinalMovementRule,
+        ],
+        modifiers: {
+            allowPlayerCardinalMovement: true,
+        },
+        playerLevel: 3,
+        playerLevelExperience: 900,
+        unlockedGameRules: [
+            playerCardinalMovementRule,
+        ],
+    } satisfies TestGameState['saveState'];
 }
 
 async function renderRuleDebug(gameState: Readonly<TestGameState>) {
@@ -79,22 +96,7 @@ describe(VirRuleDebug.tagName, () => {
             router,
         });
 
-        gameState.missionState = {
-            players: {},
-        };
-        gameState.saveState = {
-            activeRules: [
-                playerCardinalMovementRule,
-            ],
-            modifiers: {
-                allowPlayerCardinalMovement: true,
-            },
-            playerLevel: 3,
-            playerLevelExperience: 900,
-            unlockedGameRules: [
-                playerCardinalMovementRule,
-            ],
-        };
+        gameState.saveState = createRestrictedSaveState();
 
         try {
             const ruleDebugElement = await renderRuleDebug(gameState);
@@ -129,6 +131,33 @@ describe(VirRuleDebug.tagName, () => {
         }
     });
 
+    it('makes all rules available', async () => {
+        const router = createFrontendRouter();
+        const navController = new NavController(document.body, {
+            alwaysRequireFocused: true,
+        });
+        const gameState = createGameState({
+            navController,
+            router,
+        });
+        gameState.saveState = createRestrictedSaveState();
+
+        try {
+            const ruleDebugElement = await renderRuleDebug(gameState);
+            const unlockAllRulesButton = ruleDebugElement.shadowRoot.querySelector<HTMLElement>(
+                testIdSelector(VirRuleDebug.testIds.unlockAllRulesButton),
+            );
+
+            assert.isDefined(unlockAllRulesButton);
+            assertWrap.isDefined(extractNavEntry(unlockAllRulesButton)).activate(true);
+
+            assert.deepEquals(gameState.saveState.unlockedGameRules, allGameRules);
+        } finally {
+            router.destroy();
+            testWeb.cleanupRender();
+        }
+    });
+
     it('restores pause-menu navigation when it is removed', async () => {
         const router = createFrontendRouter();
         const navController = new NavController(document.body, {
@@ -140,12 +169,17 @@ describe(VirRuleDebug.tagName, () => {
         });
 
         try {
-            const pauseMenuElement = await testWeb.renderElement(VirPauseMenu, {
-                gameState,
-            });
+            const pauseMenuElement = assertWrap.instanceOf(
+                await testWeb.render(html`
+                    <${VirPauseMenu.assign({
+                        gameState,
+                    })}></${VirPauseMenu}>
+                `),
+                VirPauseMenu,
+            );
             const ruleDebugElement = await renderRuleDebug(gameState);
             const exitDebugButton = ruleDebugElement.shadowRoot.querySelector<HTMLElement>(
-                ViraButton.tagName,
+                VirGameButton.tagName,
             );
 
             assert.isDefined(exitDebugButton);
@@ -157,7 +191,6 @@ describe(VirRuleDebug.tagName, () => {
 
             gameState.menuState = {
                 isPaused: true,
-                onMainMenu: false,
             };
             ruleDebugElement.remove();
 
@@ -166,6 +199,7 @@ describe(VirRuleDebug.tagName, () => {
             const [
                 resumeButton,
                 debugButton,
+                restartMissionButton,
                 endMissionButton,
             ] = getPauseMenuButtons(pauseMenuElement);
 
@@ -177,6 +211,13 @@ describe(VirRuleDebug.tagName, () => {
                 direction: NavDirection.Down,
             });
             assert.strictEquals(navController.currentNavEntry.entry.element, debugButton);
+
+            navController.navigate({
+                allowWrapping: true,
+                blockPerpendicularNavigation: true,
+                direction: NavDirection.Down,
+            });
+            assert.strictEquals(navController.currentNavEntry.entry.element, restartMissionButton);
 
             navController.navigate({
                 allowWrapping: true,
@@ -208,8 +249,7 @@ describe(VirRuleDebug.tagName, () => {
         });
 
         gameState.menuState = {
-            isPaused: true,
-            onMainMenu: false,
+            isOnRuleDebug: true,
         };
         router.setRoute({
             paths: frontendPathTree.paths.children.debug.children.rules.fullPaths,
@@ -229,19 +269,8 @@ describe(VirRuleDebug.tagName, () => {
             resumeNavEntry.activate(true);
             await waitForAnimationFrame();
 
-            assert.deepEquals(
-                {
-                    menuState: gameState.menuState,
-                    routePaths: router.readCurrentRoute().paths,
-                },
-                {
-                    menuState: {
-                        isPaused: false,
-                        onMainMenu: false,
-                    },
-                    routePaths: [],
-                },
-            );
+            assert.isUndefined(gameState.menuState);
+            assert.deepEquals(router.readCurrentRoute().paths, []);
         } finally {
             router.destroy();
             testWeb.cleanupRender();

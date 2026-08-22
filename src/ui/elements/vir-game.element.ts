@@ -1,15 +1,20 @@
-import {AnthaAssetLoadingScreen, createAnthaAssetMod} from '@antha/asset';
+import {createAnthaAssetMod} from '@antha/asset';
 import {AnthaEngine, AnthaUi} from '@antha/engine';
 import {type EmptyFunction} from '@augment-vir/common';
-import {css, defineElement, html, nothing} from 'element-vir';
-import {type AsteroidsEngineState} from '../../data/game-state.js';
+import {css, defineElement, defineElementEvent, html} from 'element-vir';
+import {type AsteroidsGameEngineState} from '../../data/game-state.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
-import {createGameLoaderMod} from '../../mods/game-loader.mod.js';
+import {createGameLoaderMod} from '../../mods/game-loader/game-loader.mod.js';
+
+const loadingScreenFadeMs = 500;
 
 export const VirGame = defineElement<{
     router: FrontendRouter;
 }>()({
     tagName: 'vir-game',
+    events: {
+        loadingScreenRendered: defineElementEvent<void>(),
+    },
     styles: css`
         :host {
             background: black;
@@ -29,7 +34,7 @@ export const VirGame = defineElement<{
         }
     `,
     state({inputs}) {
-        const engine = new AnthaEngine<AsteroidsEngineState>({
+        const engine = new AnthaEngine<AsteroidsGameEngineState>({
             initState: {
                 isShowingLoadingScreen: true,
                 loadingScreenState: {
@@ -40,7 +45,9 @@ export const VirGame = defineElement<{
                 },
             },
             mods: [
-                createAnthaAssetMod(),
+                createAnthaAssetMod({
+                    loadingScreenFadeMs,
+                }),
                 createGameLoaderMod({
                     router: inputs.router,
                 }),
@@ -49,17 +56,16 @@ export const VirGame = defineElement<{
 
         return {
             engine,
-            hasRenderedFirstEngineFrame: false,
             removeEngineObservableListener: undefined as undefined | EmptyFunction,
         };
     },
-    init({state, updateState}) {
+    init({dispatch, events, state, updateState}) {
         const removeEngineObservableListener = state.engine.observable.listen(false, () => {
             removeEngineObservableListener();
             updateState({
-                hasRenderedFirstEngineFrame: true,
                 removeEngineObservableListener: undefined,
             });
+            dispatch(new events.loadingScreenRendered(undefined));
         });
 
         updateState({
@@ -74,16 +80,6 @@ export const VirGame = defineElement<{
             <${AnthaUi.assign({
                 engine: state.engine,
             })}></${AnthaUi}>
-            ${state.hasRenderedFirstEngineFrame
-                ? nothing
-                : html`
-                      <${AnthaAssetLoadingScreen.assign({
-                          completed: false,
-                          currentResourceName: undefined,
-                          dotCount: 0,
-                          progressPercent: 0,
-                      })}></${AnthaAssetLoadingScreen}>
-                  `}
         `;
     },
 });

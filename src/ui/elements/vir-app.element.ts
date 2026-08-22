@@ -1,4 +1,4 @@
-import {css, defineElement, html} from 'element-vir';
+import {css, defineElement, html, listen, nothing} from 'element-vir';
 import {noUserSelect, viraTheme, ViraThemeClient, ViraThemeSelection} from 'vira';
 import {defaultFrontendRoute} from '../../data/routing/frontend-route.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
@@ -22,6 +22,7 @@ export const VirApp = defineElement()({
 
         return {
             currentRoute: defaultFrontendRoute,
+            hasRenderedGameLoadingScreen: false,
             router: createFrontendRouter(),
             themeClient,
         };
@@ -37,11 +38,22 @@ export const VirApp = defineElement()({
         state.router.destroy();
         state.themeClient.destroy();
     },
-    render({state}) {
+    render({state, updateState}) {
         return html`
             <${VirGame.assign({
                 router: state.router,
-            })}></${VirGame}>
+            })}
+                ${listen(VirGame.events.loadingScreenRendered, () => {
+                    updateState({
+                        hasRenderedGameLoadingScreen: true,
+                    });
+                })}
+            ></${VirGame}>
+            ${state.hasRenderedGameLoadingScreen
+                ? nothing
+                : html`
+                      <slot></slot>
+                  `}
         `;
     },
 });

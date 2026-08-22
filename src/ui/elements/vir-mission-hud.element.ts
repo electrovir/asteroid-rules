@@ -1,9 +1,9 @@
-import {clamp} from '@augment-vir/common';
 import {css, defineElement, html} from 'element-vir';
 import {themeDefaultKey} from 'theme-vir';
-import {ViraProgress, viraTheme} from 'vira';
+import {viraTheme} from 'vira';
 import {calculateExperienceRequiredToReachLevel} from '../../data/player-level.js';
 import {GameZIndex} from '../../data/z-index.js';
+import {VirGameProgress} from './vir-game-progress.element.js';
 
 export const VirMissionHud = defineElement<{
     playerLevel: number;
@@ -22,11 +22,6 @@ export const VirMissionHud = defineElement<{
             z-index: ${GameZIndex.Game};
         }
 
-        ${ViraProgress} {
-            ${ViraProgress.cssVars['vira-progress-height'].name}: 24px;
-            width: 100%;
-        }
-
         .level-wrapper {
             height: 100%;
             width: 100%;
@@ -41,17 +36,13 @@ export const VirMissionHud = defineElement<{
     `,
     render({inputs}) {
         const experienceRequired = calculateExperienceRequiredToReachLevel(inputs.playerLevel + 1);
-        const experience = clamp(inputs.playerLevelExperience, {
-            min: 0,
-            max: experienceRequired,
-        });
 
         return html`
-            <${ViraProgress.assign({
+            <${VirGameProgress.assign({
                 max: experienceRequired,
                 min: 0,
-                value: experience,
-            })}></${ViraProgress}>
+                value: inputs.playerLevelExperience,
+            })}></${VirGameProgress}>
             <div class="level-wrapper">
                 <span>${inputs.playerLevel || ''}</span>
             </div>

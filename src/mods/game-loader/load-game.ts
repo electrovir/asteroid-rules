@@ -10,25 +10,27 @@ import {
 import {ensureErrorAndPrependMessage} from '@augment-vir/common';
 import {css} from 'element-vir';
 import {LocalDbClient} from 'local-db-client';
-import {defaultPlayerInputBindings} from '../data/default-bindings.js';
-import {type AsteroidsEngineState, type AsteroidsSaveState} from '../data/game-state.js';
-import {type GameInputAction} from '../data/player-action.js';
-import {type FrontendRouter} from '../data/routing/frontend-router.js';
-import {GameZIndex} from '../data/z-index.js';
-import {asteroidsEntityMod} from './asteroids-entity.mod.js';
+import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
+import {
+    updateMenuState,
+    type AsteroidsGameEngineState,
+    type AsteroidsSaveState,
+} from '../../data/game-state.js';
+import {type GameInputAction} from '../../data/player-action.js';
+import {type FrontendRouter} from '../../data/routing/frontend-router.js';
+import {GameZIndex} from '../../data/z-index.js';
 import {
     autosaveMod,
     createAsteroidsSaveState,
     saveStateDbShapes,
     type SaveStateDbClient,
-} from './autosave.mod.js';
-import {mainMenuMod} from './main-menu.mod.js';
-import {missionMod} from './mission.mod.js';
-import {pauseMenuMod} from './pause-menu.mod.js';
-import {isOnDebugPage, ruleDebugMod} from './rule-debug.mod.js';
+} from '../autosave.mod.js';
+import {gameEntityMod} from '../game-entity.mod.js';
+import {isOnDebugPage, menuMod} from '../menu.mod.js';
+import {missionMod} from '../mission/mission.mod.js';
 
-export {PlayerEntity} from '../entities/player.entity.js';
-export {createDefaultAsteroidsSaveState} from './autosave.mod.js';
+export {PlayerEntity} from '../../entities/player.entity.js';
+export {createDefaultAsteroidsSaveState} from '../autosave.mod.js';
 
 type LoadedGameSaveState = {
     loadError: Error | undefined;
@@ -71,18 +73,24 @@ export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
     },
 });
 
-export function loadAsteroidsGame({
+export function loadGame({
     engine,
     router,
 }: Readonly<{
-    engine: AnthaEngine<AsteroidsEngineState>;
+    engine: AnthaEngine<AsteroidsGameEngineState>;
     router: FrontendRouter;
 }>) {
     engine.state.bindingAssignments = defaultPlayerInputBindings;
-    engine.state.menuState = {
-        isPaused: false,
-        onMainMenu: !isOnDebugPage(router),
-    };
+    updateMenuState(
+        engine.state,
+        isOnDebugPage(router)
+            ? {
+                  isOnRuleDebug: true,
+              }
+            : {
+                  onMainMenu: true,
+              },
+    );
     engine.state.missionState = undefined;
     engine.state.router = router;
 
@@ -98,15 +106,13 @@ export function loadAsteroidsGame({
         }),
         createAnthaReadRawInputMod(),
         createAnthaInputBindingsMod<GameInputAction>(),
-        pauseMenuMod,
-        mainMenuMod,
-        ruleDebugMod,
+        menuMod,
         createAnthaMenuNavMod({
             allowWrapping: true,
             alwaysRequireFocused: true,
             blockPerpendicularNavigation: true,
         }),
-        asteroidsEntityMod,
+        gameEntityMod,
         missionMod,
         createAnthaFpsMod(),
     );

@@ -2,14 +2,13 @@ import {nav} from '@antha/input';
 import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
-import {themeDefaultKey} from 'theme-vir';
-import {noNativeSpacing, ViraButton, ViraColorVariant, ViraSize, viraTheme} from 'vira';
-import {type AsteroidsEngineState} from '../../data/game-state.js';
-import {GameZIndex} from '../../data/z-index.js';
+import {noNativeSpacing} from 'vira';
+import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
+import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
 
 export const VirMainMenu = defineElement<{
-    gameState: Partial<AsteroidsEngineState>;
+    gameState: Partial<AsteroidsGameEngineState>;
 }>()({
     tagName: 'vir-main-menu',
     state(): {
@@ -28,15 +27,14 @@ export const VirMainMenu = defineElement<{
         return css`
             :host {
                 align-items: center;
-                background: ${viraTheme.colors[themeDefaultKey].background.value};
                 box-sizing: border-box;
                 display: none;
                 flex-direction: column;
-                inset: 0;
+                flex-grow: 1;
+                height: 100%;
                 justify-content: center;
                 padding: 32px;
-                position: fixed;
-                z-index: ${GameZIndex.Menu};
+                width: 100%;
             }
 
             ${hostClasses['vir-main-menu-visible'].selector} {
@@ -63,9 +61,7 @@ export const VirMainMenu = defineElement<{
 
         function updateMainMenuVisibility(this: void) {
             updateState({
-                showMainMenu:
-                    !!inputs.gameState.menuState?.onMainMenu &&
-                    !inputs.gameState.menuState.isPaused,
+                showMainMenu: !!inputs.gameState.menuState?.onMainMenu,
             });
             host.requestUpdate();
         }
@@ -108,27 +104,23 @@ export const VirMainMenu = defineElement<{
                 <${VirGameRuleList.assign({
                     gameState: inputs.gameState,
                 })}></${VirGameRuleList}>
-                <${ViraButton.assign({
-                    buttonSize: ViraSize.Large,
-                    color: ViraColorVariant.Neutral,
-                    text: 'Play',
-                })}
+                <${VirGameButton}
                     ${nav(navController, {
                         height: Infinity,
+                        autoFocus: true,
                         x: 1,
                         y: 0,
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
-                                    inputs.gameState.menuState = {
-                                        isPaused: false,
-                                        onMainMenu: false,
-                                    };
+                                    updateMenuState(inputs.gameState, undefined);
                                 }
                             },
                         },
                     })}
-                ></${ViraButton}>
+                >
+                    Play
+                </${VirGameButton}>
             </div>
         `;
     },

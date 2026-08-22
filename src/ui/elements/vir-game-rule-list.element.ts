@@ -3,12 +3,15 @@ import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {toggleGameRule, type GameRule} from '../../data/game-rule.js';
-import {updateAsteroidsSaveStateRules, type AsteroidsEngineState} from '../../data/game-state.js';
+import {
+    updateAsteroidsSaveStateRules,
+    type AsteroidsGameEngineState,
+} from '../../data/game-state.js';
 import {allGameRules} from '../../data/rules.js';
 import {VirGameRule} from './vir-game-rule.element.js';
 
 export const VirGameRuleList = defineElement<{
-    gameState: Partial<AsteroidsEngineState>;
+    gameState: Partial<AsteroidsGameEngineState>;
     navX?: number | undefined;
     showAllRules?: boolean | undefined;
 }>()({
