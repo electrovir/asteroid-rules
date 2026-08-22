@@ -1,7 +1,7 @@
 import {defineAnthaMod} from '@antha/engine';
 import {MenuNavBinding} from '@antha/input';
 import {html} from 'element-vir';
-import {type AsteroidsEngineState} from '../data/asteroids-game-state.js';
+import {type AsteroidsEngineState} from '../data/game-state.js';
 import {VirPauseMenu} from '../ui/elements/vir-pause-menu.element.js';
 
 export const pauseMenuMod = defineAnthaMod<AsteroidsEngineState>({

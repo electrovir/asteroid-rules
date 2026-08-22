@@ -3,10 +3,7 @@ import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {ViraButton, ViraColorVariant, ViraSize} from 'vira';
-import {
-    type AsteroidsEngineState,
-    type AsteroidsGameState,
-} from '../../data/asteroids-game-state.js';
+import {type AsteroidsEngineState, type AsteroidsGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 
 export const VirPauseMenu = defineElement<{

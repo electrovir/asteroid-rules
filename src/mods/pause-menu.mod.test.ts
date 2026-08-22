@@ -2,7 +2,7 @@ import {AnthaEngine} from '@antha/engine';
 import {MenuNavBinding, type ActiveBinding} from '@antha/input';
 import {assert} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
-import {type AsteroidsEngineState} from '../data/asteroids-game-state.js';
+import {type AsteroidsEngineState} from '../data/game-state.js';
 import {pauseMenuMod} from './pause-menu.mod.js';
 
 function createActiveBinding(): ActiveBinding {

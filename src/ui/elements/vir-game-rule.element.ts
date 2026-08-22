@@ -16,7 +16,7 @@ export const VirGameRule = defineElement<{
         return css`
             :host {
                 margin: 3px;
-                color: ${viraTheme.colors['vira-grey-foreground-non-body'].foreground.value};
+                color: ${viraTheme.colors['vira-grey-foreground-header'].foreground.value};
                 display: flex;
                 border: 1px solid currentColor;
                 border-radius: 8px;

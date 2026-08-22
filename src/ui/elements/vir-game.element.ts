@@ -7,8 +7,8 @@ import {
     createAnthaReadRawInputMod,
 } from '@antha/input';
 import {css, defineElement, html} from 'element-vir';
-import {type AsteroidsEngineState} from '../../data/asteroids-game-state.js';
 import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
+import {type AsteroidsEngineState} from '../../data/game-state.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
 import {allGameRules} from '../../data/rules.js';
@@ -49,6 +49,8 @@ export const VirGame = defineElement<{
                     onMainMenu: true,
                 },
                 saveState: {
+                    playerLevel: 0,
+                    playerLevelExperience: 0,
                     activeRules: [],
                     unlockedGameRules: allGameRules,
                 },
@@ -67,7 +69,7 @@ export const VirGame = defineElement<{
                 pauseMenuMod,
                 mainMenuMod,
                 createAnthaMenuNavMod({
-                    allowWrapping: false,
+                    allowWrapping: true,
                     alwaysRequireFocused: true,
                     blockPerpendicularNavigation: true,
                 }),

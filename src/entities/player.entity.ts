@@ -7,7 +7,7 @@ import {Graphics} from '@antha/graphics-2d';
 import {type ActiveBinding, type ActiveBindings} from '@antha/input';
 import {clamp} from '@augment-vir/common';
 import {defineShape, enumShape} from 'object-shape-tester';
-import {PlayerPosition} from '../data/asteroids-game-state.js';
+import {PlayerPosition} from '../data/game-state.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/asteroids-entity.mod.js';
 

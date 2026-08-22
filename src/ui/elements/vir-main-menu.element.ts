@@ -4,12 +4,12 @@ import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {themeDefaultKey} from 'theme-vir';
 import {noNativeSpacing, ViraButton, ViraColorVariant, ViraSize, viraTheme} from 'vira';
+import {createGameModifiers, toggleGameRule, type GameRule} from '../../data/game-rule.js';
 import {
     PlayerPosition,
     type AsteroidsEngineState,
     type AsteroidsGameState,
-} from '../../data/asteroids-game-state.js';
-import {createGameModifiers, toggleGameRule, type GameRule} from '../../data/game-rule.js';
+} from '../../data/game-state.js';
 import {PlayerEntity} from '../../entities/player.entity.js';
 import {VirGameRule} from './vir-game-rule.element.js';
 
@@ -115,8 +115,12 @@ export const VirMainMenu = defineElement<{
         state.cleanup?.();
     },
     render({inputs, state, updateState}) {
+        const saveState = inputs.gameState.saveState;
+        if (!saveState) {
+            return nothing;
+        }
+
         const navController = inputs.gameState.navController;
-        const unlockedGameRules = inputs.gameState.saveState?.unlockedGameRules || [];
 
         if (!state.showMainMenu || !navController) {
             return nothing;
@@ -126,7 +130,7 @@ export const VirMainMenu = defineElement<{
             <h1>Rules</h1>
             <div class="menu-options">
                 <div class="rules">
-                    ${unlockedGameRules.map((rule, ruleIndex) => {
+                    ${saveState.unlockedGameRules.map((rule, ruleIndex) => {
                         const isActive = state.activeRules.includes(rule);
 
                         return html`
@@ -146,10 +150,8 @@ export const VirMainMenu = defineElement<{
                                                 });
 
                                                 inputs.gameState.saveState = {
+                                                    ...saveState,
                                                     activeRules,
-                                                    unlockedGameRules:
-                                                        inputs.gameState.saveState
-                                                            ?.unlockedGameRules || [],
                                                 };
                                                 updateState({
                                                     activeRules,
@@ -168,6 +170,7 @@ export const VirMainMenu = defineElement<{
                     text: 'Play',
                 })}
                     ${nav(navController, {
+                        height: Infinity,
                         x: 1,
                         y: 0,
                         listeners: {

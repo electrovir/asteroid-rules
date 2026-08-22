@@ -24,6 +24,8 @@ export type AsteroidsGameState = {
     saveState: {
         activeRules: GameRule[];
         unlockedGameRules: GameRule[];
+        playerLevel: number;
+        playerLevelExperience: number;
     };
     missionState:
         | {
