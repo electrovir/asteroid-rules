@@ -16,12 +16,21 @@ export const PlayerPosition = {
 export type PlayerPosition = Values<typeof PlayerPosition>;
 
 export type AsteroidsGameState = {
-    isPaused: boolean;
-    players: Partial<Record<PlayerPosition, PlayerEntity>>;
+    menuState: {
+        onMainMenu: boolean;
+        isPaused: boolean;
+    };
     router: FrontendRouter;
-    activeRules: GameRule[];
-    unlockedGameRules: GameRule[];
-    modifiers: GameModifiers;
+    saveState: {
+        activeRules: GameRule[];
+        unlockedGameRules: GameRule[];
+    };
+    missionState:
+        | {
+              players: Partial<Record<PlayerPosition, PlayerEntity>>;
+              modifiers: GameModifiers;
+          }
+        | undefined;
 } & AnthaInputBindingsModState<GameInputAction> &
     MenuNavModState;
 

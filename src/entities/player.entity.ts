@@ -49,7 +49,10 @@ export class PlayerEntity extends defineEntity({
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (this.state.isPaused || !this.state.modifiers.allowPlayerCardinalMovement) {
+        if (
+            this.state.isInMenu ||
+            !this.state.missionState?.modifiers.allowPlayerCardinalMovement
+        ) {
             return;
         }
 

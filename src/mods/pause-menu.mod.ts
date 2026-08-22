@@ -6,22 +6,29 @@ import {VirPauseMenu} from '../ui/elements/vir-pause-menu.element.js';
 
 export const pauseMenuMod = defineAnthaMod<AsteroidsEngineState>({
     modName: 'pause-menu',
-    initState: {
-        isPaused: false,
-    },
     execute({state}) {
-        if (!state.isPaused) {
-            Object.values(state.activeBindings || {}).forEach((bindings) => {
+        const shouldPause =
+            !!state.missionState &&
+            !state.menuState?.isPaused &&
+            Object.values(state.activeBindings || {}).reduce((hasPauseRequest, bindings) => {
                 const openPauseMenuBinding = bindings[MenuNavBinding.OpenPauseMenu];
 
                 if (openPauseMenuBinding && !openPauseMenuBinding.actCount) {
                     openPauseMenuBinding.actCount = 1;
-                    state.isPaused = true;
+                    return true;
                 }
-            });
+
+                return hasPauseRequest;
+            }, false);
+
+        if (shouldPause) {
+            state.menuState = {
+                isPaused: true,
+                onMainMenu: !!state.menuState?.onMainMenu,
+            };
         }
 
-        state.isInMenu = !!state.isPaused;
+        state.isInMenu = !!state.menuState?.isPaused;
 
         return html`
             <${VirPauseMenu.assign({

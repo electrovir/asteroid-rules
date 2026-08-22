@@ -1,3 +1,4 @@
+import {navAttribute, NavValue} from 'device-navigation';
 import {css, defineElement, html} from 'element-vir';
 import {themeDefaultKey} from 'theme-vir/dist/color-theme/color-theme.js';
 import {noNativeSpacing, ViraIcon, viraTheme} from 'vira';
@@ -14,6 +15,8 @@ export const VirGameRule = defineElement<{
     styles({hostClasses}) {
         return css`
             :host {
+                margin: 3px;
+                color: ${viraTheme.colors['vira-grey-foreground-non-body'].foreground.value};
                 display: flex;
                 border: 1px solid currentColor;
                 border-radius: 8px;
@@ -23,9 +26,24 @@ export const VirGameRule = defineElement<{
             }
 
             ${hostClasses['vir-game-rule-active'].selector} {
-                opacity: 1;
+                color: inherit;
                 background-color: ${viraTheme.colors['vira-green-behind-fg-non-body'].background
                     .value};
+            }
+
+            :host(
+                    ${navAttribute.css({
+                            navValue: NavValue.Focused,
+                        })}
+                ),
+            :host(
+                    ${navAttribute.css({
+                            navValue: NavValue.Active,
+                        })}
+                ) {
+                margin: 0;
+                border: 4px solid
+                    ${viraTheme.colors['vira-blue-foreground-non-body'].foreground.value};
             }
 
             .text {

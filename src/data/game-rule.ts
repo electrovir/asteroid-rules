@@ -8,3 +8,24 @@ export type GameRule = {
     description: string;
     effects: PartialDeep<GameModifiers>;
 };
+
+export function createGameModifiers(activeRules: ReadonlyArray<Readonly<GameRule>>) {
+    return activeRules.reduce<GameModifiers>((modifiers, rule) => {
+        return {
+            ...modifiers,
+            ...rule.effects,
+        };
+    }, {});
+}
+
+export function toggleGameRule({
+    activeRules,
+    rule,
+}: Readonly<{
+    activeRules: ReadonlyArray<Readonly<GameRule>>;
+    rule: Readonly<GameRule>;
+}>) {
+    return activeRules.includes(rule)
+        ? activeRules.filter((activeRule) => activeRule !== rule)
+        : activeRules.concat(rule);
+}

@@ -3,11 +3,14 @@ import {listenToObject} from '@antha/util';
 import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing} from 'element-vir';
 import {ViraButton, ViraColorVariant, ViraSize} from 'vira';
-import {type AsteroidsGameState} from '../../data/asteroids-game-state.js';
+import {
+    type AsteroidsEngineState,
+    type AsteroidsGameState,
+} from '../../data/asteroids-game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 
 export const VirPauseMenu = defineElement<{
-    gameState: Partial<AsteroidsGameState>;
+    gameState: Partial<AsteroidsEngineState>;
 }>()({
     tagName: 'vir-pause-menu',
     state(): {
@@ -57,16 +60,19 @@ export const VirPauseMenu = defineElement<{
         `;
     },
     init({host, inputs, updateState}) {
-        function updatePauseMenuVisibility(this: void, isPaused: boolean | undefined) {
+        function updatePauseMenuVisibility(
+            this: void,
+            menuState: AsteroidsGameState['menuState'] | undefined,
+        ) {
             updateState({
-                showPauseMenu: !!isPaused,
+                showPauseMenu: !!menuState?.isPaused,
             });
             host.requestUpdate();
         }
 
-        updatePauseMenuVisibility(inputs.gameState.isPaused);
+        updatePauseMenuVisibility(inputs.gameState.menuState);
         updateState({
-            cleanup: listenToObject(inputs.gameState, 'isPaused', updatePauseMenuVisibility),
+            cleanup: listenToObject(inputs.gameState, 'menuState', updatePauseMenuVisibility),
         });
     },
     cleanup({state}) {
@@ -96,7 +102,10 @@ export const VirPauseMenu = defineElement<{
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
-                                    inputs.gameState.isPaused = false;
+                                    inputs.gameState.menuState = {
+                                        isPaused: false,
+                                        onMainMenu: !!inputs.gameState.menuState?.onMainMenu,
+                                    };
                                 }
                             },
                         },
@@ -107,7 +116,6 @@ export const VirPauseMenu = defineElement<{
                     color: ViraColorVariant.Neutral,
                     text: 'Debug',
                 })}
-                    data-test-id="debug-button"
                     ${nav(navController, {
                         y: 1,
                         listeners: {
@@ -126,6 +134,22 @@ export const VirPauseMenu = defineElement<{
                 })}
                     ${nav(navController, {
                         y: 2,
+                        listeners: {
+                            activate({enabled}) {
+                                if (enabled) {
+                                    inputs.gameState.entityStore?.currentEntityInstances.forEach(
+                                        (entity) => {
+                                            entity.immediatelyDestroy();
+                                        },
+                                    );
+                                    inputs.gameState.missionState = undefined;
+                                    inputs.gameState.menuState = {
+                                        isPaused: false,
+                                        onMainMenu: true,
+                                    };
+                                }
+                            },
+                        },
                     })}
                 ></${ViraButton}>
             </div>

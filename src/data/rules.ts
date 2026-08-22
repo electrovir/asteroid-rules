@@ -10,8 +10,18 @@ export const playerCardinalMovementRule: GameRule = {
     icon: lucideIcons.Compass,
 };
 
+export const timedXpRule: GameRule = {
+    ruleTitle: 'Earn XP Over Time',
+    description: 'The player earns experience over time.',
+    effects: {
+        timedXp: true,
+    },
+    icon: lucideIcons.Clock,
+};
+
 export const allGameRules: GameRule[] = [
     playerCardinalMovementRule,
+    timedXpRule,
 ];
 
 /**

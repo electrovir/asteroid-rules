@@ -28,6 +28,10 @@ describe(pauseMenuMod.modName, () => {
                         [MenuNavBinding.OpenPauseMenu]: openPauseMenuBinding,
                     },
                 },
+                missionState: {
+                    modifiers: {},
+                    players: {},
+                },
             },
             mods: [
                 pauseMenuMod,
@@ -40,12 +44,15 @@ describe(pauseMenuMod.modName, () => {
             {
                 actCount: openPauseMenuBinding.actCount,
                 isInMenu: engine.state.isInMenu,
-                isPaused: engine.state.isPaused,
+                menuState: engine.state.menuState,
             },
             {
                 actCount: 1,
                 isInMenu: true,
-                isPaused: true,
+                menuState: {
+                    isPaused: true,
+                    onMainMenu: false,
+                },
             },
         );
     });
@@ -71,12 +78,12 @@ describe(pauseMenuMod.modName, () => {
             {
                 actCount: exitBinding.actCount,
                 isInMenu: engine.state.isInMenu,
-                isPaused: engine.state.isPaused,
+                menuState: engine.state.menuState,
             },
             {
                 actCount: 0,
                 isInMenu: false,
-                isPaused: false,
+                menuState: undefined,
             },
         );
     });

@@ -11,8 +11,9 @@ import {type AsteroidsEngineState} from '../../data/asteroids-game-state.js';
 import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
+import {allGameRules} from '../../data/rules.js';
 import {asteroidsEntityMod} from '../../mods/asteroids-entity.mod.js';
-import {asteroidsGameMod} from '../../mods/asteroids-game.mod.js';
+import {mainMenuMod} from '../../mods/main-menu.mod.js';
 import {pauseMenuMod} from '../../mods/pause-menu.mod.js';
 
 export const VirGame = defineElement<{
@@ -41,10 +42,16 @@ export const VirGame = defineElement<{
         const engine = new AnthaEngine<AsteroidsEngineState>({
             initState: {
                 bindingAssignments: defaultPlayerInputBindings,
-                modifiers: {
-                    allowPlayerCardinalMovement: true,
-                },
+                missionState: undefined,
                 router: inputs.router,
+                menuState: {
+                    isPaused: false,
+                    onMainMenu: true,
+                },
+                saveState: {
+                    activeRules: [],
+                    unlockedGameRules: allGameRules,
+                },
             },
             mods: [
                 createAnthaGraphics2dMod({
@@ -58,13 +65,13 @@ export const VirGame = defineElement<{
                 createAnthaReadRawInputMod(),
                 createAnthaInputBindingsMod<GameInputAction>(),
                 pauseMenuMod,
+                mainMenuMod,
                 createAnthaMenuNavMod({
                     allowWrapping: false,
                     alwaysRequireFocused: true,
                     blockPerpendicularNavigation: true,
                 }),
                 asteroidsEntityMod,
-                asteroidsGameMod,
                 createAnthaFpsMod({
                     debugFps: true,
                 }),
