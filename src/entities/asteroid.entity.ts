@@ -1,11 +1,14 @@
 import {
     position2dParamsMap,
     position2dParamsShape,
+    type BaseEntity2d,
+    type Collision,
     type EntityUpdateParams,
 } from '@antha/entity-2d';
 import {Graphics} from '@antha/graphics-2d';
 import {StableMath, stableRandom, stableRandomInteger} from '@antha/util';
 import {createArray, type SeededRandom} from '@augment-vir/common';
+import {Polygon} from 'detect-collisions';
 import {defineShape} from 'object-shape-tester';
 import {defineEntity} from '../mods/game-entity.mod.js';
 
@@ -139,7 +142,55 @@ export class AsteroidEntity extends defineEntity({
                     color: asteroidOutlineColor,
                     width: 2,
                 }),
+            hitbox: new Polygon(
+                {
+                    x: this.params.x,
+                    y: this.params.y,
+                },
+                this.params.outlinePoints,
+                {
+                    angle: this.params.rotation,
+                },
+            ),
         };
+    }
+
+    public override collide(otherEntity: BaseEntity2d, collision: Readonly<Collision>) {
+        if (!(otherEntity instanceof AsteroidEntity)) {
+            return;
+        }
+
+        const normalX = StableMath.round(collision.overlapN.x);
+        const normalY = StableMath.round(collision.overlapN.y);
+        const normalVelocity = StableMath.round(
+            (this.params.velocityX - otherEntity.params.velocityX) * normalX +
+                (this.params.velocityY - otherEntity.params.velocityY) * normalY,
+        );
+
+        if (normalVelocity <= 0) {
+            return;
+        }
+
+        this.params.velocityX = StableMath.round(
+            this.params.velocityX - normalVelocity * normalX,
+        );
+        this.params.velocityY = StableMath.round(
+            this.params.velocityY - normalVelocity * normalY,
+        );
+        otherEntity.params.velocityX = StableMath.round(
+            otherEntity.params.velocityX + normalVelocity * normalX,
+        );
+        otherEntity.params.velocityY = StableMath.round(
+            otherEntity.params.velocityY + normalVelocity * normalY,
+        );
+
+        const separationX = StableMath.round(collision.overlapV.x / 2);
+        const separationY = StableMath.round(collision.overlapV.y / 2);
+
+        this.params.x = StableMath.round(this.params.x - separationX);
+        this.params.y = StableMath.round(this.params.y - separationY);
+        otherEntity.params.x = StableMath.round(otherEntity.params.x + separationX);
+        otherEntity.params.y = StableMath.round(otherEntity.params.y + separationY);
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
@@ -152,6 +203,7 @@ export class AsteroidEntity extends defineEntity({
         this.params.rotation = StableMath.round(
             this.params.rotation + this.params.rotationSpeed * msSinceLastUpdate,
         );
+        this.hitbox?.setAngle(this.params.rotation);
 
         if (this.isInBounds()) {
             this.params.hasEnteredScreen = true;

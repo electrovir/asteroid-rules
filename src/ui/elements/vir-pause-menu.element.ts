@@ -71,7 +71,7 @@ export const VirPauseMenu = defineElement<{
             menuState: FullGameState['menuState'] | undefined,
         ) {
             updateState({
-                showPauseMenu: !!menuState?.isPaused,
+                showPauseMenu: !!menuState?.pause,
             });
             host.requestUpdate();
         }
@@ -125,7 +125,7 @@ export const VirPauseMenu = defineElement<{
                                       activate: ({enabled}) => {
                                           if (enabled) {
                                               updateMenuState(inputs.gameState, {
-                                                  isOnRuleDebug: true,
+                                                  ruleDebug: true,
                                               });
                                               router.setRoute(debugRoute);
                                           }
@@ -167,7 +167,7 @@ export const VirPauseMenu = defineElement<{
                                                   gameState: inputs.gameState,
                                               });
                                               updateMenuState(inputs.gameState, {
-                                                  onMainMenu: true,
+                                                  mainMenu: true,
                                               });
                                           }
                                       },

@@ -43,7 +43,10 @@ export const VirRuleUnlockMenu = defineElement<{
         }
 
         return html`
-            <h1>Rules Unlocked</h1>
+            <h1>
+                Rule${(inputs.gameState.saveState?.newGameRules.length || 0) === 1 ? '' : 's'}
+                Unlocked
+            </h1>
             <div class="menu-options">
                 <${VirGameRuleList.assign({
                     gameState: inputs.gameState,

@@ -1,31 +1,56 @@
 import {
     position2dParamsMap,
     position2dParamsShape,
+    type BaseEntity2d,
     type EntityUpdateParams,
 } from '@antha/entity-2d';
 import {Graphics} from '@antha/graphics-2d';
 import {clamp} from '@augment-vir/common';
+import {Polygon} from 'detect-collisions';
 import {defineShape, enumShape} from 'object-shape-tester';
 import {PlayerPosition} from '../data/game-state.js';
 import {calculatePlayerMovement, getMouseMovementTarget} from '../data/player-movement.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
+import {AsteroidEntity} from './asteroid.entity.js';
 
 const playerSize = 24;
 const playerHalfWidth = playerSize * 0.8;
 const playerHalfHeight = playerSize;
+const playerOutlinePoints = [
+    {
+        x: 0,
+        y: -playerSize,
+    },
+    {
+        x: playerSize * 0.8,
+        y: playerSize,
+    },
+    {
+        x: 0,
+        y: playerSize * 0.55,
+    },
+    {
+        x: -playerSize * 0.8,
+        y: playerSize,
+    },
+];
 
 export class PlayerEntity extends defineEntity({
     assets: {
         player: {
             maxProgress: 1,
             load({incrementProgressCallback}) {
-                const graphics = new Graphics()
-                    .moveTo(0, -playerSize)
-                    .lineTo(playerSize * 0.8, playerSize)
-                    .lineTo(0, playerSize * 0.55)
-                    .lineTo(-playerSize * 0.8, playerSize)
-                    .closePath()
-                    .fill('#39ff14');
+                const graphics = new Graphics();
+
+                playerOutlinePoints.forEach((point, index) => {
+                    if (index) {
+                        graphics.lineTo(point.x, point.y);
+                    } else {
+                        graphics.moveTo(point.x, point.y);
+                    }
+                });
+
+                graphics.closePath().fill('#39ff14');
 
                 incrementProgressCallback();
 
@@ -45,7 +70,20 @@ export class PlayerEntity extends defineEntity({
     public override async createView() {
         return {
             view: (await this.getAsset.player()).clone(),
+            hitbox: new Polygon(
+                {
+                    x: this.params.x,
+                    y: this.params.y,
+                },
+                playerOutlinePoints,
+            ),
         };
+    }
+
+    public override collide(otherEntity: BaseEntity2d) {
+        if (otherEntity instanceof AsteroidEntity) {
+            this.destroy();
+        }
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
@@ -70,7 +108,9 @@ export class PlayerEntity extends defineEntity({
             return;
         }
 
-        this.view.rotation = Math.atan2(movement.y, movement.x) + Math.PI / 2;
+        const rotation = Math.atan2(movement.y, movement.x) + Math.PI / 2;
+        this.view.rotation = rotation;
+        this.hitbox?.setAngle(rotation);
         this.params.x = clamp(this.params.x + movement.x, {
             min: playerHalfWidth,
             max: this.pixi.screen.width - playerHalfWidth,

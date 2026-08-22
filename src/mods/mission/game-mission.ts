@@ -36,7 +36,8 @@ export async function ensureGameMission({
     };
 
     gameState.missionState = {
-        lastAsteroidSpawnedAt: -asteroidSpawnIntervalMilliseconds,
+        experienceEarned: 0,
+        lastAsteroidSpawnedAt: StableMath.round(currentTime - asteroidSpawnIntervalMilliseconds),
         lastTimedExperienceEarnedAt: StableMath.round(currentTime),
         levelUpAnimation: undefined,
         players,

@@ -85,10 +85,10 @@ export function loadGame({
         engine.state,
         isOnDebugPage(router)
             ? {
-                  isOnRuleDebug: true,
+                  ruleDebug: true,
               }
             : {
-                  onMainMenu: true,
+                  mainMenu: true,
               },
     );
     engine.state.missionState = undefined;

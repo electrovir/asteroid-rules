@@ -41,10 +41,11 @@ export function checkIfMainMenuAllowed({
 }
 
 export type GameMenuState = PartialWithUndefined<{
-    isOnRuleDebug: true;
-    isOnRuleUnlock: true;
-    isPaused: true;
-    onMainMenu: true;
+    youDied: true;
+    ruleDebug: true;
+    ruleUnlock: true;
+    pause: true;
+    mainMenu: true;
 }>;
 
 export function updateMenuState(
@@ -89,6 +90,7 @@ export type FullGameState = {
     saveState: AsteroidsSaveState | undefined;
     missionState:
         | {
+              experienceEarned: number;
               lastAsteroidSpawnedAt: number;
               lastTimedExperienceEarnedAt: number;
               levelUpAnimation:

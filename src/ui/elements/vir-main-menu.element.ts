@@ -52,6 +52,10 @@ export const VirMainMenu = defineElement<{
                 gap: 16px;
                 max-width: 100%;
             }
+
+            .play-button-wrapper {
+                margin-top: 46px;
+            }
         `;
     },
     init({host, inputs, updateState}) {
@@ -61,7 +65,7 @@ export const VirMainMenu = defineElement<{
 
         function updateMainMenuVisibility(this: void) {
             updateState({
-                showMainMenu: !!inputs.gameState.menuState?.onMainMenu,
+                showMainMenu: !!inputs.gameState.menuState?.mainMenu,
             });
             host.requestUpdate();
         }
@@ -99,31 +103,32 @@ export const VirMainMenu = defineElement<{
         }
 
         return html`
-            <h1>Rules</h1>
             <div class="menu-options">
                 <${VirGameRuleList.assign({
                     gameState: inputs.gameState,
                 })}></${VirGameRuleList}>
-                <${VirGameButton}
-                    ${nav(navController, {
-                        height: Infinity,
-                        autoFocus: true,
-                        x: 1,
-                        y: 0,
-                        listeners: {
-                            activate: ({enabled}) => {
-                                if (enabled) {
-                                    if (inputs.gameState.saveState) {
-                                        inputs.gameState.saveState.newGameRules = [];
+                <div class="play-button-wrapper">
+                    <${VirGameButton}
+                        ${nav(navController, {
+                            height: Infinity,
+                            autoFocus: true,
+                            x: 1,
+                            y: 0,
+                            listeners: {
+                                activate: ({enabled}) => {
+                                    if (enabled) {
+                                        if (inputs.gameState.saveState) {
+                                            inputs.gameState.saveState.newGameRules = [];
+                                        }
+                                        updateMenuState(inputs.gameState, undefined);
                                     }
-                                    updateMenuState(inputs.gameState, undefined);
                                 }
                             },
-                        },
-                    })}
-                >
-                    Play
-                </${VirGameButton}>
+                        })}
+                    >
+                        Play
+                    </${VirGameButton}>
+                </div>
             </div>
         `;
     },

@@ -42,7 +42,7 @@ function handleMainMenu({
         })
     ) {
         updateMenuState(gameState, {
-            onMainMenu: true,
+            mainMenu: true,
         });
     } else {
         updateMenuState(gameState, undefined);

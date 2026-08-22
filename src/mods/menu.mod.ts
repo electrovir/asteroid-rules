@@ -5,6 +5,7 @@ import {routeHasPaths} from 'spa-router-vir';
 import {type AsteroidsGameEngineState, updateMenuState} from '../data/game-state.js';
 import {frontendPathTree} from '../data/routing/frontend-path-tree.js';
 import {type FrontendRouter} from '../data/routing/frontend-router.js';
+import {VirGameOverMenu} from '../ui/elements/vir-game-over-menu.element.js';
 import {VirMainMenu} from '../ui/elements/vir-main-menu.element.js';
 import {VirMenuBackground} from '../ui/elements/vir-menu-background.element.js';
 import {VirPauseMenu} from '../ui/elements/vir-pause-menu.element.js';
@@ -29,7 +30,7 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
     execute({engine, state}) {
         if (isOnDebugPage(state.router)) {
             updateMenuState(state, {
-                isOnRuleDebug: true,
+                ruleDebug: true,
             });
         }
 
@@ -40,12 +41,12 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
                 state.missionState.levelUpAnimation.endsAt <= engine.totalMs)
         ) {
             updateMenuState(state, {
-                isOnRuleUnlock: true,
+                ruleUnlock: true,
             });
         }
 
         const pauseWasTriggered: boolean =
-            (!state.menuState || !!state.menuState.isPaused) &&
+            (!state.menuState || !!state.menuState.pause) &&
             !!state.missionState &&
             Object.values(state.activeBindings || {}).reduce((hasPauseRequest, bindings) => {
                 const openPauseMenuBinding = bindings[MenuNavBinding.OpenPauseMenu];
@@ -61,10 +62,10 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
         if (pauseWasTriggered) {
             updateMenuState(
                 state,
-                state.menuState?.isPaused
+                state.menuState?.pause
                     ? undefined
                     : {
-                          isPaused: true,
+                          pause: true,
                       },
             );
         }
@@ -83,14 +84,22 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
                 <${VirMainMenu.assign({
                     gameState: state,
                 })}></${VirMainMenu}>
-                ${state.menuState.isOnRuleDebug
+                ${state.menuState.youDied
+                    ? html`
+                          <${VirGameOverMenu.assign({
+                              experienceEarned: state.missionState?.experienceEarned || 0,
+                              gameState: state,
+                          })}></${VirGameOverMenu}>
+                      `
+                    : nothing}
+                ${state.menuState.ruleDebug
                     ? html`
                           <${VirRuleDebug.assign({
                               gameState: state,
                           })}></${VirRuleDebug}>
                       `
                     : nothing}
-                ${state.menuState.isOnRuleUnlock
+                ${state.menuState.ruleUnlock
                     ? html`
                           <${VirRuleUnlockMenu.assign({
                               gameState: state,

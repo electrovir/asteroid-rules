@@ -42,6 +42,7 @@ function createGameState({
     return {
         menuState: undefined,
         missionState: {
+            experienceEarned: 0,
             lastAsteroidSpawnedAt: 0,
             lastTimedExperienceEarnedAt: 0,
             levelUpAnimation: undefined,
@@ -193,7 +194,7 @@ describe(VirRuleDebug.tagName, () => {
             exitDebugNavEntry.focus(true);
 
             gameState.menuState = {
-                isPaused: true,
+                pause: true,
             };
             ruleDebugElement.remove();
 
@@ -252,7 +253,7 @@ describe(VirRuleDebug.tagName, () => {
         });
 
         gameState.menuState = {
-            isOnRuleDebug: true,
+            ruleDebug: true,
         };
         router.setRoute({
             paths: frontendPathTree.paths.children.debug.children.rules.fullPaths,

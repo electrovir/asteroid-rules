@@ -29,9 +29,10 @@ function createGameState({
 }>): TestGameState {
     return {
         menuState: {
-            isPaused: true,
+            pause: true,
         },
         missionState: {
+            experienceEarned: 0,
             lastAsteroidSpawnedAt: 0,
             lastTimedExperienceEarnedAt: 0,
             levelUpAnimation: undefined,
@@ -145,7 +146,7 @@ describe(VirPauseMenu.tagName, () => {
 
             assert.isUndefined(gameState.missionState);
             assert.deepEquals(gameState.menuState, {
-                onMainMenu: true,
+                mainMenu: true,
             });
         } finally {
             router.destroy();

@@ -32,6 +32,7 @@ describe(menuMod.modName, () => {
             initState: {
                 activeBindings: createOpenPauseMenuBindings(),
                 missionState: {
+                    experienceEarned: 0,
                     lastAsteroidSpawnedAt: 0,
                     lastTimedExperienceEarnedAt: 0,
                     levelUpAnimation: undefined,
@@ -47,7 +48,7 @@ describe(menuMod.modName, () => {
         await engine.runSingleTick();
 
         assert.deepEquals(engine.state.menuState, {
-            isPaused: true,
+            pause: true,
         });
 
         engine.state.activeBindings = createOpenPauseMenuBindings();

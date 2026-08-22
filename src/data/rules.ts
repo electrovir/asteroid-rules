@@ -37,15 +37,14 @@ export function getGameRulesUnlockedAtLevel(level: number) {
 }
 
 /**
- * - Player level determines rule pool
- *
  * Ideas:
  *
- * 1. Guns
- * 2. More asteroids
- * 3. Xp from asteroid kills (xp per health)
- * 4. Combos (the longer you last, the more xp you get, per time, per kill, etc.)
- * 5. Stronger asteroids
- * 6. Another gun (both firing forwards)
- * 7. Dramatically increase points per kill, lose points per shot (discourages missing)
+ * 1. A gun on the front of the ship (shoots bullet entities)
+ * 2. 2 player
+ * 3. More asteroids (faster spawning)
+ * 4. Xp from asteroid kills (xp per health)
+ * 5. Combos (the longer you last, the more xp you get, per time, per kill, etc.)
+ * 6. Stronger asteroids
+ * 7. Another gun (both firing forwards)
+ * 8. Dramatically increase points per kill, lose points per shot (discourages missing)
  */

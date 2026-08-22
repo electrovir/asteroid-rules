@@ -1,7 +1,8 @@
 import {defineAnthaMod} from '@antha/engine';
 import {StableMath} from '@antha/util';
 import {html, nothing} from 'element-vir';
-import {type AsteroidsGameEngineState} from '../../data/game-state.js';
+import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
+import {PlayerEntity} from '../../entities/player.entity.js';
 import {
     calculateExperienceRequiredToReachLevel,
     levelUpPresentationDurationMilliseconds,
@@ -66,6 +67,16 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
             return nothing;
         }
 
+        if (
+            !state.menuState &&
+            state.entityStore &&
+            !state.entityStore.getEntities(PlayerEntity).size
+        ) {
+            updateMenuState(state, {
+                youDied: true,
+            });
+        }
+
         const saveState = state.saveState;
         const missionState = state.missionState;
         const activeLevelUpAnimation =
@@ -108,6 +119,10 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
             };
             state.missionState = {
                 ...missionState,
+                experienceEarned: StableMath.round(
+                    missionState.experienceEarned +
+                        timedExperienceIntervals * experiencePerTimedGain,
+                ),
                 lastTimedExperienceEarnedAt: StableMath.round(
                     missionState.lastTimedExperienceEarnedAt +
                         timedExperienceIntervals * timedExperienceIntervalMilliseconds,
