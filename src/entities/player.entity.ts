@@ -16,7 +16,7 @@ import {
 import {StableMath, stableRandom} from '@antha/util';
 import {clamp, createArray, type SeededRandom} from '@augment-vir/common';
 import {Polygon} from 'detect-collisions';
-import {defineShape, enumShape} from 'object-shape-tester';
+import {defineShape, enumShape, nonEmptyStringShape} from 'object-shape-tester';
 import {GameAudio, playGameAudio} from '../data/game-audio.js';
 import {PlayerPosition, queueMissionExperience} from '../data/game-state.js';
 import {getPlayerGunCount, getShotExperienceCost} from '../data/gameplay-modifiers.js';
@@ -265,35 +265,26 @@ function createMovementInput(activeBinding: ActiveBinding | undefined) {
     };
 }
 
+function createPlayerGraphics({color}: Readonly<{color: string}>) {
+    const graphics = new Graphics();
+
+    playerOutlinePoints.forEach((point, index) => {
+        if (index) {
+            graphics.lineTo(point.x, point.y);
+        } else {
+            graphics.moveTo(point.x, point.y);
+        }
+    });
+
+    return graphics.closePath().fill(color);
+}
+
 export class PlayerEntity extends defineEntity({
-    assets: {
-        player: {
-            maxProgress: 1,
-            load({incrementProgressCallback}) {
-                const graphics = new Graphics();
-
-                playerOutlinePoints.forEach((point, index) => {
-                    if (index) {
-                        graphics.lineTo(point.x, point.y);
-                    } else {
-                        graphics.moveTo(point.x, point.y);
-                    }
-                });
-
-                graphics.closePath().fill('#39ff14');
-
-                incrementProgressCallback();
-
-                return {
-                    value: graphics,
-                };
-            },
-        },
-    },
     key: 'asteroids-player',
     paramsMap: position2dParamsMap,
     paramsShape: defineShape({
         ...position2dParamsShape.default,
+        color: nonEmptyStringShape(),
         inputPlayerPosition: enumShape(PlayerPosition),
     }),
 }) {
@@ -301,9 +292,11 @@ export class PlayerEntity extends defineEntity({
     protected hasSpawnedDeathExplosion = false;
     protected shotCooldownMilliseconds = 0;
 
-    public override async createView() {
+    public override createView() {
         return {
-            view: (await this.getAsset.player()).clone(),
+            view: createPlayerGraphics({
+                color: this.params.color,
+            }),
             hitbox: new Polygon(
                 {
                     x: this.params.x,
@@ -345,6 +338,7 @@ export class PlayerEntity extends defineEntity({
                     (maximumExplosionParticleSpeed - minimumExplosionParticleSpeed);
 
             await this.entityStore.addEntity(PlayerExplosionParticleEntity, {
+                color: this.params.color,
                 lifetimeMilliseconds: playerExplosionParticleLifetimeMilliseconds,
                 remainingLifetimeMilliseconds: playerExplosionParticleLifetimeMilliseconds,
                 rotation: StableMath.degreesToRadians(stableRandom(random) * 360),

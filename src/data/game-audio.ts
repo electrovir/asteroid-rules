@@ -78,7 +78,7 @@ export const gameAudioFiles = {
     },
     [GameAudio.Shoot]: {
         sources: createGameAudioSource('shoot.ogg'),
-        volume: 0.3,
+        volume: 0.12,
     },
 } satisfies Record<GameAudio, AudioSetupParams>;
 

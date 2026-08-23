@@ -5,7 +5,7 @@ import {
 } from '@antha/entity-2d';
 import {Graphics} from '@antha/graphics-2d';
 import {StableMath} from '@antha/util';
-import {defineShape} from 'object-shape-tester';
+import {defineShape, nonEmptyStringShape} from 'object-shape-tester';
 import {defineEntity} from '../mods/game-entity.mod.js';
 
 const explosionPiecePoints = [
@@ -34,6 +34,7 @@ export class PlayerExplosionParticleEntity extends defineEntity({
     },
     paramsShape: defineShape({
         ...position2dParamsShape.default,
+        color: nonEmptyStringShape(),
         lifetimeMilliseconds: 0,
         remainingLifetimeMilliseconds: 0,
         rotation: 0,
@@ -54,7 +55,7 @@ export class PlayerExplosionParticleEntity extends defineEntity({
         });
 
         return {
-            view: graphics.closePath().fill('#39ff14'),
+            view: graphics.closePath().fill(this.params.color),
         };
     }
 

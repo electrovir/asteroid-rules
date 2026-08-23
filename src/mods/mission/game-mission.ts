@@ -26,6 +26,7 @@ async function updateMissionPlayers({
 
     if (gameState.saveState?.modifiers.twoPlayers && !secondPlayer) {
         const addedSecondPlayer = await entityStore.addEntity(PlayerEntity, {
+            color: '#00aaff',
             inputPlayerPosition: PlayerPosition['2'],
             x: pixiApplication.screen.width * 0.65,
             y: pixiApplication.screen.height / 2,
@@ -69,6 +70,7 @@ export async function ensureGameMission({
     if (!gameState.missionState) {
         const players = {
             [PlayerPosition['1']]: await entityStore.addEntity(PlayerEntity, {
+                color: '#39ff14',
                 inputPlayerPosition: PlayerPosition['1'],
                 x: pixiApplication.screen.width / 2,
                 y: pixiApplication.screen.height / 2,
