@@ -1,5 +1,6 @@
 import {defineAnthaMod} from '@antha/engine';
 import {MenuNavBinding} from '@antha/input';
+import {getEnumValues, omitObjectKeys} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
 import {routeHasPaths} from 'spa-router-vir';
 import {type AsteroidsGameEngineState, updateMenuState} from '../data/game-state.js';
@@ -25,9 +26,28 @@ export function isOnDebugPage(router: FrontendRouter | undefined): boolean {
     );
 }
 
+function preventPlayerTwoMenuNavigation({
+    state,
+}: Readonly<{
+    state: Partial<AsteroidsGameEngineState>;
+}>) {
+    const playerTwoActiveBindings = state.activeBindings?.['2'];
+
+    if (!state.saveState?.modifiers.onlyPlayerOneMenuNavigation || !playerTwoActiveBindings) {
+        return;
+    }
+
+    state.activeBindings = {
+        ...state.activeBindings,
+        2: omitObjectKeys(playerTwoActiveBindings, getEnumValues(MenuNavBinding)),
+    };
+}
+
 export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
     modName: 'menu',
     execute({engine, state}) {
+        preventPlayerTwoMenuNavigation({state});
+
         if (isOnDebugPage(state.router)) {
             updateMenuState(state, {
                 ruleDebug: true,

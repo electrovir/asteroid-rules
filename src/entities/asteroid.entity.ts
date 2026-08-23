@@ -66,7 +66,7 @@ function steerAsteroidTowardNearestPlayer({
 
     const closestPlayer = Array.from(players)
         .filter((player) => {
-            return !player.isDestroyed;
+            return !player.isDestroyed && !player.isGhostMode;
         })
         .reduce<PlayerEntity | undefined>((closest, player) => {
             const distance = Math.hypot(

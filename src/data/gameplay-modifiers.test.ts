@@ -36,6 +36,7 @@ import {
     getTimedExperienceMultiplier,
     heavyRoundsDamageMultiplier,
     homingRoundsTurnRateRadiansPerMillisecond,
+    isPlayerTwoGhostModeEnabled,
     novaRoundsSplashDamage,
     novaRoundsSplashRadiusPixels,
     piercingRoundsPierceCount,
@@ -209,6 +210,21 @@ describe('gameplay modifiers', () => {
                 playerMovementSpeed: 1,
                 shotInterval: 1,
             },
+        );
+    });
+
+    it('enables player-two ghost mode with the Baby Rule', () => {
+        assert.deepEquals(
+            [
+                isPlayerTwoGhostModeEnabled({}),
+                isPlayerTwoGhostModeEnabled({
+                    playerTwoGhostMode: true,
+                }),
+            ],
+            [
+                false,
+                true,
+            ],
         );
     });
 

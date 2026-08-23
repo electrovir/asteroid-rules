@@ -1,9 +1,11 @@
 import {AnthaEngine} from '@antha/engine';
 import {MenuNavBinding} from '@antha/input';
-import {assert} from '@augment-vir/assert';
+import {assert, assertWrap} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {type AsteroidsGameEngineState} from '../data/game-state.js';
+import {PlayerAction} from '../data/player-action.js';
+import {createDefaultAsteroidsSaveState} from '../mods/autosave.mod.js';
 import {menuMod} from './menu.mod.js';
 
 function createOpenPauseMenuBindings() {
@@ -60,5 +62,62 @@ describe(menuMod.modName, () => {
 
         assert.isUndefined(engine.state.menuState);
         assert.isFalse(engine.state.isInMenu ?? true);
+    });
+
+    it('prevents player two from navigating menus while preserving player two actions', async () => {
+        const engine = new AnthaEngine<AsteroidsGameEngineState>({
+            initState: {
+                activeBindings: {
+                    1: {},
+                    2: {
+                        [MenuNavBinding.OpenPauseMenu]: {
+                            actCount: 0,
+                            holdDuration: {
+                                milliseconds: 0,
+                            },
+                            lastActDuration: {
+                                milliseconds: 0,
+                            },
+                            value: 1,
+                        },
+                        [PlayerAction.Fire]: {
+                            actCount: 0,
+                            holdDuration: {
+                                milliseconds: 0,
+                            },
+                            lastActDuration: {
+                                milliseconds: 0,
+                            },
+                            value: 1,
+                        },
+                    },
+                    3: {},
+                    4: {},
+                },
+                saveState: {
+                    ...createDefaultAsteroidsSaveState(),
+                    modifiers: {
+                        onlyPlayerOneMenuNavigation: true,
+                    },
+                },
+            },
+            mods: [
+                menuMod,
+            ],
+        });
+
+        await engine.runSingleTick();
+
+        assert.isUndefined(engine.state.menuState);
+        assert.isUndefined(
+            assertWrap.isDefined(assertWrap.isDefined(engine.state.activeBindings)['2'])[
+                MenuNavBinding.OpenPauseMenu
+            ],
+        );
+        assert.isDefined(
+            assertWrap.isDefined(assertWrap.isDefined(engine.state.activeBindings)['2'])[
+                PlayerAction.Fire
+            ],
+        );
     });
 });

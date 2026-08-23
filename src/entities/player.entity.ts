@@ -34,6 +34,7 @@ import {
     getPlayerMovementSpeedMultiplier,
     getPlayerShotIntervalMultiplier,
     getShotExperienceCost,
+    isPlayerTwoGhostModeEnabled,
 } from '../data/gameplay-modifiers.js';
 import {type GameModifiers} from '../data/modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
@@ -50,6 +51,7 @@ const playerExplosionParticleCount = 20;
 const playerExplosionParticleLifetimeMilliseconds = 500;
 const maximumExplosionParticleSpeed = 0.24;
 const minimumExplosionParticleSpeed = 0.08;
+const ghostPlayerAlpha = 0.35;
 const playerBulletSpeedPixelsPerMillisecond = 0.8;
 const playerShotIntervalMilliseconds = 200;
 const playerSpeedPixelsPerMillisecond = 0.4;
@@ -419,7 +421,12 @@ export class PlayerEntity extends defineEntity({
     protected collisionProtectionUses = 0;
     protected deathAnimationRemainingMilliseconds: number | undefined;
     protected hasSpawnedDeathExplosion = false;
+    protected isGhost = false;
     protected shotCooldownMilliseconds = 0;
+
+    public get isGhostMode() {
+        return this.isGhost;
+    }
 
     public override createView() {
         return {
@@ -445,7 +452,7 @@ export class PlayerEntity extends defineEntity({
     }
 
     public async handleAsteroidCollision({asteroid}: Readonly<{asteroid: AsteroidEntity}>) {
-        if (this.deathAnimationRemainingMilliseconds != undefined) {
+        if (this.isGhostMode || this.deathAnimationRemainingMilliseconds != undefined) {
             return;
         } else if (
             this.collisionProtectionUses <
@@ -469,6 +476,17 @@ export class PlayerEntity extends defineEntity({
         this.deathAnimationRemainingMilliseconds = playerDeathAnimationDurationMilliseconds;
         playGameAudio(this.state, GameAudio.PlayerDeath);
         playGameAudio(this.state, GameAudio.PlayerDeathMusic);
+    }
+
+    protected enterGhostMode() {
+        this.isGhost = true;
+        this.view.alpha = ghostPlayerAlpha;
+        this.view.scale.set(1);
+
+        if (this.hitbox) {
+            this.hitboxSystem.remove(this.hitbox);
+            this.hitbox = undefined;
+        }
     }
 
     protected async spawnExplosionParticles({
@@ -530,7 +548,14 @@ export class PlayerEntity extends defineEntity({
             this.view.scale.set(1 - animationProgress);
 
             if (!this.deathAnimationRemainingMilliseconds) {
-                this.destroy();
+                if (
+                    this.params.inputPlayerPosition === PlayerPosition['2'] &&
+                    isPlayerTwoGhostModeEnabled(this.state.saveState?.modifiers || {})
+                ) {
+                    this.enterGhostMode();
+                } else {
+                    this.destroy();
+                }
             }
             return;
         }
@@ -593,6 +618,7 @@ export class PlayerEntity extends defineEntity({
             : undefined;
         const gunCount = getPlayerGunCount(modifiers);
         const isFiring =
+            !this.isGhostMode &&
             this.state.isPlayerFiringAllowed &&
             gunCount > 0 &&
             (!!activeBindings?.[PlayerAction.Fire]?.value || !!autoTurretDirection);

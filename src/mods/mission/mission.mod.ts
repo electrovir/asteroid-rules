@@ -97,7 +97,9 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
         if (
             !state.menuState &&
             state.entityStore &&
-            !state.entityStore.getEntities(PlayerEntity).size
+            !Array.from(state.entityStore.getEntities(PlayerEntity)).some((player) => {
+                return !player.isGhostMode;
+            })
         ) {
             updateMenuState(state, {
                 youDied: true,

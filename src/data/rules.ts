@@ -4,7 +4,7 @@ import {type GameRule} from './game-rule.js';
 export const playerCardinalMovementRule: GameRule = {
     cost: 1,
     id: 'cardinal-move',
-    unlockLevel: 2,
+    unlockLevel: 1,
     ruleTitle: 'Cardinal Movement',
     description: 'The player can move in cardinal directions.',
     effects: {
@@ -28,7 +28,7 @@ export const timedXpRule: GameRule = {
 export const playerForwardGunRule: GameRule = {
     cost: 3,
     id: 'player-forward-gun',
-    unlockLevel: 3,
+    unlockLevel: 2,
     ruleTitle: 'Forward Gun',
     description: 'The player fires bullets from the front of their ship.',
     effects: {
@@ -40,11 +40,25 @@ export const playerForwardGunRule: GameRule = {
 export const twoPlayersRule: GameRule = {
     cost: 2,
     id: 'two-players',
-    unlockLevel: 4,
+    unlockLevel: 3,
     ruleTitle: 'Two Players',
     description: 'Two players can fight asteroids together.',
     effects: {
         twoPlayers: true,
+    },
+    icon: lucideIcons.Users,
+};
+
+export const playerTwoMenuNavigationRule: GameRule = {
+    cost: 0,
+    id: 'player-two-menu-navigation',
+    unlockLevel: 4,
+    ruleTitle: 'Baby Rule',
+    description:
+        'Only player one can navigate menus. After dying, player two becomes a ghost that can fly but not fire.',
+    effects: {
+        onlyPlayerOneMenuNavigation: true,
+        playerTwoGhostMode: true,
     },
     icon: lucideIcons.Users,
 };
@@ -64,7 +78,7 @@ export const fasterAsteroidSpawningRule: GameRule = {
 export const asteroidKillXpRule: GameRule = {
     cost: 2,
     id: 'asteroid-kill-xp',
-    unlockLevel: 6,
+    unlockLevel: 8,
     ruleTitle: 'Asteroid Kill XP',
     description: 'Destroying an asteroid grants experience based on its health.',
     effects: {
@@ -76,7 +90,7 @@ export const asteroidKillXpRule: GameRule = {
 export const experienceCombosRule: GameRule = {
     cost: 5,
     id: 'experience-combos',
-    unlockLevel: 7,
+    unlockLevel: 11,
     ruleTitle: 'Experience Combos',
     description: 'Experience gains grow the longer the players survive.',
     effects: {
@@ -88,7 +102,7 @@ export const experienceCombosRule: GameRule = {
 export const strongerAsteroidsRule: GameRule = {
     cost: 5,
     id: 'stronger-asteroids',
-    unlockLevel: 8,
+    unlockLevel: 14,
     ruleTitle: 'Stronger Asteroids',
     description: 'Asteroids have more health.',
     effects: {
@@ -100,7 +114,7 @@ export const strongerAsteroidsRule: GameRule = {
 export const secondForwardGunRule: GameRule = {
     cost: 5,
     id: 'second-forward-gun',
-    unlockLevel: 9,
+    unlockLevel: 17,
     ruleTitle: 'Twin Guns',
     description: 'The player fires a second gun forward.',
     effects: {
@@ -112,7 +126,7 @@ export const secondForwardGunRule: GameRule = {
 export const precisionScoringRule: GameRule = {
     cost: 5,
     id: 'precision-scoring',
-    unlockLevel: 10,
+    unlockLevel: 20,
     ruleTitle: 'Precision Scoring',
     description: 'Asteroid kills are worth far more, but each shot costs experience.',
     effects: {
@@ -124,7 +138,7 @@ export const precisionScoringRule: GameRule = {
 export const afterburnersRule: GameRule = {
     cost: 6,
     id: 'afterburners',
-    unlockLevel: 11,
+    unlockLevel: 24,
     ruleTitle: 'Afterburners',
     description: 'The player moves 50% faster.',
     effects: {
@@ -136,7 +150,7 @@ export const afterburnersRule: GameRule = {
 export const heavyRoundsRule: GameRule = {
     cost: 6,
     id: 'heavy-rounds',
-    unlockLevel: 12,
+    unlockLevel: 28,
     ruleTitle: 'Heavy Rounds',
     description: 'Player bullets deal double damage.',
     effects: {
@@ -148,7 +162,7 @@ export const heavyRoundsRule: GameRule = {
 export const rapidFireRule: GameRule = {
     cost: 6,
     id: 'rapid-fire',
-    unlockLevel: 13,
+    unlockLevel: 32,
     ruleTitle: 'Rapid Fire',
     description: 'Player guns have a 40% shorter firing cooldown.',
     effects: {
@@ -160,7 +174,7 @@ export const rapidFireRule: GameRule = {
 export const piercingRoundsRule: GameRule = {
     cost: 7,
     id: 'piercing-rounds',
-    unlockLevel: 14,
+    unlockLevel: 36,
     ruleTitle: 'Piercing Rounds',
     description: 'Player bullets can pierce through two additional asteroids.',
     effects: {
@@ -172,7 +186,7 @@ export const piercingRoundsRule: GameRule = {
 export const reinforcedHullRule: GameRule = {
     cost: 7,
     id: 'reinforced-hull',
-    unlockLevel: 15,
+    unlockLevel: 40,
     ruleTitle: 'Reinforced Hull',
     description: 'Each player survives one asteroid collision per life.',
     effects: {
@@ -184,7 +198,7 @@ export const reinforcedHullRule: GameRule = {
 export const wideShotsRule: GameRule = {
     cost: 7,
     id: 'wide-shots',
-    unlockLevel: 16,
+    unlockLevel: 44,
     ruleTitle: 'Wide Shots',
     description: 'Player bullets are 50% wider.',
     effects: {
@@ -196,7 +210,7 @@ export const wideShotsRule: GameRule = {
 export const asteroidDragRule: GameRule = {
     cost: 8,
     id: 'asteroid-drag',
-    unlockLevel: 17,
+    unlockLevel: 48,
     ruleTitle: 'Asteroid Drag',
     description: 'Asteroids move 35% slower.',
     effects: {
@@ -208,7 +222,7 @@ export const asteroidDragRule: GameRule = {
 export const controlledDemolitionRule: GameRule = {
     cost: 8,
     id: 'controlled-demolition',
-    unlockLevel: 18,
+    unlockLevel: 52,
     ruleTitle: 'Controlled Demolition',
     description: 'Destroyed large asteroids split into one fragment instead of two.',
     effects: {
@@ -220,7 +234,7 @@ export const controlledDemolitionRule: GameRule = {
 export const salvageRightsRule: GameRule = {
     cost: 8,
     id: 'salvage-rights',
-    unlockLevel: 19,
+    unlockLevel: 56,
     ruleTitle: 'Salvage Rights',
     description: 'Destroying asteroids grants 2 experience per health.',
     effects: {
@@ -232,7 +246,7 @@ export const salvageRightsRule: GameRule = {
 export const autoTurretRule: GameRule = {
     cost: 10,
     id: 'auto-turret',
-    unlockLevel: 20,
+    unlockLevel: 60,
     ruleTitle: 'Auto Turret',
     description: 'Player guns automatically aim and fire cyan rounds at asteroids.',
     effects: {
@@ -242,9 +256,9 @@ export const autoTurretRule: GameRule = {
 };
 
 export const phaseDriveRule: GameRule = {
-    cost: 10,
+    cost: 5,
     id: 'phase-drive',
-    unlockLevel: 21,
+    unlockLevel: 64,
     ruleTitle: 'Phase Drive',
     description: 'Players wrap around the arena instead of stopping at its edges.',
     effects: {
@@ -254,9 +268,9 @@ export const phaseDriveRule: GameRule = {
 };
 
 export const triadCannonsRule: GameRule = {
-    cost: 10,
+    cost: 5,
     id: 'triad-cannons',
-    unlockLevel: 22,
+    unlockLevel: 68,
     ruleTitle: 'Triad Cannons',
     description: 'Player ships fire three parallel rounds.',
     effects: {
@@ -266,9 +280,9 @@ export const triadCannonsRule: GameRule = {
 };
 
 export const ricochetRoundsRule: GameRule = {
-    cost: 11,
+    cost: 6,
     id: 'ricochet-rounds',
-    unlockLevel: 23,
+    unlockLevel: 72,
     ruleTitle: 'Ricochet Rounds',
     description: 'Player bullets bounce twice from the arena edges.',
     effects: {
@@ -278,9 +292,9 @@ export const ricochetRoundsRule: GameRule = {
 };
 
 export const homingRoundsRule: GameRule = {
-    cost: 11,
+    cost: 6,
     id: 'homing-rounds',
-    unlockLevel: 24,
+    unlockLevel: 76,
     ruleTitle: 'Homing Rounds',
     description: 'Player bullets curve toward the nearest asteroid.',
     effects: {
@@ -290,9 +304,9 @@ export const homingRoundsRule: GameRule = {
 };
 
 export const novaRoundsRule: GameRule = {
-    cost: 12,
+    cost: 7,
     id: 'nova-rounds',
-    unlockLevel: 25,
+    unlockLevel: 80,
     ruleTitle: 'Nova Rounds',
     description: 'Player bullets damage asteroids near their first impact.',
     effects: {
@@ -302,9 +316,9 @@ export const novaRoundsRule: GameRule = {
 };
 
 export const cryoRoundsRule: GameRule = {
-    cost: 12,
+    cost: 7,
     id: 'cryo-rounds',
-    unlockLevel: 26,
+    unlockLevel: 84,
     ruleTitle: 'Cryo Rounds',
     description: 'Player bullets freeze hit asteroids for a short time.',
     effects: {
@@ -314,9 +328,9 @@ export const cryoRoundsRule: GameRule = {
 };
 
 export const velocityVolleyRule: GameRule = {
-    cost: 12,
+    cost: 7,
     id: 'velocity-volley',
-    unlockLevel: 27,
+    unlockLevel: 88,
     ruleTitle: 'Velocity Volley',
     description: 'Player bullets travel 75% faster.',
     effects: {
@@ -326,9 +340,9 @@ export const velocityVolleyRule: GameRule = {
 };
 
 export const fractalFrenzyRule: GameRule = {
-    cost: 13,
+    cost: 8,
     id: 'fractal-frenzy',
-    unlockLevel: 28,
+    unlockLevel: 92,
     ruleTitle: 'Fractal Frenzy',
     description: 'Destroyed large asteroids split into three fragments.',
     effects: {
@@ -338,9 +352,9 @@ export const fractalFrenzyRule: GameRule = {
 };
 
 export const asteroidMagnetismRule: GameRule = {
-    cost: 13,
+    cost: 8,
     id: 'asteroid-magnetism',
-    unlockLevel: 29,
+    unlockLevel: 96,
     ruleTitle: 'Meteor Magnet',
     description: 'Asteroids steadily curve toward the nearest player.',
     effects: {
@@ -350,9 +364,9 @@ export const asteroidMagnetismRule: GameRule = {
 };
 
 export const stardustDividendRule: GameRule = {
-    cost: 15,
+    cost: 10,
     id: 'stardust-dividend',
-    unlockLevel: 30,
+    unlockLevel: 100,
     ruleTitle: 'Stardust Dividend',
     description: 'Timed experience gains are tripled.',
     effects: {
@@ -366,6 +380,7 @@ export const allGameRules: GameRule[] = [
     timedXpRule,
     playerForwardGunRule,
     twoPlayersRule,
+    playerTwoMenuNavigationRule,
     fasterAsteroidSpawningRule,
     asteroidKillXpRule,
     experienceCombosRule,

@@ -135,6 +135,10 @@ export function getPlayerCollisionProtectionCount(modifiers: Readonly<GameModifi
     return modifiers.reinforcedHull ? 1 : 0;
 }
 
+export function isPlayerTwoGhostModeEnabled(modifiers: Readonly<GameModifiers>) {
+    return !!modifiers.playerTwoGhostMode;
+}
+
 export function getPlayerGunCount(modifiers: Readonly<GameModifiers>) {
     return !modifiers.allowPlayerForwardGun
         ? 0

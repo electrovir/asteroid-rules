@@ -15,9 +15,11 @@ export type GameModifiers = Partial<{
     heavyRounds: boolean;
     homingRounds: boolean;
     novaRounds: boolean;
+    onlyPlayerOneMenuNavigation: boolean;
     phaseDrive: boolean;
     piercingRounds: boolean;
     precisionScoring: boolean;
+    playerTwoGhostMode: boolean;
     rapidFire: boolean;
     reinforcedHull: boolean;
     ricochetRounds: boolean;
