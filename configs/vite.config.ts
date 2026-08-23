@@ -2,6 +2,7 @@ import {defineConfig} from '@virmator/frontend/configs/vite.config.base.js';
 import {execFile} from 'node:child_process';
 import {resolve} from 'node:path';
 import {promisify} from 'node:util';
+import {type InjectedViteData} from '../src/data/global-vite-data.js';
 
 const executeFile = promisify(execFile);
 
@@ -33,9 +34,9 @@ export default defineConfig(
             ...baseConfig,
             define: {
                 ...baseConfig.define,
-                'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(
-                    await getBuildCommitHash(packageDirPath),
-                ),
+                VITE_INJECTED_DATA: JSON.stringify({
+                    commitHash: await getBuildCommitHash(packageDirPath),
+                } satisfies InjectedViteData),
             },
         };
     },
