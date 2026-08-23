@@ -60,7 +60,7 @@ export const VirGameRule = defineElement<{
             }
 
             ${hostClasses['vir-game-rule-active'].selector} .wrapper {
-                ${colorCss(viraTheme.colors['vira-green-behind-fg-non-body'])}
+                ${colorCss(viraTheme.colors['vira-green-behind-fg-small-body'])}
             }
 
             ${hostClasses['vir-game-rule-unaffordable'].selector} .wrapper {
