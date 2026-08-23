@@ -90,6 +90,16 @@ describe(menuMod.modName, () => {
                             },
                             value: 1,
                         },
+                        [PlayerAction.MoveUp]: {
+                            actCount: 0,
+                            holdDuration: {
+                                milliseconds: 0,
+                            },
+                            lastActDuration: {
+                                milliseconds: 0,
+                            },
+                            value: 1,
+                        },
                     },
                     3: {},
                     4: {},
@@ -117,6 +127,11 @@ describe(menuMod.modName, () => {
         assert.isDefined(
             assertWrap.isDefined(assertWrap.isDefined(engine.state.activeBindings)['2'])[
                 PlayerAction.Fire
+            ],
+        );
+        assert.isDefined(
+            assertWrap.isDefined(assertWrap.isDefined(engine.state.activeBindings)['2'])[
+                PlayerAction.MoveUp
             ],
         );
     });

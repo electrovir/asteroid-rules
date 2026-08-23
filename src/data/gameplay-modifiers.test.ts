@@ -1,4 +1,4 @@
-import {assert} from '@augment-vir/assert';
+import {assert, assertWrap} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
 import {
     afterburnerMovementSpeedMultiplier,
@@ -101,10 +101,68 @@ describe('gameplay modifiers', () => {
         );
     });
 
+    it('requires Asteroid Kill XP for stronger asteroids to grant health-scaled experience', () => {
+        const strongerAsteroidModifiers = {
+            strongerAsteroids: true,
+        };
+        const asteroidHealth = getAsteroidHealth(strongerAsteroidModifiers);
+
+        assert.deepEquals(
+            {
+                asteroidHealth,
+                asteroidKillExperience: calculateAsteroidKillExperience({
+                    health: asteroidHealth,
+                    modifiers: strongerAsteroidModifiers,
+                }),
+                asteroidKillExperienceWithXpRule: calculateAsteroidKillExperience({
+                    health: asteroidHealth,
+                    modifiers: {
+                        ...strongerAsteroidModifiers,
+                        asteroidKillXp: true,
+                    },
+                }),
+            },
+            {
+                asteroidHealth: strongerAsteroidHealth,
+                asteroidKillExperience: 0,
+                asteroidKillExperienceWithXpRule: strongerAsteroidHealth,
+            },
+        );
+    });
+
     it('keeps rapid asteroid spawning proportionate to the base interval', () => {
         assert.strictEquals(
             asteroidSpawnIntervalMilliseconds / fasterAsteroidSpawnIntervalMilliseconds,
             3.75,
+        );
+    });
+
+    it('stacks asteroid spawn-rate rules for dense late-game waves', () => {
+        const spawnIntervals = [
+            getAsteroidSpawnInterval({
+                fasterAsteroidSpawning: true,
+            }),
+            getAsteroidSpawnInterval({
+                asteroidCascade: true,
+                fasterAsteroidSpawning: true,
+            }),
+            getAsteroidSpawnInterval({
+                asteroidCascade: true,
+                debrisShower: true,
+                fasterAsteroidSpawning: true,
+            }),
+            getAsteroidSpawnInterval({
+                asteroidCascade: true,
+                debrisShower: true,
+                fasterAsteroidSpawning: true,
+                meteorStorm: true,
+            }),
+        ];
+
+        assert.isTrue(
+            spawnIntervals.slice(1).every((spawnInterval, index) => {
+                return spawnInterval < assertWrap.isDefined(spawnIntervals[index]);
+            }),
         );
     });
 

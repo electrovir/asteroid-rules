@@ -1,6 +1,7 @@
-import {assert} from '@augment-vir/assert';
+import {assert, assertWrap} from '@augment-vir/assert';
+import {selectFrom} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
-import {checkValidShape} from 'object-shape-tester';
+import {checkValidShape, checkWrapValidShape} from 'object-shape-tester';
 import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
 import {createGameSaveState, SavedGameStateVersion, saveStateDbShapes} from './autosave.mod.js';
 
@@ -30,6 +31,39 @@ describe('saved joystick dead zone', () => {
         assert.strictEquals(
             createGameSaveState(createSavedGameState()).joystickDeadZone,
             defaultJoystickDeadZone,
+        );
+    });
+});
+
+describe(createGameSaveState.name, () => {
+    it('loads a partial legacy modifier record without losing level progress', () => {
+        const savedGameState = {
+            modifiers: {
+                allowPlayerCardinalMovement: true,
+                removedModifier: true,
+            },
+            playerLevel: 10,
+            playerLevelExperience: 42,
+        };
+        const validatedSaveState = assertWrap.isDefined(
+            checkWrapValidShape(savedGameState, saveStateDbShapes.saveState.shape, {
+                allowExtraKeys: true,
+            }),
+        );
+
+        assert.deepEquals(
+            selectFrom(createGameSaveState(validatedSaveState), {
+                playerLevel: true,
+                playerLevelExperience: true,
+                modifiers: true,
+            }),
+            {
+                modifiers: {
+                    allowPlayerCardinalMovement: true,
+                },
+                playerLevel: 10,
+                playerLevelExperience: 42,
+            },
         );
     });
 });

@@ -2,6 +2,11 @@ import {type GameModifiers} from './modifiers.js';
 
 export const asteroidSpawnIntervalMilliseconds = 750;
 export const fasterAsteroidSpawnIntervalMilliseconds = 200;
+const fasterAsteroidSpawnRateMultiplier =
+    asteroidSpawnIntervalMilliseconds / fasterAsteroidSpawnIntervalMilliseconds;
+const asteroidCascadeSpawnRateIncrease = 0.5;
+const debrisShowerSpawnRateIncrease = 1;
+const meteorStormSpawnRateIncrease = 1.5;
 export const baseAsteroidHealth = 1;
 export const strongerAsteroidHealth = 5;
 export const baseAsteroidFragmentCount = 2;
@@ -86,9 +91,13 @@ export function getAsteroidSlowMovementSpeedMultiplier(slowRemainingMilliseconds
 }
 
 export function getAsteroidSpawnInterval(modifiers: Readonly<GameModifiers>) {
-    return modifiers.fasterAsteroidSpawning
-        ? fasterAsteroidSpawnIntervalMilliseconds
-        : asteroidSpawnIntervalMilliseconds;
+    const spawnRateMultiplier =
+        (modifiers.fasterAsteroidSpawning ? fasterAsteroidSpawnRateMultiplier : 1) +
+        (modifiers.asteroidCascade ? asteroidCascadeSpawnRateIncrease : 0) +
+        (modifiers.debrisShower ? debrisShowerSpawnRateIncrease : 0) +
+        (modifiers.meteorStorm ? meteorStormSpawnRateIncrease : 0);
+
+    return asteroidSpawnIntervalMilliseconds / spawnRateMultiplier;
 }
 
 export function getAsteroidMovementSpeedMultiplier(modifiers: Readonly<GameModifiers>) {
@@ -140,13 +149,13 @@ export function isPlayerTwoGhostModeEnabled(modifiers: Readonly<GameModifiers>) 
 }
 
 export function getPlayerGunCount(modifiers: Readonly<GameModifiers>) {
-    return !modifiers.allowPlayerForwardGun
-        ? 0
-        : modifiers.triadCannons
-          ? 3
-          : modifiers.allowSecondForwardGun
-            ? 2
-            : 1;
+    return modifiers.allowPlayerForwardGun
+        ? modifiers.triadCannons
+            ? 3
+            : modifiers.allowSecondForwardGun
+              ? 2
+              : 1
+        : 0;
 }
 
 export function getPlayerMovementSpeedMultiplier(modifiers: Readonly<GameModifiers>) {

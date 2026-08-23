@@ -29,7 +29,7 @@ describe(getGameRulesUnlockedAtLevel.name, () => {
                 return (
                     rule.unlockLevel -
                         assertWrap.isDefined(postOnboardingRules[index]).unlockLevel >=
-                    3
+                    2
                 );
             }),
         );

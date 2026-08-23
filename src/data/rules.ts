@@ -104,7 +104,7 @@ export const strongerAsteroidsRule: GameRule = {
     id: 'stronger-asteroids',
     unlockLevel: 14,
     ruleTitle: 'Stronger Asteroids',
-    description: 'Asteroids have more health.',
+    description: 'Asteroids have more health and grant more experience when Asteroid Kill XP is active.',
     effects: {
         strongerAsteroids: true,
     },
@@ -157,6 +157,18 @@ export const heavyRoundsRule: GameRule = {
         heavyRounds: true,
     },
     icon: lucideIcons.Target,
+};
+
+export const asteroidCascadeRule: GameRule = {
+    cost: 2,
+    id: 'asteroid-cascade',
+    unlockLevel: 30,
+    ruleTitle: 'Asteroid Cascade',
+    description: 'Asteroids spawn 50% faster.',
+    effects: {
+        asteroidCascade: true,
+    },
+    icon: lucideIcons.Rocket,
 };
 
 export const rapidFireRule: GameRule = {
@@ -217,6 +229,18 @@ export const asteroidDragRule: GameRule = {
         asteroidDrag: true,
     },
     icon: lucideIcons.Compass,
+};
+
+export const debrisShowerRule: GameRule = {
+    cost: 3,
+    id: 'debris-shower',
+    unlockLevel: 50,
+    ruleTitle: 'Debris Shower',
+    description: 'Asteroids spawn 100% faster.',
+    effects: {
+        debrisShower: true,
+    },
+    icon: lucideIcons.Rocket,
 };
 
 export const controlledDemolitionRule: GameRule = {
@@ -301,6 +325,18 @@ export const homingRoundsRule: GameRule = {
         homingRounds: true,
     },
     icon: lucideIcons.Crosshair,
+};
+
+export const meteorStormRule: GameRule = {
+    cost: 4,
+    id: 'meteor-storm',
+    unlockLevel: 78,
+    ruleTitle: 'Meteor Storm',
+    description: 'Asteroids spawn 150% faster.',
+    effects: {
+        meteorStorm: true,
+    },
+    icon: lucideIcons.Rocket,
 };
 
 export const novaRoundsRule: GameRule = {
@@ -389,11 +425,13 @@ export const allGameRules: GameRule[] = [
     precisionScoringRule,
     afterburnersRule,
     heavyRoundsRule,
+    asteroidCascadeRule,
     rapidFireRule,
     piercingRoundsRule,
     reinforcedHullRule,
     wideShotsRule,
     asteroidDragRule,
+    debrisShowerRule,
     controlledDemolitionRule,
     salvageRightsRule,
     autoTurretRule,
@@ -401,6 +439,7 @@ export const allGameRules: GameRule[] = [
     triadCannonsRule,
     ricochetRoundsRule,
     homingRoundsRule,
+    meteorStormRule,
     novaRoundsRule,
     cryoRoundsRule,
     velocityVolleyRule,

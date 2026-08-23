@@ -1,7 +1,7 @@
 import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
-import {ensureErrorAndPrependMessage} from '@augment-vir/common';
+import {ensureErrorAndPrependMessage, getObjectTypedEntries} from '@augment-vir/common';
 import {type LocalDbClient} from 'local-db-client';
-import {defineShape, enumShape, nullableShape} from 'object-shape-tester';
+import {enumShape, nullableShape, partialShape} from 'object-shape-tester';
 import {createGameModifiers, limitGameRulesToPool} from '../data/game-rule.js';
 import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
 import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
@@ -11,9 +11,50 @@ export enum SavedGameStateVersion {
     Initial = 1,
 }
 
-const savedGameStateShape = defineShape({
+const startingPlayerLevel = 1;
+
+const savedGameModifiersShape = partialShape({
+    allowPlayerCardinalMovement: true,
+    allowPlayerForwardGun: true,
+    allowSecondForwardGun: true,
+    afterburners: true,
+    asteroidCascade: true,
+    asteroidDrag: true,
+    asteroidKillXp: true,
+    asteroidMagnetism: true,
+    autoTurret: true,
+    controlledDemolition: true,
+    cryoRounds: true,
+    debrisShower: true,
+    experienceCombos: true,
+    fasterAsteroidSpawning: true,
+    fractalFrenzy: true,
+    heavyRounds: true,
+    homingRounds: true,
+    meteorStorm: true,
+    novaRounds: true,
+    onlyPlayerOneMenuNavigation: true,
+    phaseDrive: true,
+    piercingRounds: true,
+    precisionScoring: true,
+    playerTwoGhostMode: true,
+    rapidFire: true,
+    reinforcedHull: true,
+    ricochetRounds: true,
+    salvageRights: true,
+    stardustDividend: true,
+    strongerAsteroids: true,
+    timedXp: true,
+    triadCannons: true,
+    twoPlayers: true,
+    velocityVolley: true,
+    wideShots: true,
+});
+
+const savedGameStateShape = partialShape({
     activeRuleIds: [''],
     joystickDeadZone: nullableShape(0),
+    modifiers: savedGameModifiersShape,
     newGameRuleIds: nullableShape(['']),
     playerLevel: 0,
     playerLevelExperience: 0,
@@ -40,7 +81,6 @@ export type AutosaveModState = {
 export const autosaveModName = 'autosave';
 
 export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
-    const startingPlayerLevel = 1;
     const activeRules = getGameRulesUnlockedAtLevel(0);
     const unlockedGameRules = getGameRulesUnlockedAtLevel(startingPlayerLevel);
 
@@ -55,6 +95,23 @@ export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
     };
 }
 
+function getActiveRuleIdsFromModifiers(savedGameState: SavedGameState) {
+    return allGameRules
+        .filter((rule) => {
+            return getObjectTypedEntries(rule.effects).every(
+                ([
+                    modifierName,
+                    modifierValue,
+                ]) => {
+                    return savedGameState.modifiers?.[modifierName] === modifierValue;
+                },
+            );
+        })
+        .map((rule) => {
+            return rule.id;
+        });
+}
+
 export function createGameSaveState(
     savedGameState: SavedGameState | undefined,
 ): AsteroidsSaveState {
@@ -62,18 +119,21 @@ export function createGameSaveState(
         return createDefaultAsteroidsSaveState();
     }
 
+    const playerLevel = savedGameState.playerLevel ?? startingPlayerLevel;
+    const activeRuleIds =
+        savedGameState.activeRuleIds || getActiveRuleIdsFromModifiers(savedGameState);
+
     const unlockedGameRules = allGameRules.filter((rule) => {
         return (
-            savedGameState.unlockedGameRuleIds.includes(rule.id) ||
-            rule.unlockLevel <= savedGameState.playerLevel
+            savedGameState.unlockedGameRuleIds?.includes(rule.id) || rule.unlockLevel <= playerLevel
         );
     });
 
     const activeRules = limitGameRulesToPool({
         gameRules: unlockedGameRules.filter((rule) => {
-            return savedGameState.activeRuleIds.includes(rule.id);
+            return activeRuleIds.includes(rule.id);
         }),
-        maximumRulePool: savedGameState.playerLevel,
+        maximumRulePool: playerLevel,
     });
     const newGameRules = unlockedGameRules.filter((rule) => {
         return (savedGameState.newGameRuleIds || []).includes(rule.id);
@@ -84,8 +144,8 @@ export function createGameSaveState(
         joystickDeadZone: savedGameState.joystickDeadZone ?? defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules,
-        playerLevel: savedGameState.playerLevel,
-        playerLevelExperience: savedGameState.playerLevelExperience,
+        playerLevel,
+        playerLevelExperience: savedGameState.playerLevelExperience ?? 0,
         unlockedGameRules,
     };
 }

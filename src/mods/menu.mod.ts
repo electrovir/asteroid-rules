@@ -46,7 +46,9 @@ function preventPlayerTwoMenuNavigation({
 export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
     modName: 'menu',
     execute({engine, state}) {
-        preventPlayerTwoMenuNavigation({state});
+        preventPlayerTwoMenuNavigation({
+            state,
+        });
 
         if (isOnDebugPage(state.router)) {
             updateMenuState(state, {
