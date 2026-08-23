@@ -7,8 +7,14 @@ const fasterAsteroidSpawnRateMultiplier =
 const asteroidCascadeSpawnRateIncrease = 0.5;
 const debrisShowerSpawnRateIncrease = 1;
 const meteorStormSpawnRateIncrease = 1.5;
+const asteroidArmadaSpawnRateIncrease = 2;
+const asteroidOnslaughtSpawnRateIncrease = 3;
+const escalatingAsteroidSpawnRateIncreasePerMinute = 0.1;
+const maximumEscalatingAsteroidSpawnRateIncrease = 9;
 export const baseAsteroidHealth = 1;
 export const strongerAsteroidHealth = 5;
+const fortifiedAsteroidHealthIncrease = 5;
+const titanAsteroidHealthIncrease = 10;
 export const baseAsteroidFragmentCount = 2;
 export const controlledDemolitionAsteroidFragmentCount = 1;
 export const fractalFrenzyAsteroidFragmentCount = 3;
@@ -65,7 +71,12 @@ export function calculateExperienceMultiplier({
 }
 
 export function getAsteroidHealth(modifiers: Readonly<GameModifiers>) {
-    return modifiers.strongerAsteroids ? strongerAsteroidHealth : baseAsteroidHealth;
+    return (
+        baseAsteroidHealth +
+        (modifiers.strongerAsteroids ? strongerAsteroidHealth - baseAsteroidHealth : 0) +
+        (modifiers.fortifiedAsteroids ? fortifiedAsteroidHealthIncrease : 0) +
+        (modifiers.titanAsteroids ? titanAsteroidHealthIncrease : 0)
+    );
 }
 
 export function getAsteroidFragmentRadius(asteroidRadius: number) {
@@ -90,12 +101,27 @@ export function getAsteroidSlowMovementSpeedMultiplier(slowRemainingMilliseconds
     return slowRemainingMilliseconds ? cryoRoundsAsteroidMovementSpeedMultiplier : 1;
 }
 
-export function getAsteroidSpawnInterval(modifiers: Readonly<GameModifiers>) {
+export function getAsteroidSpawnInterval({
+    missionDurationMilliseconds = 0,
+    modifiers,
+}: Readonly<{
+    missionDurationMilliseconds?: number | undefined;
+    modifiers: Readonly<GameModifiers>;
+}>) {
     const spawnRateMultiplier =
         (modifiers.fasterAsteroidSpawning ? fasterAsteroidSpawnRateMultiplier : 1) +
         (modifiers.asteroidCascade ? asteroidCascadeSpawnRateIncrease : 0) +
+        (modifiers.asteroidArmada ? asteroidArmadaSpawnRateIncrease : 0) +
         (modifiers.debrisShower ? debrisShowerSpawnRateIncrease : 0) +
-        (modifiers.meteorStorm ? meteorStormSpawnRateIncrease : 0);
+        (modifiers.meteorStorm ? meteorStormSpawnRateIncrease : 0) +
+        (modifiers.asteroidOnslaught ? asteroidOnslaughtSpawnRateIncrease : 0) +
+        (modifiers.escalatingAsteroidSpawning
+            ? Math.min(
+                  maximumEscalatingAsteroidSpawnRateIncrease,
+                  (missionDurationMilliseconds / 60_000) *
+                      escalatingAsteroidSpawnRateIncreasePerMinute,
+              )
+            : 0);
 
     return asteroidSpawnIntervalMilliseconds / spawnRateMultiplier;
 }
@@ -144,7 +170,7 @@ export function getPlayerCollisionProtectionCount(modifiers: Readonly<GameModifi
     return modifiers.reinforcedHull ? 1 : 0;
 }
 
-export function isPlayerTwoGhostModeEnabled(modifiers: Readonly<GameModifiers>) {
+export function isPlayerGhostModeEnabled(modifiers: Readonly<GameModifiers>) {
     return !!modifiers.playerTwoGhostMode;
 }
 

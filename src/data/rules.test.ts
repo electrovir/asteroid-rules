@@ -3,6 +3,8 @@ import {describe, it} from '@augment-vir/test';
 import {toggleGameRule} from './game-rule.js';
 import {
     allGameRules,
+    asteroidArmadaRule,
+    escalatingAsteroidSpawningRule,
     getGameRulesUnlockedAtLevel,
     playerTwoMenuNavigationRule,
     timedXpRule,
@@ -61,8 +63,26 @@ describe(getGameRulesUnlockedAtLevel.name, () => {
         );
     });
 
-    it('does not unlock a rule before its unlock level', () => {
-        assert.isFalse(getGameRulesUnlockedAtLevel(99).some((rule) => rule.unlockLevel === 100));
-        assert.isTrue(getGameRulesUnlockedAtLevel(100).some((rule) => rule.unlockLevel === 100));
+    it('unlocks the final asteroid challenge rules at their assigned levels', () => {
+        assert.isFalse(
+            getGameRulesUnlockedAtLevel(asteroidArmadaRule.unlockLevel - 1).includes(
+                asteroidArmadaRule,
+            ),
+        );
+        assert.isTrue(
+            getGameRulesUnlockedAtLevel(asteroidArmadaRule.unlockLevel).includes(
+                asteroidArmadaRule,
+            ),
+        );
+        assert.isFalse(
+            getGameRulesUnlockedAtLevel(escalatingAsteroidSpawningRule.unlockLevel - 1).includes(
+                escalatingAsteroidSpawningRule,
+            ),
+        );
+        assert.isTrue(
+            getGameRulesUnlockedAtLevel(escalatingAsteroidSpawningRule.unlockLevel).includes(
+                escalatingAsteroidSpawningRule,
+            ),
+        );
     });
 });

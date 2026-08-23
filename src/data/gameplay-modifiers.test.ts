@@ -36,7 +36,7 @@ import {
     getTimedExperienceMultiplier,
     heavyRoundsDamageMultiplier,
     homingRoundsTurnRateRadiansPerMillisecond,
-    isPlayerTwoGhostModeEnabled,
+    isPlayerGhostModeEnabled,
     novaRoundsSplashDamage,
     novaRoundsSplashRadiusPixels,
     piercingRoundsPierceCount,
@@ -67,7 +67,9 @@ describe('gameplay modifiers', () => {
                     health: 3,
                     modifiers,
                 }),
-                asteroidSpawnInterval: getAsteroidSpawnInterval(modifiers),
+                asteroidSpawnInterval: getAsteroidSpawnInterval({
+                    modifiers,
+                }),
                 gunCount: getPlayerGunCount(modifiers),
                 shotExperienceCost: getShotExperienceCost(modifiers),
             },
@@ -88,7 +90,9 @@ describe('gameplay modifiers', () => {
                     health: 3,
                     modifiers: {},
                 }),
-                asteroidSpawnInterval: getAsteroidSpawnInterval({}),
+                asteroidSpawnInterval: getAsteroidSpawnInterval({
+                    modifiers: {},
+                }),
                 gunCount: getPlayerGunCount({}),
                 shotExperienceCost: getShotExperienceCost({}),
             },
@@ -140,22 +144,30 @@ describe('gameplay modifiers', () => {
     it('stacks asteroid spawn-rate rules for dense late-game waves', () => {
         const spawnIntervals = [
             getAsteroidSpawnInterval({
-                fasterAsteroidSpawning: true,
+                modifiers: {
+                    fasterAsteroidSpawning: true,
+                },
             }),
             getAsteroidSpawnInterval({
-                asteroidCascade: true,
-                fasterAsteroidSpawning: true,
+                modifiers: {
+                    asteroidCascade: true,
+                    fasterAsteroidSpawning: true,
+                },
             }),
             getAsteroidSpawnInterval({
-                asteroidCascade: true,
-                debrisShower: true,
-                fasterAsteroidSpawning: true,
+                modifiers: {
+                    asteroidCascade: true,
+                    debrisShower: true,
+                    fasterAsteroidSpawning: true,
+                },
             }),
             getAsteroidSpawnInterval({
-                asteroidCascade: true,
-                debrisShower: true,
-                fasterAsteroidSpawning: true,
-                meteorStorm: true,
+                modifiers: {
+                    asteroidCascade: true,
+                    debrisShower: true,
+                    fasterAsteroidSpawning: true,
+                    meteorStorm: true,
+                },
             }),
         ];
 
@@ -163,6 +175,61 @@ describe('gameplay modifiers', () => {
             spawnIntervals.slice(1).every((spawnInterval, index) => {
                 return spawnInterval < assertWrap.isDefined(spawnIntervals[index]);
             }),
+        );
+    });
+
+    it('stacks the final asteroid challenge rules', () => {
+        const modifiers = {
+            asteroidArmada: true,
+            asteroidKillXp: true,
+            asteroidOnslaught: true,
+            fortifiedAsteroids: true,
+            strongerAsteroids: true,
+            titanAsteroids: true,
+        };
+
+        assert.deepEquals(
+            {
+                asteroidHealth: getAsteroidHealth(modifiers),
+                asteroidKillExperience: calculateAsteroidKillExperience({
+                    health: getAsteroidHealth(modifiers),
+                    modifiers,
+                }),
+                asteroidSpawnInterval: getAsteroidSpawnInterval({
+                    modifiers,
+                }),
+            },
+            {
+                asteroidHealth: 20,
+                asteroidKillExperience: 20,
+                asteroidSpawnInterval: 125,
+            },
+        );
+    });
+
+    it('gradually accelerates asteroid spawns over a mission', () => {
+        assert.deepEquals(
+            [
+                0,
+                5 * 60_000,
+                10 * 60_000,
+                90 * 60_000,
+                120 * 60_000,
+            ].map((missionDurationMilliseconds) => {
+                return getAsteroidSpawnInterval({
+                    missionDurationMilliseconds,
+                    modifiers: {
+                        escalatingAsteroidSpawning: true,
+                    },
+                });
+            }),
+            [
+                750,
+                500,
+                375,
+                75,
+                75,
+            ],
         );
     });
 
@@ -271,11 +338,11 @@ describe('gameplay modifiers', () => {
         );
     });
 
-    it('enables player-two ghost mode with the Baby Rule', () => {
+    it('enables player ghost mode with the Baby Rule', () => {
         assert.deepEquals(
             [
-                isPlayerTwoGhostModeEnabled({}),
-                isPlayerTwoGhostModeEnabled({
+                isPlayerGhostModeEnabled({}),
+                isPlayerGhostModeEnabled({
                     playerTwoGhostMode: true,
                 }),
             ],

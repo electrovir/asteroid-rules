@@ -34,7 +34,7 @@ import {
     getPlayerMovementSpeedMultiplier,
     getPlayerShotIntervalMultiplier,
     getShotExperienceCost,
-    isPlayerTwoGhostModeEnabled,
+    isPlayerGhostModeEnabled,
 } from '../data/gameplay-modifiers.js';
 import {type GameModifiers} from '../data/modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
@@ -184,6 +184,7 @@ export function createPlayerBulletParams({
     directionX,
     directionY,
     gunOffset,
+    isAutoTurretBullet = false,
     modifiers,
     playerX,
     playerY,
@@ -191,6 +192,7 @@ export function createPlayerBulletParams({
     directionX: number;
     directionY: number;
     gunOffset: number;
+    isAutoTurretBullet?: boolean | undefined;
     modifiers: Readonly<GameModifiers>;
     playerX: number;
     playerY: number;
@@ -199,7 +201,7 @@ export function createPlayerBulletParams({
     const lateralDirectionY = directionX;
 
     return {
-        color: modifiers.autoTurret ? autoTurretBulletColor : playerBulletColor,
+        color: isAutoTurretBullet ? autoTurretBulletColor : playerBulletColor,
         damage: playerBulletDamage * getPlayerBulletDamageMultiplier(modifiers),
         homingTurnRate: getPlayerBulletHomingTurnRate(modifiers),
         radius: playerBulletRadius * getPlayerBulletRadiusMultiplier(modifiers),
@@ -549,10 +551,7 @@ export class PlayerEntity extends defineEntity({
             this.view.scale.set(1 - animationProgress);
 
             if (!this.deathAnimationRemainingMilliseconds) {
-                if (
-                    this.params.inputPlayerPosition === PlayerPosition['2'] &&
-                    isPlayerTwoGhostModeEnabled(this.state.saveState?.modifiers || {})
-                ) {
+                if (isPlayerGhostModeEnabled(this.state.saveState?.modifiers || {})) {
                     this.enterGhostMode();
                 } else {
                     this.destroy();
@@ -617,12 +616,13 @@ export class PlayerEntity extends defineEntity({
                   targetPosition: autoTurretTarget.params,
               })
             : undefined;
+        const isFireButtonHeld = !!activeBindings?.[PlayerAction.Fire]?.value;
         const gunCount = getPlayerGunCount(modifiers);
         const isFiring =
             !this.isGhostMode &&
             this.state.isPlayerFiringAllowed &&
-            gunCount > 0 &&
-            (!!activeBindings?.[PlayerAction.Fire]?.value || !!autoTurretDirection);
+            isFireButtonHeld &&
+            (gunCount > 0 || !!autoTurretDirection);
 
         this.shotCooldownMilliseconds = isFiring
             ? Math.max(0, this.shotCooldownMilliseconds - msSinceLastUpdate)
@@ -632,47 +632,59 @@ export class PlayerEntity extends defineEntity({
             return;
         }
 
-        const directionX = autoTurretDirection?.x ?? Math.sin(this.view.rotation);
-        const directionY = autoTurretDirection?.y ?? -Math.cos(this.view.rotation);
-
-        if (autoTurretDirection) {
-            const rotation = Math.atan2(directionY, directionX) + Math.PI / 2;
-
-            this.view.rotation = rotation;
-            this.hitbox?.setAngle(rotation);
-        }
+        const directionX = Math.sin(this.view.rotation);
+        const directionY = -Math.cos(this.view.rotation);
 
         await Promise.all(
-            (gunCount === 3
-                ? [
-                      -12,
-                      0,
-                      12,
-                  ]
-                : gunCount === 2
-                  ? [
-                        -8,
-                        8,
-                    ]
-                  : [
-                        0,
-                    ]
-            ).map(async (gunOffset) => {
-                await this.addEntity(
-                    PlayerBulletEntity,
-                    createPlayerBulletParams({
-                        directionX,
-                        directionY,
-                        gunOffset,
-                        modifiers,
-                        playerX: this.params.x,
-                        playerY: this.params.y,
-                    }),
-                );
-            }),
+            (gunCount
+                ? (gunCount === 3
+                      ? [
+                            -12,
+                            0,
+                            12,
+                        ]
+                      : gunCount === 2
+                        ? [
+                              -8,
+                              8,
+                          ]
+                        : [
+                              0,
+                          ]
+                  ).map((gunOffset) => {
+                      return this.addEntity(
+                          PlayerBulletEntity,
+                          createPlayerBulletParams({
+                              directionX,
+                              directionY,
+                              gunOffset,
+                              modifiers,
+                              playerX: this.params.x,
+                              playerY: this.params.y,
+                          }),
+                      );
+                  })
+                : []
+            ).concat(
+                autoTurretDirection
+                    ? this.addEntity(
+                          PlayerBulletEntity,
+                          createPlayerBulletParams({
+                              directionX: autoTurretDirection.x,
+                              directionY: autoTurretDirection.y,
+                              gunOffset: 0,
+                              isAutoTurretBullet: true,
+                              modifiers,
+                              playerX: this.params.x,
+                              playerY: this.params.y,
+                          }),
+                      )
+                    : [],
+            ),
         );
         queueMissionExperience({
-            experienceSpent: getShotExperienceCost(modifiers) * gunCount,
+            experienceSpent:
+                getShotExperienceCost(modifiers) * (gunCount + (autoTurretDirection ? 1 : 0)),
             gameState: this.state,
         });
         playGameAudio(this.state, GameAudio.Shoot);

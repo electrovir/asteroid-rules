@@ -55,7 +55,7 @@ export const playerTwoMenuNavigationRule: GameRule = {
     unlockLevel: 5,
     ruleTitle: 'Baby Rule',
     description:
-        'Only player one can navigate menus. After dying, player two becomes a ghost that can fly but not fire.',
+        'Only player one can navigate menus. After dying, players become ghosts that can fly but not fire.',
     effects: {
         onlyPlayerOneMenuNavigation: true,
         playerTwoGhostMode: true,
@@ -273,7 +273,7 @@ export const autoTurretRule: GameRule = {
     id: 'auto-turret',
     unlockLevel: 60,
     ruleTitle: 'Auto Turret',
-    description: 'Player guns automatically aim and fire cyan rounds at asteroids.',
+    description: 'When the player fires, an extra round targets the nearest asteroid.',
     effects: {
         autoTurret: true,
     },
@@ -412,6 +412,68 @@ export const stardustDividendRule: GameRule = {
     icon: lucideIcons.Star,
 };
 
+export const asteroidArmadaRule: GameRule = {
+    cost: 4,
+    id: 'asteroid-armada',
+    unlockLevel: 104,
+    ruleTitle: 'Asteroid Armada',
+    description: 'Asteroids spawn 200% faster.',
+    effects: {
+        asteroidArmada: true,
+    },
+    icon: lucideIcons.Rocket,
+};
+
+export const fortifiedAsteroidsRule: GameRule = {
+    cost: 5,
+    id: 'fortified-asteroids',
+    unlockLevel: 108,
+    ruleTitle: 'Fortified Asteroids',
+    description:
+        'Asteroids gain 5 health and grant more experience when Asteroid Kill XP is active.',
+    effects: {
+        fortifiedAsteroids: true,
+    },
+    icon: lucideIcons.Shield,
+};
+
+export const asteroidOnslaughtRule: GameRule = {
+    cost: 5,
+    id: 'asteroid-onslaught',
+    unlockLevel: 112,
+    ruleTitle: 'Asteroid Onslaught',
+    description: 'Asteroids spawn 300% faster.',
+    effects: {
+        asteroidOnslaught: true,
+    },
+    icon: lucideIcons.Rocket,
+};
+
+export const titanAsteroidsRule: GameRule = {
+    cost: 6,
+    id: 'titan-asteroids',
+    unlockLevel: 116,
+    ruleTitle: 'Titan Asteroids',
+    description:
+        'Asteroids gain 10 health and grant more experience when Asteroid Kill XP is active.',
+    effects: {
+        titanAsteroids: true,
+    },
+    icon: lucideIcons.Shield,
+};
+
+export const escalatingAsteroidSpawningRule: GameRule = {
+    cost: 5,
+    id: 'escalating-asteroid-spawning',
+    unlockLevel: 120,
+    ruleTitle: 'Escalating Threat',
+    description: 'Asteroid spawns gradually accelerate over the course of each mission.',
+    effects: {
+        escalatingAsteroidSpawning: true,
+    },
+    icon: lucideIcons.Rocket,
+};
+
 export const allGameRules: GameRule[] = [
     playerCardinalMovementRule,
     timedXpRule,
@@ -447,6 +509,11 @@ export const allGameRules: GameRule[] = [
     fractalFrenzyRule,
     asteroidMagnetismRule,
     stardustDividendRule,
+    asteroidArmadaRule,
+    fortifiedAsteroidsRule,
+    asteroidOnslaughtRule,
+    titanAsteroidsRule,
+    escalatingAsteroidSpawningRule,
 ];
 
 export function getGameRulesUnlockedAtLevel(level: number) {

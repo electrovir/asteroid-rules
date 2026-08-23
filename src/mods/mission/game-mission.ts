@@ -76,9 +76,9 @@ export async function ensureGameMission({
                 y: pixiApplication.screen.height / 2,
             }),
         };
-        const asteroidSpawnInterval = getAsteroidSpawnInterval(
-            gameState.saveState?.modifiers || {},
-        );
+        const asteroidSpawnInterval = getAsteroidSpawnInterval({
+            modifiers: gameState.saveState?.modifiers || {},
+        });
 
         gameState.missionState = {
             experienceEarned: 0,
@@ -125,7 +125,10 @@ export async function updateMissionAsteroidSpawning({
         return;
     }
 
-    const asteroidSpawnInterval = getAsteroidSpawnInterval(gameState.saveState?.modifiers || {});
+    const asteroidSpawnInterval = getAsteroidSpawnInterval({
+        missionDurationMilliseconds: currentTime - missionState.missionStartedAt,
+        modifiers: gameState.saveState?.modifiers || {},
+    });
 
     const asteroidSpawnCount = calculateAsteroidSpawnCount({
         currentTime,

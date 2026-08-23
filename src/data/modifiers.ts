@@ -7,12 +7,16 @@ export type GameModifiers = Partial<{
     asteroidKillXp: boolean;
     asteroidDrag: boolean;
     asteroidMagnetism: boolean;
+    asteroidArmada: boolean;
+    asteroidOnslaught: boolean;
     autoTurret: boolean;
     controlledDemolition: boolean;
     cryoRounds: boolean;
     debrisShower: boolean;
+    escalatingAsteroidSpawning: boolean;
     experienceCombos: boolean;
     fasterAsteroidSpawning: boolean;
+    fortifiedAsteroids: boolean;
     fractalFrenzy: boolean;
     heavyRounds: boolean;
     homingRounds: boolean;
@@ -31,6 +35,7 @@ export type GameModifiers = Partial<{
     strongerAsteroids: boolean;
     twoPlayers: boolean;
     timedXp: boolean;
+    titanAsteroids: boolean;
     triadCannons: boolean;
     velocityVolley: boolean;
     wideShots: boolean;
