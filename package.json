@@ -30,15 +30,15 @@
         "test:spelling": "virmator spellcheck"
     },
     "dependencies": {
-        "@antha/asset": "^0.4.1",
-        "@antha/audio": "^0.4.1",
-        "@antha/engine": "^0.4.1",
-        "@antha/entity-2d": "^0.4.1",
-        "@antha/fps": "^0.4.1",
-        "@antha/graphics-2d": "^0.4.1",
-        "@antha/input": "^0.4.1",
-        "@antha/multiplayer-p2p-lock-step": "^0.4.1",
-        "@antha/util": "^0.4.1",
+        "@antha/asset": "^0.4.2",
+        "@antha/audio": "^0.4.2",
+        "@antha/engine": "^0.4.2",
+        "@antha/entity-2d": "^0.4.2",
+        "@antha/fps": "^0.4.2",
+        "@antha/graphics-2d": "^0.4.2",
+        "@antha/input": "^0.4.2",
+        "@antha/multiplayer-p2p-lock-step": "^0.4.2",
+        "@antha/util": "^0.4.2",
         "@augment-vir/assert": "^32.2.3",
         "@augment-vir/common": "^32.2.3",
         "@augment-vir/web": "^32.2.3",
@@ -50,6 +50,7 @@
         "object-shape-tester": "^6.15.0",
         "spa-router-vir": "^6.8.0",
         "theme-vir": "^28.25.1",
+        "url-vir": "^2.2.1",
         "vira": "^31.31.5"
     },
     "devDependencies": {

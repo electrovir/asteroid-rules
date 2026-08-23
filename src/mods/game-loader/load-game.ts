@@ -1,4 +1,5 @@
 import {defineAsset} from '@antha/asset';
+import {createAnthaAudioMod, type AudioPlayer} from '@antha/audio';
 import {type AnthaEngine} from '@antha/engine';
 import {createAnthaFpsMod} from '@antha/fps';
 import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
@@ -11,6 +12,7 @@ import {ensureErrorAndPrependMessage} from '@augment-vir/common';
 import {css} from 'element-vir';
 import {LocalDbClient} from 'local-db-client';
 import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
+import {gameAudioFilesToLoad} from '../../data/game-audio.js';
 import {
     updateMenuState,
     type AsteroidsGameEngineState,
@@ -26,6 +28,7 @@ import {
     saveStateDbShapes,
     type SaveStateDbClient,
 } from '../autosave.mod.js';
+import {gameAudioMod} from '../game-audio.mod.js';
 import {gameEntityMod} from '../game-entity.mod.js';
 import {isOnDebugPage, menuMod} from '../menu.mod.js';
 import {missionMod} from '../mission/mission.mod.js';
@@ -74,6 +77,25 @@ export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
     },
 });
 
+export function createGameAudioAsset({audioPlayer}: Readonly<{audioPlayer: AudioPlayer}>) {
+    return defineAsset({
+        name: 'Game audio',
+        maxProgress: gameAudioFilesToLoad.length,
+        async load({incrementProgressCallback}) {
+            await audioPlayer.loadFiles(gameAudioFilesToLoad, {
+                progressCallback() {
+                    incrementProgressCallback();
+                },
+                serial: true,
+            });
+
+            return {
+                value: undefined,
+            };
+        },
+    });
+}
+
 export function loadGame({
     engine,
     router,
@@ -105,6 +127,7 @@ export function loadGame({
                 background: 'black',
             },
         }),
+        createAnthaAudioMod(),
         createAnthaReadRawInputMod(),
         createAnthaInputBindingsMod<GameInputAction>(),
         menuMod,
@@ -115,6 +138,7 @@ export function loadGame({
         }),
         gameEntityMod,
         missionMod,
+        gameAudioMod,
         ...(isDeployed
             ? []
             : [

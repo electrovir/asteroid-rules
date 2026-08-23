@@ -65,6 +65,13 @@ describe('gameplay modifiers', () => {
         );
     });
 
+    it('keeps rapid asteroid spawning proportionate to the base interval', () => {
+        assert.strictEquals(
+            asteroidSpawnIntervalMilliseconds / fasterAsteroidSpawnIntervalMilliseconds,
+            3.75,
+        );
+    });
+
     it('increases earned experience as a combo lasts longer', () => {
         assert.deepEquals(
             [

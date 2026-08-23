@@ -17,6 +17,7 @@ import {StableMath, stableRandom} from '@antha/util';
 import {clamp, createArray, type SeededRandom} from '@augment-vir/common';
 import {Polygon} from 'detect-collisions';
 import {defineShape, enumShape} from 'object-shape-tester';
+import {GameAudio, playGameAudio} from '../data/game-audio.js';
 import {PlayerPosition, queueMissionExperience} from '../data/game-state.js';
 import {getPlayerGunCount, getShotExperienceCost} from '../data/gameplay-modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
@@ -325,6 +326,8 @@ export class PlayerEntity extends defineEntity({
         }
 
         this.deathAnimationRemainingMilliseconds = playerDeathAnimationDurationMilliseconds;
+        playGameAudio(this.state, GameAudio.PlayerDeath);
+        playGameAudio(this.state, GameAudio.PlayerDeathMusic);
     }
 
     protected async spawnExplosionParticles({
@@ -464,6 +467,7 @@ export class PlayerEntity extends defineEntity({
             experienceSpent: getShotExperienceCost(modifiers) * gunCount,
             gameState: this.state,
         });
+        playGameAudio(this.state, GameAudio.Shoot);
         this.shotCooldownMilliseconds = playerShotIntervalMilliseconds;
     }
 }

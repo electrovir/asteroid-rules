@@ -1,6 +1,7 @@
 import {nav} from '@antha/input';
-import {css, defineElement, html, nothing} from 'element-vir';
+import {css, defineElement, html, nothing, testId} from 'element-vir';
 import {noNativeSpacing, viraTheme} from 'vira';
+import {GameAudio, gameAudioFiles} from '../../data/game-audio.js';
 import {updateMenuState, type AsteroidsGameEngineState} from '../../data/game-state.js';
 import {resetMission} from '../../mods/mission/reset-mission.js';
 import {VirGameButton} from './vir-game-button.element.js';
@@ -10,6 +11,9 @@ export const VirGameOverMenu = defineElement<{
     gameState: Partial<AsteroidsGameEngineState>;
 }>()({
     tagName: 'vir-game-over-menu',
+    testIds: [
+        'terminateMissionButton',
+    ],
     styles: css`
         :host {
             align-items: center;
@@ -42,7 +46,7 @@ export const VirGameOverMenu = defineElement<{
             color: ${viraTheme.colors['vira-green-foreground-header'].foreground.value};
         }
     `,
-    render({inputs}) {
+    render({inputs, testIds}) {
         const navController = inputs.gameState.navController;
 
         if (!navController) {
@@ -56,11 +60,15 @@ export const VirGameOverMenu = defineElement<{
                 <span class="xp">${inputs.experienceEarned} XP.</span>
             </p>
             <${VirGameButton}
+                ${testId(testIds.terminateMissionButton)}
                 ${nav(navController, {
                     autoFocus: true,
                     listeners: {
                         activate: ({enabled}) => {
                             if (enabled) {
+                                inputs.gameState.audioPlayer?.stopFile(
+                                    gameAudioFiles[GameAudio.PlayerDeathMusic],
+                                );
                                 resetMission({
                                     gameState: inputs.gameState,
                                 });

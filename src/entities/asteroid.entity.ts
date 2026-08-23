@@ -10,7 +10,8 @@ import {StableMath, stableRandom, stableRandomInteger} from '@antha/util';
 import {createArray, type SeededRandom} from '@augment-vir/common';
 import {Polygon} from 'detect-collisions';
 import {defineShape} from 'object-shape-tester';
-import {queueMissionExperience} from '../data/game-state.js';
+import {GameAudio, playGameAudio} from '../data/game-audio.js';
+import {queueMissionExperience, type FullGameState} from '../data/game-state.js';
 import {
     asteroidSpawnIntervalMilliseconds,
     calculateAsteroidKillExperience,
@@ -29,6 +30,54 @@ const asteroidSpeedMaxPixelsPerMillisecond = 0.07;
 const asteroidSpeedMinPixelsPerMillisecond = 0.04;
 const asteroidSpinSpeedMaxRadiansPerMillisecond = 0.0003;
 const asteroidSpinSpeedMinRadiansPerMillisecond = 0.0001;
+
+const asteroidCollisionAudio: ReadonlyArray<GameAudio> = [
+    GameAudio.AsteroidCollisionCrash,
+    GameAudio.AsteroidCollisionMetalOne,
+    GameAudio.AsteroidCollisionMetalTwo,
+    GameAudio.AsteroidCollisionMetalThree,
+];
+
+const asteroidDeathAudio: ReadonlyArray<GameAudio> = [
+    GameAudio.AsteroidDeath,
+    GameAudio.AsteroidDeathExplosionOne,
+    GameAudio.AsteroidDeathExplosionTwo,
+    GameAudio.AsteroidDeathExplosionThree,
+];
+
+export function playAsteroidCollisionAudio(gameState: FullGameState) {
+    const random = gameState.missionState?.seededRandom;
+
+    playGameAudio(
+        gameState,
+        random
+            ? (asteroidCollisionAudio[
+                  stableRandomInteger({
+                      random,
+                      min: 0,
+                      max: asteroidCollisionAudio.length - 1,
+                  })
+              ] ?? GameAudio.AsteroidCollisionCrash)
+            : GameAudio.AsteroidCollisionCrash,
+    );
+}
+
+export function playAsteroidDeathAudio(gameState: FullGameState) {
+    const random = gameState.missionState?.seededRandom;
+
+    playGameAudio(
+        gameState,
+        random
+            ? (asteroidDeathAudio[
+                  stableRandomInteger({
+                      random,
+                      min: 0,
+                      max: asteroidDeathAudio.length - 1,
+                  })
+              ] ?? GameAudio.AsteroidDeath)
+            : GameAudio.AsteroidDeath,
+    );
+}
 
 export function calculateAsteroidSpawnCount({
     currentTime,
@@ -291,6 +340,7 @@ export class AsteroidEntity extends defineEntity({
 
         this.destroy();
         const random = this.state.missionState?.seededRandom;
+        playAsteroidDeathAudio(this.state);
 
         if (random && this.params.radius > minimumAsteroidRadius) {
             await createArray(asteroidFragmentCount, async (fragmentIndex) => {
@@ -355,6 +405,7 @@ export class AsteroidEntity extends defineEntity({
         this.params.y = StableMath.round(this.params.y - separationY);
         otherEntity.params.x = StableMath.round(otherEntity.params.x + separationX);
         otherEntity.params.y = StableMath.round(otherEntity.params.y + separationY);
+        playAsteroidCollisionAudio(this.state);
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {

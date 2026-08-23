@@ -1,4 +1,5 @@
 import {type AnthaAssetModState} from '@antha/asset';
+import {type AnthaAudioState} from '@antha/audio';
 import {type AnthaEntity2dModState} from '@antha/entity-2d';
 import {type AnthaInputBindingsModState, type MenuNavModState} from '@antha/input';
 import {check} from '@augment-vir/assert';
@@ -108,6 +109,7 @@ export type FullGameState = {
           }
         | undefined;
 } & AnthaInputBindingsModState<GameInputAction> &
+    AnthaAudioState &
     AnthaAssetModState &
     MenuNavModState;
 

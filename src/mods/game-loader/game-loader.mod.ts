@@ -104,10 +104,12 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
             const entityStore = state.entityStore;
             const gameModules = state.gameModules;
             const gameAssetLoadSession = state.gameAssetLoadSession;
+            const audioPlayer = state.audioPlayer;
 
             if (
                 state.hasStartedLoadingGameAssets ||
                 !assetLoader ||
+                !audioPlayer ||
                 !entityStore ||
                 !gameModules ||
                 !gameAssetLoadSession
@@ -124,6 +126,9 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
                             gameModules.PlayerEntity,
                         ],
                         otherAssets: [
+                            gameModules.createGameAudioAsset({
+                                audioPlayer,
+                            }),
                             gameModules.gameSaveStateAsset,
                         ],
                     },

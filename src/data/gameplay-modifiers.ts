@@ -1,7 +1,7 @@
 import {type GameModifiers} from './modifiers.js';
 
-export const asteroidSpawnIntervalMilliseconds = 1500;
-export const fasterAsteroidSpawnIntervalMilliseconds = 400;
+export const asteroidSpawnIntervalMilliseconds = 750;
+export const fasterAsteroidSpawnIntervalMilliseconds = 200;
 export const baseAsteroidHealth = 1;
 export const strongerAsteroidHealth = 5;
 export const minimumAsteroidRadius = 18;

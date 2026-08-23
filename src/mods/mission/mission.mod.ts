@@ -2,6 +2,7 @@ import {defineAnthaMod} from '@antha/engine';
 import {StableMath} from '@antha/util';
 import {getObjectTypedValues} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
+import {GameAudio, playGameAudio} from '../../data/game-audio.js';
 import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
 import {calculateExperienceMultiplier} from '../../data/gameplay-modifiers.js';
 import {PlayerAction} from '../../data/player-action.js';
@@ -154,6 +155,10 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
                 newGameRules: saveState.newGameRules.concat(newlyUnlockedRules),
                 unlockedGameRules: saveState.unlockedGameRules.concat(newlyUnlockedRules),
             };
+
+            if (newlyUnlockedRules.length) {
+                playGameAudio(state, GameAudio.RuleUnlocked);
+            }
         }
 
         state.missionState = {
