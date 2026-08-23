@@ -1,7 +1,11 @@
 import {type AnthaAssetModState} from '@antha/asset';
 import {type AnthaAudioState} from '@antha/audio';
 import {type AnthaEntity2dModState} from '@antha/entity-2d';
-import {type AnthaInputBindingsModState, type MenuNavModState} from '@antha/input';
+import {
+    type AnthaInputBindingsModState,
+    type InputDeviceHandler,
+    type MenuNavModState,
+} from '@antha/input';
 import {check} from '@augment-vir/assert';
 import {
     mapObject,
@@ -26,6 +30,7 @@ export type PlayerPosition = Values<typeof PlayerPosition>;
 
 export type AsteroidsSaveState = {
     activeRules: GameRule[];
+    joystickDeadZone: number;
     modifiers: GameModifiers;
     newGameRules: GameRule[];
     unlockedGameRules: GameRule[];
@@ -111,7 +116,9 @@ export type FullGameState = {
 } & AnthaInputBindingsModState<GameInputAction> &
     AnthaAudioState &
     AnthaAssetModState &
-    MenuNavModState;
+    MenuNavModState & {
+        deviceHandler: Pick<InputDeviceHandler, 'globalDeadZone'>;
+    };
 
 export function queueMissionExperience({
     experienceGained = 0,

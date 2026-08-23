@@ -49,6 +49,35 @@ function handleMainMenu({
     }
 }
 
+function applyJoystickDeadZone({
+    gameState,
+}: Readonly<{
+    gameState: Partial<AsteroidsGameEngineState>;
+}>) {
+    if (!gameState.deviceHandler || !gameState.saveState) {
+        return;
+    }
+
+    gameState.deviceHandler.globalDeadZone = gameState.saveState.joystickDeadZone;
+}
+
+function completeGameSaveStateLoading({
+    gameAssetLoadSession,
+    gameState,
+}: Readonly<{
+    gameAssetLoadSession: AssetLoadSession;
+    gameState: Partial<AsteroidsGameEngineState & AutosaveModState>;
+}>) {
+    applyJoystickDeadZone({
+        gameState,
+    });
+    handleMainMenu({
+        gameState,
+    });
+    gameState.hasFinishedLoadingSaveState = true;
+    gameAssetLoadSession.complete();
+}
+
 export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>) {
     return defineAnthaMod<AsteroidsGameEngineState & GameLoaderModState & AutosaveModState>({
         initState: {
@@ -65,24 +94,12 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
             if (!state.hasLoadedGameModules) {
                 if (!state.hasStartedLoadingGameModules && assetLoader) {
                     state.hasStartedLoadingGameModules = true;
-                    const gameAssetLoadSession = assetLoader.createLoadSession();
-                    state.gameAssetLoadSession = gameAssetLoadSession;
 
                     void assetLoader
-                        .bulkLoadAssets(
-                            [
-                                gameModulesAsset,
-                            ],
-                            {
-                                doNotUnload: true,
-                                loadSession: gameAssetLoadSession,
-                            },
-                        )
-                        .then(async () => {
-                            const gameModules = await assetLoader.loadIndividualAsset({
-                                asset: gameModulesAsset,
-                            });
-
+                        .loadIndividualAsset({
+                            asset: gameModulesAsset,
+                        })
+                        .then((gameModules) => {
                             state.gameModules = gameModules;
                             state.hasLoadedGameModules = true;
                             gameModules.loadGame({
@@ -91,7 +108,6 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
                             });
                         })
                         .catch((error: unknown) => {
-                            gameAssetLoadSession.complete();
                             engine.log.error(
                                 ensureErrorAndPrependMessage(error, 'Failed to load game code.'),
                             );
@@ -103,7 +119,6 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
 
             const entityStore = state.entityStore;
             const gameModules = state.gameModules;
-            const gameAssetLoadSession = state.gameAssetLoadSession;
             const audioPlayer = state.audioPlayer;
 
             if (
@@ -111,13 +126,14 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
                 !assetLoader ||
                 !audioPlayer ||
                 !entityStore ||
-                !gameModules ||
-                !gameAssetLoadSession
+                !gameModules
             ) {
                 return;
             }
 
             state.hasStartedLoadingGameAssets = true;
+            const gameAssetLoadSession = assetLoader.createLoadSession();
+            state.gameAssetLoadSession = gameAssetLoadSession;
 
             void entityStore
                 .loadEntityAssets(
@@ -148,19 +164,17 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
 
                     state.localDbClient = loadedSaveState.localDbClient;
                     state.saveState = loadedSaveState.saveState;
-                    handleMainMenu({
+                    completeGameSaveStateLoading({
+                        gameAssetLoadSession,
                         gameState: state,
                     });
-                    state.hasFinishedLoadingSaveState = true;
-                    gameAssetLoadSession.complete();
                 })
                 .catch((error: unknown) => {
-                    state.hasFinishedLoadingSaveState = true;
                     state.saveState = gameModules.createDefaultAsteroidsSaveState();
-                    handleMainMenu({
+                    completeGameSaveStateLoading({
+                        gameAssetLoadSession,
                         gameState: state,
                     });
-                    gameAssetLoadSession.complete();
                     engine.log.error(
                         ensureErrorAndPrependMessage(error, 'Failed to load game save state.'),
                     );

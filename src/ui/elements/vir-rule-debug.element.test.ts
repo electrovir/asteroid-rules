@@ -19,7 +19,7 @@ function getPauseMenuButtons(pauseMenuElement: Readonly<HTMLElement>) {
         pauseMenuElement.shadowRoot?.querySelectorAll<HTMLElement>(VirGameButton.tagName) || [],
     );
 
-    assert.isLengthExactly(buttons, 4);
+    assert.isLengthExactly(buttons, 6);
 
     return buttons;
 }
@@ -56,6 +56,7 @@ function createGameState({
         router,
         saveState: {
             activeRules: [],
+            joystickDeadZone: 0.01,
             modifiers: {},
             newGameRules: [],
             playerLevel: 1,
@@ -70,6 +71,7 @@ function createRestrictedSaveState() {
         activeRules: [
             playerCardinalMovementRule,
         ],
+        joystickDeadZone: 0.01,
         modifiers: {
             allowPlayerCardinalMovement: true,
         },
@@ -243,12 +245,34 @@ describe(VirRuleDebug.tagName, () => {
 
             const [
                 resumeButton,
+                decreaseJoystickDeadZoneButton,
+                increaseJoystickDeadZoneButton,
                 debugButton,
                 restartMissionButton,
                 endMissionButton,
             ] = getPauseMenuButtons(pauseMenuElement);
 
             assert.strictEquals(navController.currentNavEntry?.entry.element, resumeButton);
+
+            navController.navigate({
+                allowWrapping: true,
+                blockPerpendicularNavigation: true,
+                direction: NavDirection.Down,
+            });
+            assert.strictEquals(
+                navController.currentNavEntry.entry.element,
+                decreaseJoystickDeadZoneButton,
+            );
+
+            navController.navigate({
+                allowWrapping: true,
+                blockPerpendicularNavigation: true,
+                direction: NavDirection.Right,
+            });
+            assert.strictEquals(
+                navController.currentNavEntry.entry.element,
+                increaseJoystickDeadZoneButton,
+            );
 
             navController.navigate({
                 allowWrapping: true,

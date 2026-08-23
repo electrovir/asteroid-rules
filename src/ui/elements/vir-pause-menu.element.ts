@@ -1,7 +1,8 @@
 import {nav} from '@antha/input';
 import {listenToObject} from '@antha/util';
-import {type EmptyFunction} from '@augment-vir/common';
+import {clamp, type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, html, nothing, testId} from 'element-vir';
+import {noNativeSpacing} from 'vira';
 import {
     checkIfMainMenuAllowed,
     updateMenuState,
@@ -9,15 +10,47 @@ import {
     type FullGameState,
 } from '../../data/game-state.js';
 import {isDeployed} from '../../data/is-deployed.js';
+import {defaultJoystickDeadZone, joystickDeadZoneStep} from '../../data/joystick-dead-zone.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 import {resetMission} from '../../mods/mission/reset-mission.js';
 import {VirGameButton} from './vir-game-button.element.js';
+
+function adjustJoystickDeadZone({
+    adjustment,
+    gameState,
+}: Readonly<{
+    adjustment: number;
+    gameState: Partial<AsteroidsGameEngineState>;
+}>) {
+    const joystickDeadZone = clamp(
+        (gameState.deviceHandler?.globalDeadZone ??
+            gameState.saveState?.joystickDeadZone ??
+            defaultJoystickDeadZone) + adjustment,
+        {
+            min: defaultJoystickDeadZone,
+            max: 1,
+        },
+    );
+
+    if (gameState.deviceHandler) {
+        gameState.deviceHandler.globalDeadZone = joystickDeadZone;
+    }
+
+    if (gameState.saveState) {
+        gameState.saveState = {
+            ...gameState.saveState,
+            joystickDeadZone,
+        };
+    }
+}
 
 export const VirPauseMenu = defineElement<{
     gameState: Partial<AsteroidsGameEngineState>;
 }>()({
     tagName: 'vir-pause-menu',
     testIds: [
+        'decreaseJoystickDeadZoneButton',
+        'increaseJoystickDeadZoneButton',
         'restartMissionButton',
         'endMissionButton',
     ],
@@ -63,6 +96,23 @@ export const VirPauseMenu = defineElement<{
                 flex-direction: column;
                 gap: 8px;
             }
+
+            .joystick-dead-zone {
+                align-items: center;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .dead-zone-buttons {
+                display: flex;
+                gap: 8px;
+            }
+
+            .joystick-dead-zone p {
+                ${noNativeSpacing}
+                font-size: 18px;
+            }
         `;
     },
     init({host, inputs, updateState}) {
@@ -84,7 +134,7 @@ export const VirPauseMenu = defineElement<{
     cleanup({state}) {
         state.cleanup?.();
     },
-    render({inputs, state, testIds}) {
+    render({host, inputs, state, testIds}) {
         const navController = inputs.gameState.navController;
         const router = inputs.gameState.router;
         const mainMenuAllowed = checkIfMainMenuAllowed({
@@ -115,12 +165,64 @@ export const VirPauseMenu = defineElement<{
                 >
                     Resume
                 </${VirGameButton}>
+                <div class="joystick-dead-zone">
+                    <p>
+                        Joystick Dead Zone:
+                        ${Math.round(
+                            (inputs.gameState.deviceHandler?.globalDeadZone ??
+                                inputs.gameState.saveState?.joystickDeadZone ??
+                                defaultJoystickDeadZone) * 100,
+                        )}%
+                    </p>
+                    <div class="dead-zone-buttons">
+                        <${VirGameButton}
+                            ${testId(testIds.decreaseJoystickDeadZoneButton)}
+                            ${nav(navController, {
+                                x: 0,
+                                y: 1,
+                                listeners: {
+                                    activate: ({enabled}) => {
+                                        if (enabled) {
+                                            adjustJoystickDeadZone({
+                                                adjustment: -joystickDeadZoneStep,
+                                                gameState: inputs.gameState,
+                                            });
+                                            host.requestUpdate();
+                                        }
+                                    },
+                                },
+                            })}
+                        >
+                            -
+                        </${VirGameButton}>
+                        <${VirGameButton}
+                            ${testId(testIds.increaseJoystickDeadZoneButton)}
+                            ${nav(navController, {
+                                y: 1,
+                                x: 1,
+                                listeners: {
+                                    activate: ({enabled}) => {
+                                        if (enabled) {
+                                            adjustJoystickDeadZone({
+                                                adjustment: joystickDeadZoneStep,
+                                                gameState: inputs.gameState,
+                                            });
+                                            host.requestUpdate();
+                                        }
+                                    },
+                                },
+                            })}
+                        >
+                            +
+                        </${VirGameButton}>
+                    </div>
+                </div>
                 ${isDeployed
                     ? nothing
                     : html`
                           <${VirGameButton}
                               ${nav(navController, {
-                                  y: 1,
+                                  y: 2,
                                   listeners: {
                                       activate: ({enabled}) => {
                                           if (enabled) {
@@ -139,7 +241,7 @@ export const VirPauseMenu = defineElement<{
                 <${VirGameButton}
                     ${testId(testIds.restartMissionButton)}
                     ${nav(navController, {
-                        y: isDeployed ? 1 : 2,
+                        y: isDeployed ? 2 : 3,
                         listeners: {
                             activate({enabled}) {
                                 if (enabled) {
@@ -159,7 +261,7 @@ export const VirPauseMenu = defineElement<{
                           <${VirGameButton}
                               ${testId(testIds.endMissionButton)}
                               ${nav(navController, {
-                                  y: isDeployed ? 2 : 3,
+                                  y: isDeployed ? 3 : 4,
                                   listeners: {
                                       activate({enabled}) {
                                           if (enabled) {

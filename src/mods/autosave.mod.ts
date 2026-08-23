@@ -4,6 +4,7 @@ import {type LocalDbClient} from 'local-db-client';
 import {defineShape, enumShape, nullableShape} from 'object-shape-tester';
 import {createGameModifiers, limitGameRulesToPool} from '../data/game-rule.js';
 import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
+import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
 import {allGameRules, getGameRulesUnlockedAtLevel} from '../data/rules.js';
 
 export enum SavedGameStateVersion {
@@ -12,6 +13,7 @@ export enum SavedGameStateVersion {
 
 const savedGameStateShape = defineShape({
     activeRuleIds: [''],
+    joystickDeadZone: nullableShape(0),
     newGameRuleIds: nullableShape(['']),
     playerLevel: 0,
     playerLevelExperience: 0,
@@ -44,6 +46,7 @@ export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
 
     return {
         activeRules,
+        joystickDeadZone: defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules: [],
         playerLevel: startingPlayerLevel,
@@ -78,6 +81,7 @@ export function createGameSaveState(
 
     return {
         activeRules,
+        joystickDeadZone: savedGameState.joystickDeadZone ?? defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules,
         playerLevel: savedGameState.playerLevel,
@@ -88,6 +92,7 @@ export function createGameSaveState(
 
 function createSavedGameState({
     activeRules,
+    joystickDeadZone,
     newGameRules,
     playerLevel,
     playerLevelExperience,
@@ -95,6 +100,7 @@ function createSavedGameState({
 }: AsteroidsSaveState): SavedGameState {
     return {
         activeRuleIds: activeRules.map((rule) => rule.id),
+        joystickDeadZone,
         newGameRuleIds: newGameRules.map((rule) => rule.id),
         playerLevel,
         playerLevelExperience,

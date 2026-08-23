@@ -5,12 +5,14 @@ import {NavController, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
 import {type GameRule} from '../../data/game-rule.js';
 import {type FullGameState} from '../../data/game-state.js';
+import {defaultJoystickDeadZone, joystickDeadZoneStep} from '../../data/joystick-dead-zone.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
 import {allGameRules, playerCardinalMovementRule} from '../../data/rules.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirPauseMenu} from './vir-pause-menu.element.js';
 
 type TestGameState = {
+    deviceHandler: Pick<FullGameState['deviceHandler'], 'globalDeadZone'>;
     menuState: FullGameState['menuState'];
     missionState: NonNullable<FullGameState['missionState']> | undefined;
     navController: NavController;
@@ -28,6 +30,9 @@ function createGameState({
     unlockedGameRules: ReadonlyArray<GameRule>;
 }>): TestGameState {
     return {
+        deviceHandler: {
+            globalDeadZone: defaultJoystickDeadZone,
+        },
         menuState: {
             pause: true,
         },
@@ -46,6 +51,7 @@ function createGameState({
         router,
         saveState: {
             activeRules: [],
+            joystickDeadZone: defaultJoystickDeadZone,
             modifiers: {},
             newGameRules: [],
             playerLevel: 0,
@@ -78,6 +84,55 @@ async function renderPauseMenu(gameState: Readonly<TestGameState>) {
 }
 
 describe(VirPauseMenu.tagName, () => {
+    it('adjusts the joystick dead zone', async () => {
+        const router = createFrontendRouter();
+        const navController = new NavController(document.body, {
+            alwaysRequireFocused: true,
+        });
+        const gameState = createGameState({
+            navController,
+            router,
+            unlockedGameRules: allGameRules,
+        });
+
+        try {
+            const pauseMenuElement = await renderPauseMenu(gameState);
+            const decreaseJoystickDeadZoneButton = getPauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.decreaseJoystickDeadZoneButton,
+            });
+            const increaseJoystickDeadZoneButton = getPauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.increaseJoystickDeadZoneButton,
+            });
+            const decreaseJoystickDeadZoneNavEntry = assertWrap.isDefined(
+                extractNavEntry(decreaseJoystickDeadZoneButton),
+            );
+            const increaseJoystickDeadZoneNavEntry = assertWrap.isDefined(
+                extractNavEntry(increaseJoystickDeadZoneButton),
+            );
+
+            increaseJoystickDeadZoneNavEntry.activate(true);
+
+            assert.strictEquals(
+                gameState.deviceHandler.globalDeadZone,
+                defaultJoystickDeadZone + joystickDeadZoneStep,
+            );
+            assert.strictEquals(
+                gameState.saveState.joystickDeadZone,
+                defaultJoystickDeadZone + joystickDeadZoneStep,
+            );
+
+            decreaseJoystickDeadZoneNavEntry.activate(true);
+
+            assert.strictEquals(gameState.deviceHandler.globalDeadZone, defaultJoystickDeadZone);
+            assert.strictEquals(gameState.saveState.joystickDeadZone, defaultJoystickDeadZone);
+        } finally {
+            router.destroy();
+            testWeb.cleanupRender();
+        }
+    });
+
     it('only offers restarting the mission when there is one available rule', async () => {
         const router = createFrontendRouter();
         const navController = new NavController(document.body, {

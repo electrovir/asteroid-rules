@@ -19,6 +19,7 @@ import {
     type AsteroidsSaveState,
 } from '../../data/game-state.js';
 import {isDeployed} from '../../data/is-deployed.js';
+import {defaultJoystickDeadZone} from '../../data/joystick-dead-zone.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
 import {GameZIndex} from '../../data/z-index.js';
@@ -128,7 +129,11 @@ export function loadGame({
             },
         }),
         createAnthaAudioMod(),
-        createAnthaReadRawInputMod(),
+        createAnthaReadRawInputMod({
+            deviceHandlerOptions: {
+                globalDeadZone: defaultJoystickDeadZone,
+            },
+        }),
         createAnthaInputBindingsMod<GameInputAction>(),
         menuMod,
         createAnthaMenuNavMod({
