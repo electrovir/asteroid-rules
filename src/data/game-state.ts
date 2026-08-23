@@ -84,6 +84,7 @@ export function updateAsteroidsSaveStateRules({
 }
 
 export type FullGameState = {
+    isPlayerFiringAllowed: boolean;
     isMouseMovementAllowed: boolean;
     menuState: GameMenuState | undefined;
     router: FrontendRouter;
@@ -93,6 +94,7 @@ export type FullGameState = {
               experienceEarned: number;
               lastAsteroidSpawnedAt: number;
               lastTimedExperienceEarnedAt: number;
+              missionStartedAt: number;
               levelUpAnimation:
                   | {
                         endsAt: number;
@@ -100,11 +102,35 @@ export type FullGameState = {
                     }
                   | undefined;
               seededRandom: SeededRandom;
-              players: Partial<Record<PlayerPosition, PlayerEntity>>;
+              pendingExperienceGained: number;
+              pendingExperienceSpent: number;
+              players: PartialWithUndefined<Record<PlayerPosition, PlayerEntity>>;
           }
         | undefined;
 } & AnthaInputBindingsModState<GameInputAction> &
     AnthaAssetModState &
     MenuNavModState;
+
+export function queueMissionExperience({
+    experienceGained = 0,
+    experienceSpent = 0,
+    gameState,
+}: Readonly<{
+    experienceGained?: number | undefined;
+    experienceSpent?: number | undefined;
+    gameState: Partial<FullGameState>;
+}>) {
+    const missionState = gameState.missionState;
+
+    if (!missionState) {
+        return;
+    }
+
+    gameState.missionState = {
+        ...missionState,
+        pendingExperienceGained: missionState.pendingExperienceGained + experienceGained,
+        pendingExperienceSpent: missionState.pendingExperienceSpent + experienceSpent,
+    };
+}
 
 export type AsteroidsGameEngineState = AnthaEntity2dModState<FullGameState>;

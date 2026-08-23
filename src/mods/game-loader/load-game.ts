@@ -16,6 +16,7 @@ import {
     type AsteroidsGameEngineState,
     type AsteroidsSaveState,
 } from '../../data/game-state.js';
+import {isDeployed} from '../../data/is-deployed.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
 import {GameZIndex} from '../../data/z-index.js';
@@ -114,6 +115,10 @@ export function loadGame({
         }),
         gameEntityMod,
         missionMod,
-        createAnthaFpsMod(),
+        ...(isDeployed
+            ? []
+            : [
+                  createAnthaFpsMod(),
+              ]),
     );
 }

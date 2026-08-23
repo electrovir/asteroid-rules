@@ -25,9 +25,113 @@ export const timedXpRule: GameRule = {
     icon: lucideIcons.Clock,
 };
 
+export const playerForwardGunRule: GameRule = {
+    cost: 3,
+    id: 'player-forward-gun',
+    unlockLevel: 3,
+    ruleTitle: 'Forward Gun',
+    description: 'The player fires bullets from the front of their ship.',
+    effects: {
+        allowPlayerForwardGun: true,
+    },
+    icon: lucideIcons.Crosshair,
+};
+
+export const twoPlayersRule: GameRule = {
+    cost: 2,
+    id: 'two-players',
+    unlockLevel: 4,
+    ruleTitle: 'Two Players',
+    description: 'Two players can fight asteroids together.',
+    effects: {
+        twoPlayers: true,
+    },
+    icon: lucideIcons.Users,
+};
+
+export const fasterAsteroidSpawningRule: GameRule = {
+    cost: 2,
+    id: 'faster-asteroid-spawning',
+    unlockLevel: 5,
+    ruleTitle: 'Rapid Asteroids',
+    description: 'Asteroids spawn faster.',
+    effects: {
+        fasterAsteroidSpawning: true,
+    },
+    icon: lucideIcons.Rocket,
+};
+
+export const asteroidKillXpRule: GameRule = {
+    cost: 2,
+    id: 'asteroid-kill-xp',
+    unlockLevel: 6,
+    ruleTitle: 'Asteroid Kill XP',
+    description: 'Destroying an asteroid grants experience based on its health.',
+    effects: {
+        asteroidKillXp: true,
+    },
+    icon: lucideIcons.Star,
+};
+
+export const experienceCombosRule: GameRule = {
+    cost: 5,
+    id: 'experience-combos',
+    unlockLevel: 7,
+    ruleTitle: 'Experience Combos',
+    description: 'Experience gains grow the longer the players survive.',
+    effects: {
+        experienceCombos: true,
+    },
+    icon: lucideIcons.ChartNoAxesCombined,
+};
+
+export const strongerAsteroidsRule: GameRule = {
+    cost: 5,
+    id: 'stronger-asteroids',
+    unlockLevel: 8,
+    ruleTitle: 'Stronger Asteroids',
+    description: 'Asteroids have more health.',
+    effects: {
+        strongerAsteroids: true,
+    },
+    icon: lucideIcons.Shield,
+};
+
+export const secondForwardGunRule: GameRule = {
+    cost: 5,
+    id: 'second-forward-gun',
+    unlockLevel: 9,
+    ruleTitle: 'Twin Guns',
+    description: 'The player fires a second gun forward.',
+    effects: {
+        allowSecondForwardGun: true,
+    },
+    icon: lucideIcons.Swords,
+};
+
+export const precisionScoringRule: GameRule = {
+    cost: 5,
+    id: 'precision-scoring',
+    unlockLevel: 10,
+    ruleTitle: 'Precision Scoring',
+    description: 'Asteroid kills are worth far more, but each shot costs experience.',
+    effects: {
+        precisionScoring: true,
+    },
+    icon: lucideIcons.Target,
+};
+
 export const allGameRules: GameRule[] = [
     playerCardinalMovementRule,
     timedXpRule,
+    playerForwardGunRule,
+    twoPlayersRule,
+    fasterAsteroidSpawningRule,
+    asteroidKillXpRule,
+    experienceCombosRule,
+    strongerAsteroidsRule,
+    secondForwardGunRule,
+    precisionScoringRule,
 ];
 
 export function getGameRulesUnlockedAtLevel(level: number) {
@@ -37,14 +141,7 @@ export function getGameRulesUnlockedAtLevel(level: number) {
 }
 
 /**
- * Ideas:
+ * More rule ideas
  *
- * 1. A gun on the front of the ship (shoots bullet entities)
- * 2. 2 player
- * 3. More asteroids (faster spawning)
- * 4. Xp from asteroid kills (xp per health)
- * 5. Combos (the longer you last, the more xp you get, per time, per kill, etc.)
- * 6. Stronger asteroids
- * 7. Another gun (both firing forwards)
- * 8. Dramatically increase points per kill, lose points per shot (discourages missing)
+ * 1. Auto aiming auto firing gun (cyan bullets)
  */

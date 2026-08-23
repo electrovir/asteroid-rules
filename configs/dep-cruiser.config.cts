@@ -11,7 +11,7 @@ const baseConfig = defineConfig({
         },
     },
     omitRules: [
-        // enter rule names here to omit
+        'no-circular',
     ],
 });
 

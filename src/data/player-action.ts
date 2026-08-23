@@ -2,6 +2,7 @@ import {MenuNavBinding} from '@antha/input';
 import {type Values} from '@augment-vir/common';
 
 export enum PlayerAction {
+    Fire = 'fire',
     MoveDown = 'move-down',
     MoveLeft = 'move-left',
     MoveRight = 'move-right',

@@ -85,11 +85,7 @@ export const VirGameRuleList = defineElement<{
             <div class="rule-pool">${activeRulePoolCost} / ${saveState.playerLevel}</div>
             ${availableRules
                 .toSorted((a, b) => {
-                    return saveState.newGameRules.includes(a) === saveState.newGameRules.includes(b)
-                        ? a.ruleTitle.localeCompare(b.ruleTitle)
-                        : saveState.newGameRules.includes(a)
-                          ? -1
-                          : 1;
+                    return a.unlockLevel - b.unlockLevel;
                 })
                 .map((rule, ruleIndex) => {
                     return html`

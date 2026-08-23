@@ -1,14 +1,20 @@
 import {defineAnthaMod} from '@antha/engine';
 import {StableMath} from '@antha/util';
+import {getObjectTypedValues} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
 import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
-import {PlayerEntity} from '../../entities/player.entity.js';
+import {calculateExperienceMultiplier} from '../../data/gameplay-modifiers.js';
+import {PlayerAction} from '../../data/player-action.js';
 import {
     calculateExperienceRequiredToReachLevel,
     levelUpPresentationDurationMilliseconds,
 } from '../../data/player-level.js';
-import {isPrimaryMouseButtonHeld} from '../../data/player-movement.js';
 import {getGameRulesUnlockedAtLevel} from '../../data/rules.js';
+import {
+    isPrimaryMouseButtonHeld,
+    PlayerEntity,
+    updatePlayerFiringAllowed,
+} from '../../entities/player.entity.js';
 import {VirMissionHud} from '../../ui/elements/vir-mission-hud.element.js';
 import {ensureGameMission, updateMissionAsteroidSpawning} from './game-mission.js';
 
@@ -28,7 +34,10 @@ function applyExperience({
     playerLevel: number;
     playerLevelExperience: number;
 }> {
-    const nextPlayerLevelExperience = StableMath.round(playerLevelExperience + experience);
+    const nextPlayerLevelExperience = Math.max(
+        0,
+        StableMath.round(playerLevelExperience + experience),
+    );
     const experienceRequired = calculateExperienceRequiredToReachLevel(playerLevel + 1);
 
     if (nextPlayerLevelExperience < experienceRequired) {
@@ -47,16 +56,30 @@ function applyExperience({
 
 export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
     initState: {
+        isPlayerFiringAllowed: false,
         isMouseMovementAllowed: false,
     },
     modName: 'mission',
     async execute({engine, state}) {
+        const isFireButtonHeld = getObjectTypedValues(state.activeBindings || {}).some(
+            (bindings) => {
+                return !!bindings[PlayerAction.Fire]?.value;
+            },
+        );
+
+        /** Don't allow player firing until after the button has been lifted after exiting a menu. */
+        state.isPlayerFiringAllowed = state.menuState
+            ? false
+            : updatePlayerFiringAllowed({
+                  isFireButtonHeld,
+                  wasFiringAllowed: state.isPlayerFiringAllowed || false,
+              });
         state.isMouseMovementAllowed = state.menuState
             ? false
             : /** Don't allow player movement until after the mouse button has been lifted _after_ exiting a menu. */
               !isPrimaryMouseButtonHeld(state.rawInputs) || state.isMouseMovementAllowed || false;
 
-        if (state.saveState && !state.missionState && !state.menuState) {
+        if (state.saveState && !state.menuState) {
             await ensureGameMission({
                 currentTime: engine.totalMs,
                 gameState: state,
@@ -84,13 +107,6 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
                 ? missionState.levelUpAnimation
                 : undefined;
 
-        if (activeLevelUpAnimation !== missionState.levelUpAnimation) {
-            state.missionState = {
-                ...missionState,
-                levelUpAnimation: activeLevelUpAnimation,
-            };
-        }
-
         const timedExperienceIntervals = Math.max(
             0,
             Math.floor(
@@ -99,51 +115,75 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
             ),
         );
 
-        if (saveState.modifiers.timedXp && !state.menuState && timedExperienceIntervals > 0) {
-            const updatedExperience = applyExperience({
-                experience: timedExperienceIntervals * experiencePerTimedGain,
-                playerLevel: saveState.playerLevel,
-                playerLevelExperience: saveState.playerLevelExperience,
-            });
-            const newlyUnlockedRules = getGameRulesUnlockedAtLevel(
-                updatedExperience.playerLevel,
-            ).filter((rule) => {
-                return !saveState.unlockedGameRules.includes(rule);
-            });
+        const timedExperienceGained =
+            saveState.modifiers.timedXp && !state.menuState
+                ? timedExperienceIntervals * experiencePerTimedGain
+                : 0;
+        const experienceGained = timedExperienceGained + missionState.pendingExperienceGained;
+        const experienceSpent = missionState.pendingExperienceSpent;
+        const shouldProcessExperience =
+            !state.menuState && (experienceGained > 0 || experienceSpent > 0);
+        const experienceChange =
+            experienceGained *
+                calculateExperienceMultiplier({
+                    currentTime: engine.totalMs,
+                    missionStartedAt: missionState.missionStartedAt,
+                    modifiers: saveState.modifiers,
+                }) -
+            experienceSpent;
+        const updatedExperience = shouldProcessExperience
+            ? applyExperience({
+                  experience: experienceChange,
+                  playerLevel: saveState.playerLevel,
+                  playerLevelExperience: saveState.playerLevelExperience,
+              })
+            : {
+                  playerLevel: saveState.playerLevel,
+                  playerLevelExperience: saveState.playerLevelExperience,
+              };
+        const newlyUnlockedRules = getGameRulesUnlockedAtLevel(
+            updatedExperience.playerLevel,
+        ).filter((rule) => {
+            return !saveState.unlockedGameRules.includes(rule);
+        });
 
+        if (shouldProcessExperience) {
             state.saveState = {
                 ...saveState,
                 ...updatedExperience,
                 newGameRules: saveState.newGameRules.concat(newlyUnlockedRules),
                 unlockedGameRules: saveState.unlockedGameRules.concat(newlyUnlockedRules),
             };
-            state.missionState = {
-                ...missionState,
-                experienceEarned: StableMath.round(
-                    missionState.experienceEarned +
-                        timedExperienceIntervals * experiencePerTimedGain,
-                ),
-                lastTimedExperienceEarnedAt: StableMath.round(
-                    missionState.lastTimedExperienceEarnedAt +
-                        timedExperienceIntervals * timedExperienceIntervalMilliseconds,
-                ),
-                levelUpAnimation:
-                    updatedExperience.playerLevel > saveState.playerLevel
-                        ? {
-                              endsAt: StableMath.round(
-                                  engine.totalMs + levelUpPresentationDurationMilliseconds,
-                              ),
-                              playerLevel: saveState.playerLevel,
-                          }
-                        : activeLevelUpAnimation,
-            };
-        } else if (state.menuState || !state.saveState.modifiers.timedXp) {
-            state.missionState = {
-                ...missionState,
-                lastTimedExperienceEarnedAt: StableMath.round(engine.totalMs),
-                levelUpAnimation: activeLevelUpAnimation,
-            };
         }
+
+        state.missionState = {
+            ...missionState,
+            experienceEarned: shouldProcessExperience
+                ? Math.max(0, StableMath.round(missionState.experienceEarned + experienceChange))
+                : missionState.experienceEarned,
+            lastTimedExperienceEarnedAt:
+                state.menuState || !saveState.modifiers.timedXp
+                    ? StableMath.round(engine.totalMs)
+                    : StableMath.round(
+                          missionState.lastTimedExperienceEarnedAt +
+                              timedExperienceIntervals * timedExperienceIntervalMilliseconds,
+                      ),
+            levelUpAnimation:
+                updatedExperience.playerLevel > saveState.playerLevel
+                    ? {
+                          endsAt: StableMath.round(
+                              engine.totalMs + levelUpPresentationDurationMilliseconds,
+                          ),
+                          playerLevel: saveState.playerLevel,
+                      }
+                    : activeLevelUpAnimation,
+            pendingExperienceGained: shouldProcessExperience
+                ? 0
+                : missionState.pendingExperienceGained,
+            pendingExperienceSpent: shouldProcessExperience
+                ? 0
+                : missionState.pendingExperienceSpent,
+        };
 
         await updateMissionAsteroidSpawning({
             currentTime: engine.totalMs,

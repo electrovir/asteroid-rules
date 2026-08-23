@@ -117,6 +117,18 @@ export const defaultPlayerInputBindings: Readonly<PlayersBindingAssignments<Game
                 inputName: 'button-ArrowUp',
             },
         ],
+        [PlayerAction.Fire]: [
+            {
+                deviceKey: GamepadInputDeviceKey.Gamepad1,
+                direction: InputDirection.Positive,
+                inputName: KnownInput.FaceAccept,
+            },
+            {
+                deviceKey: 'keyboard',
+                direction: InputDirection.Positive,
+                inputName: 'button-Space',
+            },
+        ],
         [MenuNavBinding.MenuDown]: [
             {
                 deviceKey: GamepadInputDeviceKey.Gamepad1,
@@ -149,11 +161,6 @@ export const defaultPlayerInputBindings: Readonly<PlayersBindingAssignments<Game
                 deviceKey: GamepadInputDeviceKey.Gamepad1,
                 direction: InputDirection.Positive,
                 inputName: KnownInput.FaceAccept,
-            },
-            {
-                deviceKey: 'keyboard',
-                direction: InputDirection.Positive,
-                inputName: 'button-Space',
             },
             {
                 deviceKey: 'keyboard',
@@ -385,6 +392,18 @@ export const defaultPlayerInputBindings: Readonly<PlayersBindingAssignments<Game
                 inputName: 'button-KeyI',
             },
         ],
+        [PlayerAction.Fire]: [
+            {
+                deviceKey: GamepadInputDeviceKey.Gamepad2,
+                direction: InputDirection.Positive,
+                inputName: KnownInput.FaceAccept,
+            },
+            {
+                deviceKey: 'keyboard',
+                direction: InputDirection.Positive,
+                inputName: 'button-KeyP',
+            },
+        ],
         [MenuNavBinding.MenuDown]: [
             {
                 deviceKey: GamepadInputDeviceKey.Gamepad2,
@@ -412,11 +431,6 @@ export const defaultPlayerInputBindings: Readonly<PlayersBindingAssignments<Game
                 deviceKey: GamepadInputDeviceKey.Gamepad2,
                 direction: InputDirection.Positive,
                 inputName: KnownInput.FaceAccept,
-            },
-            {
-                deviceKey: 'keyboard',
-                direction: InputDirection.Positive,
-                inputName: 'button-Space',
             },
             {
                 deviceKey: 'keyboard',

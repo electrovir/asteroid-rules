@@ -7,7 +7,7 @@ import {html, testIdSelector} from 'element-vir';
 import {type FullGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
-import {allGameRules, playerCardinalMovementRule} from '../../data/rules.js';
+import {allGameRules, playerCardinalMovementRule, playerForwardGunRule} from '../../data/rules.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
 import {VirGameRule} from './vir-game-rule.element.js';
@@ -46,6 +46,9 @@ function createGameState({
             lastAsteroidSpawnedAt: 0,
             lastTimedExperienceEarnedAt: 0,
             levelUpAnimation: undefined,
+            missionStartedAt: 0,
+            pendingExperienceGained: 0,
+            pendingExperienceSpent: 0,
             players: {},
             seededRandom: SeededRandom.fromSeed('test-seed'),
         },
@@ -90,6 +93,44 @@ async function renderRuleDebug(gameState: Readonly<TestGameState>) {
 }
 
 describe(VirRuleDebug.tagName, () => {
+    it('orders rules by unlock level', async () => {
+        const router = createFrontendRouter();
+        const navController = new NavController(document.body, {
+            alwaysRequireFocused: true,
+        });
+        const gameState = createGameState({
+            navController,
+            router,
+        });
+        gameState.saveState.newGameRules = [playerForwardGunRule];
+
+        try {
+            const ruleDebugElement = await renderRuleDebug(gameState);
+            const ruleListElement = assertWrap.instanceOf(
+                ruleDebugElement.shadowRoot.querySelector(VirGameRuleList.tagName),
+                VirGameRuleList,
+            );
+            const displayedRules = Array.from(
+                ruleListElement.shadowRoot.querySelectorAll<InstanceType<typeof VirGameRule>>(
+                    VirGameRule.tagName,
+                ),
+            ).map((ruleElement) => {
+                return ruleElement.instanceInputs.rule;
+            });
+
+            assert.isTrue(
+                displayedRules.slice(1).every((rule, index) => {
+                    const previousRule = assertWrap.isDefined(displayedRules[index]);
+
+                    return rule.unlockLevel >= previousRule.unlockLevel;
+                }),
+            );
+        } finally {
+            router.destroy();
+            testWeb.cleanupRender();
+        }
+    });
+
     it('clears the save state', async () => {
         const router = createFrontendRouter();
         const navController = new NavController(document.body, {

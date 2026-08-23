@@ -122,7 +122,7 @@ export const VirMainMenu = defineElement<{
                                         }
                                         updateMenuState(inputs.gameState, undefined);
                                     }
-                                }
+                                },
                             },
                         })}
                     >
