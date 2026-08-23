@@ -14,7 +14,7 @@ describe(getGameRulesUnlockedAtLevel.name, () => {
     });
 
     it('does not unlock a rule before its unlock level', () => {
-        assert.isFalse(getGameRulesUnlockedAtLevel(9).some((rule) => rule.unlockLevel === 10));
-        assert.isTrue(getGameRulesUnlockedAtLevel(10).some((rule) => rule.unlockLevel === 10));
+        assert.isFalse(getGameRulesUnlockedAtLevel(29).some((rule) => rule.unlockLevel === 30));
+        assert.isTrue(getGameRulesUnlockedAtLevel(30).some((rule) => rule.unlockLevel === 30));
     });
 });

@@ -4,7 +4,10 @@ import {getObjectTypedValues} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
 import {GameAudio, playGameAudio} from '../../data/game-audio.js';
 import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
-import {calculateExperienceMultiplier} from '../../data/gameplay-modifiers.js';
+import {
+    calculateExperienceMultiplier,
+    getTimedExperienceMultiplier,
+} from '../../data/gameplay-modifiers.js';
 import {PlayerAction} from '../../data/player-action.js';
 import {
     calculateExperienceRequiredToReachLevel,
@@ -118,7 +121,9 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
 
         const timedExperienceGained =
             saveState.modifiers.timedXp && !state.menuState
-                ? timedExperienceIntervals * experiencePerTimedGain
+                ? timedExperienceIntervals *
+                  experiencePerTimedGain *
+                  getTimedExperienceMultiplier(saveState.modifiers)
                 : 0;
         const experienceGained = timedExperienceGained + missionState.pendingExperienceGained;
         const experienceSpent = missionState.pendingExperienceSpent;

@@ -1,16 +1,51 @@
 import {assert} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
 import {
+    afterburnerMovementSpeedMultiplier,
+    asteroidDragMovementSpeedMultiplier,
+    asteroidMagnetAccelerationPixelsPerMillisecondSquared,
     asteroidSpawnIntervalMilliseconds,
+    baseAsteroidFragmentCount,
     calculateAsteroidKillExperience,
     calculateExperienceMultiplier,
+    controlledDemolitionAsteroidFragmentCount,
+    cryoRoundsAsteroidMovementSpeedMultiplier,
+    cryoRoundsSlowDurationMilliseconds,
     fasterAsteroidSpawnIntervalMilliseconds,
+    getAsteroidFragmentCount,
     getAsteroidFragmentRadius,
     getAsteroidHealth,
+    getAsteroidMagnetAcceleration,
+    getAsteroidMovementSpeedMultiplier,
+    getAsteroidSlowMovementSpeedMultiplier,
     getAsteroidSpawnInterval,
+    getPlayerBulletBounceCount,
+    getPlayerBulletDamageMultiplier,
+    getPlayerBulletHomingTurnRate,
+    getPlayerBulletPierceCount,
+    getPlayerBulletRadiusMultiplier,
+    getPlayerBulletSlowDuration,
+    getPlayerBulletSpeedMultiplier,
+    getPlayerBulletSplashDamage,
+    getPlayerBulletSplashRadius,
+    getPlayerCollisionProtectionCount,
     getPlayerGunCount,
+    getPlayerMovementSpeedMultiplier,
+    getPlayerShotIntervalMultiplier,
     getShotExperienceCost,
+    getTimedExperienceMultiplier,
+    heavyRoundsDamageMultiplier,
+    homingRoundsTurnRateRadiansPerMillisecond,
+    novaRoundsSplashDamage,
+    novaRoundsSplashRadiusPixels,
+    piercingRoundsPierceCount,
+    rapidFireShotIntervalMultiplier,
+    ricochetRoundsBounceCount,
+    salvageRightsExperiencePerHealth,
+    stardustDividendTimedExperienceMultiplier,
     strongerAsteroidHealth,
+    velocityVolleySpeedMultiplier,
+    wideShotsRadiusMultiplier,
 } from './gameplay-modifiers.js';
 
 describe('gameplay modifiers', () => {
@@ -37,7 +72,7 @@ describe('gameplay modifiers', () => {
             },
             {
                 asteroidHealth: strongerAsteroidHealth,
-                asteroidKillExperience: 30,
+                asteroidKillExperience: 33,
                 asteroidSpawnInterval: fasterAsteroidSpawnIntervalMilliseconds,
                 gunCount: 2,
                 shotExperienceCost: 1,
@@ -107,6 +142,123 @@ describe('gameplay modifiers', () => {
                 18,
                 18,
             ],
+        );
+    });
+
+    it('applies the additional combat and survival modifiers', () => {
+        const modifiers = {
+            afterburners: true,
+            asteroidDrag: true,
+            controlledDemolition: true,
+            heavyRounds: true,
+            piercingRounds: true,
+            rapidFire: true,
+            reinforcedHull: true,
+            salvageRights: true,
+            wideShots: true,
+        };
+
+        assert.deepEquals(
+            {
+                asteroidFragmentCount: getAsteroidFragmentCount(modifiers),
+                asteroidKillExperience: calculateAsteroidKillExperience({
+                    health: 3,
+                    modifiers,
+                }),
+                asteroidMovementSpeed: getAsteroidMovementSpeedMultiplier(modifiers),
+                bulletDamage: getPlayerBulletDamageMultiplier(modifiers),
+                bulletPierces: getPlayerBulletPierceCount(modifiers),
+                bulletRadius: getPlayerBulletRadiusMultiplier(modifiers),
+                collisionProtection: getPlayerCollisionProtectionCount(modifiers),
+                playerMovementSpeed: getPlayerMovementSpeedMultiplier(modifiers),
+                shotInterval: getPlayerShotIntervalMultiplier(modifiers),
+            },
+            {
+                asteroidFragmentCount: controlledDemolitionAsteroidFragmentCount,
+                asteroidKillExperience: 3 * salvageRightsExperiencePerHealth,
+                asteroidMovementSpeed: asteroidDragMovementSpeedMultiplier,
+                bulletDamage: heavyRoundsDamageMultiplier,
+                bulletPierces: piercingRoundsPierceCount,
+                bulletRadius: wideShotsRadiusMultiplier,
+                collisionProtection: 1,
+                playerMovementSpeed: afterburnerMovementSpeedMultiplier,
+                shotInterval: rapidFireShotIntervalMultiplier,
+            },
+        );
+    });
+
+    it('leaves the additional modifiers at their baseline values', () => {
+        assert.deepEquals(
+            {
+                asteroidFragmentCount: getAsteroidFragmentCount({}),
+                asteroidMovementSpeed: getAsteroidMovementSpeedMultiplier({}),
+                bulletDamage: getPlayerBulletDamageMultiplier({}),
+                bulletPierces: getPlayerBulletPierceCount({}),
+                bulletRadius: getPlayerBulletRadiusMultiplier({}),
+                collisionProtection: getPlayerCollisionProtectionCount({}),
+                playerMovementSpeed: getPlayerMovementSpeedMultiplier({}),
+                shotInterval: getPlayerShotIntervalMultiplier({}),
+            },
+            {
+                asteroidFragmentCount: baseAsteroidFragmentCount,
+                asteroidMovementSpeed: 1,
+                bulletDamage: 1,
+                bulletPierces: 0,
+                bulletRadius: 1,
+                collisionProtection: 0,
+                playerMovementSpeed: 1,
+                shotInterval: 1,
+            },
+        );
+    });
+
+    it('applies the experimental projectile and asteroid modifiers', () => {
+        const modifiers = {
+            allowPlayerForwardGun: true,
+            asteroidMagnetism: true,
+            cryoRounds: true,
+            fractalFrenzy: true,
+            homingRounds: true,
+            novaRounds: true,
+            ricochetRounds: true,
+            stardustDividend: true,
+            triadCannons: true,
+            velocityVolley: true,
+        };
+
+        assert.deepEquals(
+            {
+                asteroidFragmentCount: getAsteroidFragmentCount(modifiers),
+                asteroidMagnetAcceleration: getAsteroidMagnetAcceleration(modifiers),
+                asteroidSlowMovementSpeed: [
+                    getAsteroidSlowMovementSpeedMultiplier(0),
+                    getAsteroidSlowMovementSpeedMultiplier(500),
+                ],
+                bulletBounces: getPlayerBulletBounceCount(modifiers),
+                bulletHomingTurnRate: getPlayerBulletHomingTurnRate(modifiers),
+                bulletSlowDuration: getPlayerBulletSlowDuration(modifiers),
+                bulletSpeed: getPlayerBulletSpeedMultiplier(modifiers),
+                bulletSplashDamage: getPlayerBulletSplashDamage(modifiers),
+                bulletSplashRadius: getPlayerBulletSplashRadius(modifiers),
+                gunCount: getPlayerGunCount(modifiers),
+                timedExperience: getTimedExperienceMultiplier(modifiers),
+            },
+            {
+                asteroidFragmentCount: 3,
+                asteroidMagnetAcceleration: asteroidMagnetAccelerationPixelsPerMillisecondSquared,
+                asteroidSlowMovementSpeed: [
+                    1,
+                    cryoRoundsAsteroidMovementSpeedMultiplier,
+                ],
+                bulletBounces: ricochetRoundsBounceCount,
+                bulletHomingTurnRate: homingRoundsTurnRateRadiansPerMillisecond,
+                bulletSlowDuration: cryoRoundsSlowDurationMilliseconds,
+                bulletSpeed: velocityVolleySpeedMultiplier,
+                bulletSplashDamage: novaRoundsSplashDamage,
+                bulletSplashRadius: novaRoundsSplashRadiusPixels,
+                gunCount: 3,
+                timedExperience: stardustDividendTimedExperienceMultiplier,
+            },
         );
     });
 });

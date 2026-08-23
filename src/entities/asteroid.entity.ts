@@ -7,7 +7,7 @@ import {
 } from '@antha/entity-2d';
 import {Graphics} from '@antha/graphics-2d';
 import {StableMath, stableRandom, stableRandomInteger} from '@antha/util';
-import {createArray, type SeededRandom} from '@augment-vir/common';
+import {clamp, createArray, type SeededRandom} from '@augment-vir/common';
 import {Polygon} from 'detect-collisions';
 import {defineShape} from 'object-shape-tester';
 import {GameAudio, playGameAudio} from '../data/game-audio.js';
@@ -15,21 +15,25 @@ import {queueMissionExperience, type FullGameState} from '../data/game-state.js'
 import {
     asteroidSpawnIntervalMilliseconds,
     calculateAsteroidKillExperience,
+    getAsteroidFragmentCount,
     getAsteroidFragmentRadius,
+    getAsteroidMagnetAcceleration,
+    getAsteroidMovementSpeedMultiplier,
+    getAsteroidSlowMovementSpeedMultiplier,
     minimumAsteroidRadius,
 } from '../data/gameplay-modifiers.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
 import {PlayerBulletEntity} from './player-bullet.entity.js';
-import {playerBulletDamage, PlayerEntity} from './player.entity.js';
+import {PlayerEntity} from './player.entity.js';
 
 const asteroidOutlineColor = '#a3a3a3';
 const asteroidFillColor = '#3d3d3d';
-const asteroidFragmentCount = 2;
 const asteroidSpawnPadding = 2;
 const asteroidSpeedMaxPixelsPerMillisecond = 0.07;
 const asteroidSpeedMinPixelsPerMillisecond = 0.04;
 const asteroidSpinSpeedMaxRadiansPerMillisecond = 0.0003;
 const asteroidSpinSpeedMinRadiansPerMillisecond = 0.0001;
+const maximumMeteorMagnetSpeedPixelsPerMillisecond = 0.12;
 
 const asteroidCollisionAudio: ReadonlyArray<GameAudio> = [
     GameAudio.AsteroidCollisionCrash,
@@ -44,6 +48,72 @@ const asteroidDeathAudio: ReadonlyArray<GameAudio> = [
     GameAudio.AsteroidDeathExplosionTwo,
     GameAudio.AsteroidDeathExplosionThree,
 ];
+
+function steerAsteroidTowardNearestPlayer({
+    acceleration,
+    asteroid,
+    msSinceLastUpdate,
+    players,
+}: Readonly<{
+    acceleration: number;
+    asteroid: AsteroidEntity;
+    msSinceLastUpdate: number;
+    players: ReadonlySet<PlayerEntity>;
+}>) {
+    if (!acceleration) {
+        return;
+    }
+
+    const closestPlayer = Array.from(players)
+        .filter((player) => {
+            return !player.isDestroyed;
+        })
+        .reduce<PlayerEntity | undefined>((closest, player) => {
+            const distance = Math.hypot(
+                player.params.x - asteroid.params.x,
+                player.params.y - asteroid.params.y,
+            );
+            const closestDistance = closest
+                ? Math.hypot(
+                      closest.params.x - asteroid.params.x,
+                      closest.params.y - asteroid.params.y,
+                  )
+                : Infinity;
+
+            return distance < closestDistance ? player : closest;
+        }, undefined);
+
+    if (!closestPlayer) {
+        return;
+    }
+
+    const xDistance = closestPlayer.params.x - asteroid.params.x;
+    const yDistance = closestPlayer.params.y - asteroid.params.y;
+    const distance = Math.hypot(xDistance, yDistance);
+
+    if (!distance) {
+        return;
+    }
+
+    asteroid.params.velocityX = StableMath.round(
+        clamp(
+            asteroid.params.velocityX + (xDistance / distance) * acceleration * msSinceLastUpdate,
+            {
+                min: -maximumMeteorMagnetSpeedPixelsPerMillisecond,
+                max: maximumMeteorMagnetSpeedPixelsPerMillisecond,
+            },
+        ),
+    );
+    asteroid.params.velocityY = StableMath.round(
+        clamp(
+            asteroid.params.velocityY + (yDistance / distance) * acceleration * msSinceLastUpdate,
+            {
+                min: -maximumMeteorMagnetSpeedPixelsPerMillisecond,
+                max: maximumMeteorMagnetSpeedPixelsPerMillisecond,
+            },
+        ),
+    );
+}
 
 export function playAsteroidCollisionAudio(gameState: FullGameState) {
     const random = gameState.missionState?.seededRandom;
@@ -154,6 +224,7 @@ function createAsteroidParamsFromValues({
         radius,
         rotation,
         rotationSpeed,
+        slowRemainingMilliseconds: 0,
         velocityX,
         velocityY,
         x,
@@ -224,11 +295,13 @@ export function createAsteroidParams({
 }
 
 export function createAsteroidFragmentParams({
+    fragmentCount,
     fragmentIndex,
     health,
     parent,
     random,
 }: Readonly<{
+    fragmentCount: number;
     fragmentIndex: number;
     health: number;
     parent: Readonly<{
@@ -243,7 +316,7 @@ export function createAsteroidFragmentParams({
 }>) {
     const radius = getAsteroidFragmentRadius(parent.radius);
     const fragmentAngle = StableMath.degreesToRadians(
-        fragmentIndex * (360 / asteroidFragmentCount) + stableRandom(random) * 60,
+        fragmentIndex * (360 / fragmentCount) + stableRandom(random) * 60,
     );
     const fragmentSpeed = 0.08 + stableRandom(random) * 0.04;
 
@@ -288,6 +361,7 @@ export class AsteroidEntity extends defineEntity({
         radius: 0,
         rotation: 0,
         rotationSpeed: 0,
+        slowRemainingMilliseconds: 0,
         velocityX: 0,
         velocityY: 0,
     }),
@@ -340,13 +414,17 @@ export class AsteroidEntity extends defineEntity({
 
         this.destroy();
         const random = this.state.missionState?.seededRandom;
+        const modifiers = this.state.saveState?.modifiers || {};
         playAsteroidDeathAudio(this.state);
 
         if (random && this.params.radius > minimumAsteroidRadius) {
-            await createArray(asteroidFragmentCount, async (fragmentIndex) => {
+            const fragmentCount = getAsteroidFragmentCount(modifiers);
+
+            await createArray(fragmentCount, async (fragmentIndex) => {
                 await this.entityStore.addEntity(
                     AsteroidEntity,
                     createAsteroidFragmentParams({
+                        fragmentCount,
                         fragmentIndex,
                         health: this.params.maximumHealth,
                         parent: this.params,
@@ -358,21 +436,29 @@ export class AsteroidEntity extends defineEntity({
         queueMissionExperience({
             experienceGained: calculateAsteroidKillExperience({
                 health: this.params.maximumHealth,
-                modifiers: this.state.saveState?.modifiers || {},
+                modifiers,
             }),
             gameState: this.state,
         });
     }
 
+    public applySlow({durationMilliseconds}: Readonly<{durationMilliseconds: number}>) {
+        this.params.slowRemainingMilliseconds = Math.max(
+            this.params.slowRemainingMilliseconds,
+            durationMilliseconds,
+        );
+    }
+
     public override async collide(otherEntity: BaseEntity2d, collision: Readonly<Collision>) {
         if (otherEntity instanceof PlayerBulletEntity) {
-            await this.takeDamage({
-                damage: playerBulletDamage,
+            await otherEntity.damageAsteroid({
+                asteroid: this,
             });
-            otherEntity.destroy();
             return;
         } else if (otherEntity instanceof PlayerEntity) {
-            otherEntity.startDeathAnimation();
+            await otherEntity.handleAsteroidCollision({
+                asteroid: this,
+            });
             return;
         } else if (!(otherEntity instanceof AsteroidEntity)) {
             return;
@@ -413,8 +499,30 @@ export class AsteroidEntity extends defineEntity({
             return;
         }
 
-        this.params.x = StableMath.round(this.params.x + this.params.velocityX * msSinceLastUpdate);
-        this.params.y = StableMath.round(this.params.y + this.params.velocityY * msSinceLastUpdate);
+        const modifiers = this.state.saveState?.modifiers || {};
+        const slowMovementSpeedMultiplier = getAsteroidSlowMovementSpeedMultiplier(
+            this.params.slowRemainingMilliseconds,
+        );
+
+        this.params.slowRemainingMilliseconds = Math.max(
+            0,
+            this.params.slowRemainingMilliseconds - msSinceLastUpdate,
+        );
+        steerAsteroidTowardNearestPlayer({
+            acceleration: getAsteroidMagnetAcceleration(modifiers),
+            asteroid: this,
+            msSinceLastUpdate,
+            players: this.entityStore.getEntities(PlayerEntity),
+        });
+        const movementSpeedMultiplier =
+            getAsteroidMovementSpeedMultiplier(modifiers) * slowMovementSpeedMultiplier;
+
+        this.params.x = StableMath.round(
+            this.params.x + this.params.velocityX * msSinceLastUpdate * movementSpeedMultiplier,
+        );
+        this.params.y = StableMath.round(
+            this.params.y + this.params.velocityY * msSinceLastUpdate * movementSpeedMultiplier,
+        );
         this.params.rotation = StableMath.round(
             this.params.rotation + this.params.rotationSpeed * msSinceLastUpdate,
         );

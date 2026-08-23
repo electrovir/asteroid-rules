@@ -121,6 +121,246 @@ export const precisionScoringRule: GameRule = {
     icon: lucideIcons.Target,
 };
 
+export const afterburnersRule: GameRule = {
+    cost: 6,
+    id: 'afterburners',
+    unlockLevel: 11,
+    ruleTitle: 'Afterburners',
+    description: 'The player moves 50% faster.',
+    effects: {
+        afterburners: true,
+    },
+    icon: lucideIcons.Rocket,
+};
+
+export const heavyRoundsRule: GameRule = {
+    cost: 6,
+    id: 'heavy-rounds',
+    unlockLevel: 12,
+    ruleTitle: 'Heavy Rounds',
+    description: 'Player bullets deal double damage.',
+    effects: {
+        heavyRounds: true,
+    },
+    icon: lucideIcons.Target,
+};
+
+export const rapidFireRule: GameRule = {
+    cost: 6,
+    id: 'rapid-fire',
+    unlockLevel: 13,
+    ruleTitle: 'Rapid Fire',
+    description: 'Player guns have a 40% shorter firing cooldown.',
+    effects: {
+        rapidFire: true,
+    },
+    icon: lucideIcons.Clock,
+};
+
+export const piercingRoundsRule: GameRule = {
+    cost: 7,
+    id: 'piercing-rounds',
+    unlockLevel: 14,
+    ruleTitle: 'Piercing Rounds',
+    description: 'Player bullets can pierce through two additional asteroids.',
+    effects: {
+        piercingRounds: true,
+    },
+    icon: lucideIcons.Swords,
+};
+
+export const reinforcedHullRule: GameRule = {
+    cost: 7,
+    id: 'reinforced-hull',
+    unlockLevel: 15,
+    ruleTitle: 'Reinforced Hull',
+    description: 'Each player survives one asteroid collision per life.',
+    effects: {
+        reinforcedHull: true,
+    },
+    icon: lucideIcons.Shield,
+};
+
+export const wideShotsRule: GameRule = {
+    cost: 7,
+    id: 'wide-shots',
+    unlockLevel: 16,
+    ruleTitle: 'Wide Shots',
+    description: 'Player bullets are 50% wider.',
+    effects: {
+        wideShots: true,
+    },
+    icon: lucideIcons.Crosshair,
+};
+
+export const asteroidDragRule: GameRule = {
+    cost: 8,
+    id: 'asteroid-drag',
+    unlockLevel: 17,
+    ruleTitle: 'Asteroid Drag',
+    description: 'Asteroids move 35% slower.',
+    effects: {
+        asteroidDrag: true,
+    },
+    icon: lucideIcons.Compass,
+};
+
+export const controlledDemolitionRule: GameRule = {
+    cost: 8,
+    id: 'controlled-demolition',
+    unlockLevel: 18,
+    ruleTitle: 'Controlled Demolition',
+    description: 'Destroyed large asteroids split into one fragment instead of two.',
+    effects: {
+        controlledDemolition: true,
+    },
+    icon: lucideIcons.Swords,
+};
+
+export const salvageRightsRule: GameRule = {
+    cost: 8,
+    id: 'salvage-rights',
+    unlockLevel: 19,
+    ruleTitle: 'Salvage Rights',
+    description: 'Destroying asteroids grants 2 experience per health.',
+    effects: {
+        salvageRights: true,
+    },
+    icon: lucideIcons.Star,
+};
+
+export const autoTurretRule: GameRule = {
+    cost: 10,
+    id: 'auto-turret',
+    unlockLevel: 20,
+    ruleTitle: 'Auto Turret',
+    description: 'Player guns automatically aim and fire cyan rounds at asteroids.',
+    effects: {
+        autoTurret: true,
+    },
+    icon: lucideIcons.Crosshair,
+};
+
+export const phaseDriveRule: GameRule = {
+    cost: 10,
+    id: 'phase-drive',
+    unlockLevel: 21,
+    ruleTitle: 'Phase Drive',
+    description: 'Players wrap around the arena instead of stopping at its edges.',
+    effects: {
+        phaseDrive: true,
+    },
+    icon: lucideIcons.Compass,
+};
+
+export const triadCannonsRule: GameRule = {
+    cost: 10,
+    id: 'triad-cannons',
+    unlockLevel: 22,
+    ruleTitle: 'Triad Cannons',
+    description: 'Player ships fire three parallel rounds.',
+    effects: {
+        triadCannons: true,
+    },
+    icon: lucideIcons.Swords,
+};
+
+export const ricochetRoundsRule: GameRule = {
+    cost: 11,
+    id: 'ricochet-rounds',
+    unlockLevel: 23,
+    ruleTitle: 'Ricochet Rounds',
+    description: 'Player bullets bounce twice from the arena edges.',
+    effects: {
+        ricochetRounds: true,
+    },
+    icon: lucideIcons.Target,
+};
+
+export const homingRoundsRule: GameRule = {
+    cost: 11,
+    id: 'homing-rounds',
+    unlockLevel: 24,
+    ruleTitle: 'Homing Rounds',
+    description: 'Player bullets curve toward the nearest asteroid.',
+    effects: {
+        homingRounds: true,
+    },
+    icon: lucideIcons.Crosshair,
+};
+
+export const novaRoundsRule: GameRule = {
+    cost: 12,
+    id: 'nova-rounds',
+    unlockLevel: 25,
+    ruleTitle: 'Nova Rounds',
+    description: 'Player bullets damage asteroids near their first impact.',
+    effects: {
+        novaRounds: true,
+    },
+    icon: lucideIcons.Star,
+};
+
+export const cryoRoundsRule: GameRule = {
+    cost: 12,
+    id: 'cryo-rounds',
+    unlockLevel: 26,
+    ruleTitle: 'Cryo Rounds',
+    description: 'Player bullets freeze hit asteroids for a short time.',
+    effects: {
+        cryoRounds: true,
+    },
+    icon: lucideIcons.Clock,
+};
+
+export const velocityVolleyRule: GameRule = {
+    cost: 12,
+    id: 'velocity-volley',
+    unlockLevel: 27,
+    ruleTitle: 'Velocity Volley',
+    description: 'Player bullets travel 75% faster.',
+    effects: {
+        velocityVolley: true,
+    },
+    icon: lucideIcons.Rocket,
+};
+
+export const fractalFrenzyRule: GameRule = {
+    cost: 13,
+    id: 'fractal-frenzy',
+    unlockLevel: 28,
+    ruleTitle: 'Fractal Frenzy',
+    description: 'Destroyed large asteroids split into three fragments.',
+    effects: {
+        fractalFrenzy: true,
+    },
+    icon: lucideIcons.Swords,
+};
+
+export const asteroidMagnetismRule: GameRule = {
+    cost: 13,
+    id: 'asteroid-magnetism',
+    unlockLevel: 29,
+    ruleTitle: 'Meteor Magnet',
+    description: 'Asteroids steadily curve toward the nearest player.',
+    effects: {
+        asteroidMagnetism: true,
+    },
+    icon: lucideIcons.Compass,
+};
+
+export const stardustDividendRule: GameRule = {
+    cost: 15,
+    id: 'stardust-dividend',
+    unlockLevel: 30,
+    ruleTitle: 'Stardust Dividend',
+    description: 'Timed experience gains are tripled.',
+    effects: {
+        stardustDividend: true,
+    },
+    icon: lucideIcons.Star,
+};
+
 export const allGameRules: GameRule[] = [
     playerCardinalMovementRule,
     timedXpRule,
@@ -132,6 +372,26 @@ export const allGameRules: GameRule[] = [
     strongerAsteroidsRule,
     secondForwardGunRule,
     precisionScoringRule,
+    afterburnersRule,
+    heavyRoundsRule,
+    rapidFireRule,
+    piercingRoundsRule,
+    reinforcedHullRule,
+    wideShotsRule,
+    asteroidDragRule,
+    controlledDemolitionRule,
+    salvageRightsRule,
+    autoTurretRule,
+    phaseDriveRule,
+    triadCannonsRule,
+    ricochetRoundsRule,
+    homingRoundsRule,
+    novaRoundsRule,
+    cryoRoundsRule,
+    velocityVolleyRule,
+    fractalFrenzyRule,
+    asteroidMagnetismRule,
+    stardustDividendRule,
 ];
 
 export function getGameRulesUnlockedAtLevel(level: number) {
@@ -139,9 +399,3 @@ export function getGameRulesUnlockedAtLevel(level: number) {
         return rule.unlockLevel <= level;
     });
 }
-
-/**
- * More rule ideas
- *
- * 1. Auto aiming auto firing gun (cyan bullets)
- */

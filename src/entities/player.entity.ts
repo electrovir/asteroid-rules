@@ -19,7 +19,23 @@ import {Polygon} from 'detect-collisions';
 import {defineShape, enumShape, nonEmptyStringShape} from 'object-shape-tester';
 import {GameAudio, playGameAudio} from '../data/game-audio.js';
 import {PlayerPosition, queueMissionExperience} from '../data/game-state.js';
-import {getPlayerGunCount, getShotExperienceCost} from '../data/gameplay-modifiers.js';
+import {
+    getPlayerBulletBounceCount,
+    getPlayerBulletDamageMultiplier,
+    getPlayerBulletHomingTurnRate,
+    getPlayerBulletPierceCount,
+    getPlayerBulletRadiusMultiplier,
+    getPlayerBulletSlowDuration,
+    getPlayerBulletSpeedMultiplier,
+    getPlayerBulletSplashDamage,
+    getPlayerBulletSplashRadius,
+    getPlayerCollisionProtectionCount,
+    getPlayerGunCount,
+    getPlayerMovementSpeedMultiplier,
+    getPlayerShotIntervalMultiplier,
+    getShotExperienceCost,
+} from '../data/gameplay-modifiers.js';
+import {type GameModifiers} from '../data/modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
 import {AsteroidEntity} from './asteroid.entity.js';
@@ -38,6 +54,9 @@ const playerBulletSpeedPixelsPerMillisecond = 0.8;
 const playerShotIntervalMilliseconds = 200;
 const playerSpeedPixelsPerMillisecond = 0.4;
 export const playerBulletDamage = 1;
+export const playerBulletRadius = 6;
+const playerBulletColor = '#ffff66';
+const autoTurretBulletColor = '#66ffff';
 const playerOutlinePoints = [
     {
         x: 0,
@@ -62,6 +81,7 @@ export function calculatePlayerMovement({
     mouseMovementTarget,
     msSinceLastUpdate,
     playerPosition,
+    speedMultiplier = 1,
 }: Readonly<{
     activeBindings: ActiveBindings<GameInputAction> | undefined;
     mouseMovementTarget:
@@ -75,15 +95,18 @@ export function calculatePlayerMovement({
         x: number;
         y: number;
     }>;
+    speedMultiplier?: number | undefined;
 }>) {
     const cardinalMovement = calculateCardinalMovement({
         activeBindings,
         msSinceLastUpdate,
+        speedMultiplier,
     });
     const mouseMovement = calculateMouseMovement({
         mouseMovementTarget,
         msSinceLastUpdate,
         playerPosition,
+        speedMultiplier,
     });
     const x = (cardinalMovement?.x || 0) + (mouseMovement?.x || 0);
     const y = (cardinalMovement?.y || 0) + (mouseMovement?.y || 0);
@@ -94,7 +117,7 @@ export function calculatePlayerMovement({
     }
 
     const movementMultiplier = Math.min(
-        (msSinceLastUpdate * playerSpeedPixelsPerMillisecond) / movementMagnitude,
+        (msSinceLastUpdate * playerSpeedPixelsPerMillisecond * speedMultiplier) / movementMagnitude,
         1,
     );
 
@@ -159,12 +182,14 @@ export function createPlayerBulletParams({
     directionX,
     directionY,
     gunOffset,
+    modifiers,
     playerX,
     playerY,
 }: Readonly<{
     directionX: number;
     directionY: number;
     gunOffset: number;
+    modifiers: Readonly<GameModifiers>;
     playerX: number;
     playerY: number;
 }>) {
@@ -172,8 +197,25 @@ export function createPlayerBulletParams({
     const lateralDirectionY = directionX;
 
     return {
-        velocityX: StableMath.round(directionX * playerBulletSpeedPixelsPerMillisecond),
-        velocityY: StableMath.round(directionY * playerBulletSpeedPixelsPerMillisecond),
+        color: modifiers.autoTurret ? autoTurretBulletColor : playerBulletColor,
+        damage: playerBulletDamage * getPlayerBulletDamageMultiplier(modifiers),
+        homingTurnRate: getPlayerBulletHomingTurnRate(modifiers),
+        radius: playerBulletRadius * getPlayerBulletRadiusMultiplier(modifiers),
+        remainingBounces: getPlayerBulletBounceCount(modifiers),
+        remainingPierces: getPlayerBulletPierceCount(modifiers),
+        slowDurationMilliseconds: getPlayerBulletSlowDuration(modifiers),
+        splashDamage: getPlayerBulletSplashDamage(modifiers),
+        splashRadius: getPlayerBulletSplashRadius(modifiers),
+        velocityX: StableMath.round(
+            directionX *
+                playerBulletSpeedPixelsPerMillisecond *
+                getPlayerBulletSpeedMultiplier(modifiers),
+        ),
+        velocityY: StableMath.round(
+            directionY *
+                playerBulletSpeedPixelsPerMillisecond *
+                getPlayerBulletSpeedMultiplier(modifiers),
+        ),
         x: StableMath.round(playerX + directionX * playerSize + lateralDirectionX * gunOffset),
         y: StableMath.round(playerY + directionY * playerSize + lateralDirectionY * gunOffset),
     };
@@ -182,9 +224,11 @@ export function createPlayerBulletParams({
 function calculateCardinalMovement({
     activeBindings,
     msSinceLastUpdate,
+    speedMultiplier,
 }: Readonly<{
     activeBindings: ActiveBindings<GameInputAction> | undefined;
     msSinceLastUpdate: number;
+    speedMultiplier: number;
 }>) {
     const upMovement = createMovementInput(activeBindings?.[PlayerAction.MoveUp]);
     const downMovement = createMovementInput(activeBindings?.[PlayerAction.MoveDown]);
@@ -210,8 +254,16 @@ function calculateCardinalMovement({
     }
 
     return {
-        x: (movementX / movementMagnitude) * msSinceLastUpdate * playerSpeedPixelsPerMillisecond,
-        y: (movementY / movementMagnitude) * msSinceLastUpdate * playerSpeedPixelsPerMillisecond,
+        x:
+            (movementX / movementMagnitude) *
+            msSinceLastUpdate *
+            playerSpeedPixelsPerMillisecond *
+            speedMultiplier,
+        y:
+            (movementY / movementMagnitude) *
+            msSinceLastUpdate *
+            playerSpeedPixelsPerMillisecond *
+            speedMultiplier,
     };
 }
 
@@ -219,6 +271,7 @@ function calculateMouseMovement({
     mouseMovementTarget,
     msSinceLastUpdate,
     playerPosition,
+    speedMultiplier,
 }: Readonly<{
     mouseMovementTarget:
         | {
@@ -231,6 +284,7 @@ function calculateMouseMovement({
         x: number;
         y: number;
     }>;
+    speedMultiplier: number;
 }>) {
     if (!mouseMovementTarget) {
         return undefined;
@@ -246,7 +300,7 @@ function calculateMouseMovement({
 
     const movementDistance = Math.min(
         distance,
-        msSinceLastUpdate * playerSpeedPixelsPerMillisecond,
+        msSinceLastUpdate * playerSpeedPixelsPerMillisecond * speedMultiplier,
     );
 
     return {
@@ -279,6 +333,80 @@ function createPlayerGraphics({color}: Readonly<{color: string}>) {
     return graphics.closePath().fill(color);
 }
 
+function wrapPlayerPosition({
+    maximum,
+    minimum,
+    value,
+}: Readonly<{
+    maximum: number;
+    minimum: number;
+    value: number;
+}>) {
+    return value < minimum ? maximum : value > maximum ? minimum : value;
+}
+
+function findClosestAsteroid({
+    asteroids,
+    playerPosition,
+}: Readonly<{
+    asteroids: ReadonlySet<AsteroidEntity>;
+    playerPosition: Readonly<{
+        x: number;
+        y: number;
+    }>;
+}>) {
+    return Array.from(asteroids)
+        .filter((asteroid) => {
+            return !asteroid.isDestroyed;
+        })
+        .reduce<
+            | {
+                  asteroid: AsteroidEntity;
+                  distance: number;
+              }
+            | undefined
+        >((closestAsteroid, asteroid) => {
+            const distance = Math.hypot(
+                asteroid.params.x - playerPosition.x,
+                asteroid.params.y - playerPosition.y,
+            );
+
+            return !closestAsteroid || distance < closestAsteroid.distance
+                ? {
+                      asteroid,
+                      distance,
+                  }
+                : closestAsteroid;
+        }, undefined)?.asteroid;
+}
+
+function calculateTargetDirection({
+    playerPosition,
+    targetPosition,
+}: Readonly<{
+    playerPosition: Readonly<{
+        x: number;
+        y: number;
+    }>;
+    targetPosition: Readonly<{
+        x: number;
+        y: number;
+    }>;
+}>) {
+    const xDistance = targetPosition.x - playerPosition.x;
+    const yDistance = targetPosition.y - playerPosition.y;
+    const distance = Math.hypot(xDistance, yDistance);
+
+    if (!distance) {
+        return undefined;
+    }
+
+    return {
+        x: xDistance / distance,
+        y: yDistance / distance,
+    };
+}
+
 export class PlayerEntity extends defineEntity({
     key: 'asteroids-player',
     paramsMap: position2dParamsMap,
@@ -288,6 +416,7 @@ export class PlayerEntity extends defineEntity({
         inputPlayerPosition: enumShape(PlayerPosition),
     }),
 }) {
+    protected collisionProtectionUses = 0;
     protected deathAnimationRemainingMilliseconds: number | undefined;
     protected hasSpawnedDeathExplosion = false;
     protected shotCooldownMilliseconds = 0;
@@ -307,8 +436,27 @@ export class PlayerEntity extends defineEntity({
         };
     }
 
-    public override collide(otherEntity: BaseEntity2d) {
+    public override async collide(otherEntity: BaseEntity2d) {
         if (otherEntity instanceof AsteroidEntity) {
+            await this.handleAsteroidCollision({
+                asteroid: otherEntity,
+            });
+        }
+    }
+
+    public async handleAsteroidCollision({asteroid}: Readonly<{asteroid: AsteroidEntity}>) {
+        if (this.deathAnimationRemainingMilliseconds != undefined) {
+            return;
+        } else if (
+            this.collisionProtectionUses <
+            getPlayerCollisionProtectionCount(this.state.saveState?.modifiers || {})
+        ) {
+            this.collisionProtectionUses += 1;
+            await asteroid.takeDamage({
+                damage: asteroid.params.health,
+            });
+            return;
+        } else {
             this.startDeathAnimation();
         }
     }
@@ -401,6 +549,7 @@ export class PlayerEntity extends defineEntity({
                         })
                       : undefined,
                   playerPosition: this.params,
+                  speedMultiplier: getPlayerMovementSpeedMultiplier(modifiers),
               })
             : undefined;
 
@@ -408,21 +557,45 @@ export class PlayerEntity extends defineEntity({
             const rotation = Math.atan2(movement.y, movement.x) + Math.PI / 2;
             this.view.rotation = rotation;
             this.hitbox?.setAngle(rotation);
-            this.params.x = clamp(this.params.x + movement.x, {
-                min: playerHalfWidth,
-                max: this.pixi.screen.width - playerHalfWidth,
-            });
-            this.params.y = clamp(this.params.y + movement.y, {
-                min: playerHalfHeight,
-                max: this.pixi.screen.height - playerHalfHeight,
-            });
+            this.params.x = modifiers.phaseDrive
+                ? wrapPlayerPosition({
+                      maximum: this.pixi.screen.width + playerHalfWidth,
+                      minimum: -playerHalfWidth,
+                      value: this.params.x + movement.x,
+                  })
+                : clamp(this.params.x + movement.x, {
+                      min: playerHalfWidth,
+                      max: this.pixi.screen.width - playerHalfWidth,
+                  });
+            this.params.y = modifiers.phaseDrive
+                ? wrapPlayerPosition({
+                      maximum: this.pixi.screen.height + playerHalfHeight,
+                      minimum: -playerHalfHeight,
+                      value: this.params.y + movement.y,
+                  })
+                : clamp(this.params.y + movement.y, {
+                      min: playerHalfHeight,
+                      max: this.pixi.screen.height - playerHalfHeight,
+                  });
         }
 
+        const autoTurretTarget = modifiers.autoTurret
+            ? findClosestAsteroid({
+                  asteroids: this.entityStore.getEntities(AsteroidEntity),
+                  playerPosition: this.params,
+              })
+            : undefined;
+        const autoTurretDirection = autoTurretTarget
+            ? calculateTargetDirection({
+                  playerPosition: this.params,
+                  targetPosition: autoTurretTarget.params,
+              })
+            : undefined;
         const gunCount = getPlayerGunCount(modifiers);
         const isFiring =
             this.state.isPlayerFiringAllowed &&
             gunCount > 0 &&
-            !!activeBindings?.[PlayerAction.Fire]?.value;
+            (!!activeBindings?.[PlayerAction.Fire]?.value || !!autoTurretDirection);
 
         this.shotCooldownMilliseconds = isFiring
             ? Math.max(0, this.shotCooldownMilliseconds - msSinceLastUpdate)
@@ -432,18 +605,31 @@ export class PlayerEntity extends defineEntity({
             return;
         }
 
-        const directionX = Math.sin(this.view.rotation);
-        const directionY = -Math.cos(this.view.rotation);
+        const directionX = autoTurretDirection?.x ?? Math.sin(this.view.rotation);
+        const directionY = autoTurretDirection?.y ?? -Math.cos(this.view.rotation);
+
+        if (autoTurretDirection) {
+            const rotation = Math.atan2(directionY, directionX) + Math.PI / 2;
+
+            this.view.rotation = rotation;
+            this.hitbox?.setAngle(rotation);
+        }
 
         await Promise.all(
-            (gunCount === 2
+            (gunCount === 3
                 ? [
-                      -8,
-                      8,
-                  ]
-                : [
+                      -12,
                       0,
+                      12,
                   ]
+                : gunCount === 2
+                  ? [
+                        -8,
+                        8,
+                    ]
+                  : [
+                        0,
+                    ]
             ).map(async (gunOffset) => {
                 await this.addEntity(
                     PlayerBulletEntity,
@@ -451,6 +637,7 @@ export class PlayerEntity extends defineEntity({
                         directionX,
                         directionY,
                         gunOffset,
+                        modifiers,
                         playerX: this.params.x,
                         playerY: this.params.y,
                     }),
@@ -462,6 +649,7 @@ export class PlayerEntity extends defineEntity({
             gameState: this.state,
         });
         playGameAudio(this.state, GameAudio.Shoot);
-        this.shotCooldownMilliseconds = playerShotIntervalMilliseconds;
+        this.shotCooldownMilliseconds =
+            playerShotIntervalMilliseconds * getPlayerShotIntervalMultiplier(modifiers);
     }
 }
