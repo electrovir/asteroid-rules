@@ -117,17 +117,10 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
                 return;
             }
 
-            const entityStore = state.entityStore;
             const gameModules = state.gameModules;
             const audioPlayer = state.audioPlayer;
 
-            if (
-                state.hasStartedLoadingGameAssets ||
-                !assetLoader ||
-                !audioPlayer ||
-                !entityStore ||
-                !gameModules
-            ) {
+            if (state.hasStartedLoadingGameAssets || !assetLoader || !audioPlayer || !gameModules) {
                 return;
             }
 
@@ -135,19 +128,14 @@ export function createGameLoaderMod({router}: Readonly<{router: FrontendRouter}>
             const gameAssetLoadSession = assetLoader.createLoadSession();
             state.gameAssetLoadSession = gameAssetLoadSession;
 
-            void entityStore
-                .loadEntityAssets(
-                    {
-                        entities: [
-                            gameModules.PlayerEntity,
-                        ],
-                        otherAssets: [
-                            gameModules.createGameAudioAsset({
-                                audioPlayer,
-                            }),
-                            gameModules.gameSaveStateAsset,
-                        ],
-                    },
+            void assetLoader
+                .bulkLoadAssets(
+                    [
+                        gameModules.createGameAudioAsset({
+                            audioPlayer,
+                        }),
+                        gameModules.gameSaveStateAsset,
+                    ],
                     {
                         doNotUnload: true,
                         loadSession: gameAssetLoadSession,

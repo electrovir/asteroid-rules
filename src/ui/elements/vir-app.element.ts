@@ -15,6 +15,17 @@ export const VirApp = defineElement()({
             font-family: sans-serif;
             ${noUserSelect}
         }
+
+        .build-commit {
+            bottom: 8px;
+            color: ${viraTheme.colors['theme-default'].foreground.value};
+            font-size: 10px;
+            left: 8px;
+            opacity: 0.35;
+            pointer-events: none;
+            position: fixed;
+            z-index: 2;
+        }
     `,
     state() {
         const themeClient = new ViraThemeClient();
@@ -54,6 +65,7 @@ export const VirApp = defineElement()({
                 : html`
                       <slot></slot>
                   `}
+            <span class="build-commit">${import.meta.env.VITE_GIT_COMMIT_HASH}</span>
         `;
     },
 });

@@ -21,6 +21,7 @@ import {
 } from '../../entities/player.entity.js';
 import {VirMissionHud} from '../../ui/elements/vir-mission-hud.element.js';
 import {ensureGameMission, updateMissionAsteroidSpawning} from './game-mission.js';
+import {shouldShowGameOver} from './should-show-game-over.js';
 
 const timedExperienceIntervalMilliseconds = 1000;
 const experiencePerTimedGain = 0.5;
@@ -97,9 +98,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
         if (
             !state.menuState &&
             state.entityStore &&
-            !Array.from(state.entityStore.getEntities(PlayerEntity)).some((player) => {
-                return !player.isGhostMode;
-            })
+            shouldShowGameOver(Array.from(state.entityStore.getEntities(PlayerEntity)))
         ) {
             updateMenuState(state, {
                 youDied: true,

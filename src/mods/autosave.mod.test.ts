@@ -1,9 +1,18 @@
+import {AnthaEngine} from '@antha/engine';
 import {assert, assertWrap} from '@augment-vir/assert';
-import {selectFrom} from '@augment-vir/common';
+import {randomString, selectFrom, wait} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
+import {LocalDbClient} from 'local-db-client';
 import {checkValidShape, checkWrapValidShape} from 'object-shape-tester';
-import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
-import {createGameSaveState, SavedGameStateVersion, saveStateDbShapes} from './autosave.mod.js';
+import {checkIfMainMenuAllowed, type AsteroidsGameEngineState} from '../data/game-state.js';
+import {
+    autosaveMod,
+    createGameSaveState,
+    SavedGameStateVersion,
+    saveStateDbShapes,
+    type AutosaveModState,
+    type SaveStateDbClient,
+} from './autosave.mod.js';
 
 function createSavedGameState() {
     return {
@@ -27,10 +36,45 @@ describe('saved joystick dead zone', () => {
         assert.strictEquals(createGameSaveState(savedGameState).joystickDeadZone, 0.3);
     });
 
-    it('defaults missing values from legacy saves', () => {
-        assert.strictEquals(
-            createGameSaveState(createSavedGameState()).joystickDeadZone,
-            defaultJoystickDeadZone,
+    it('defaults missing values from legacy saves to 25 percent', () => {
+        assert.strictEquals(createGameSaveState(createSavedGameState()).joystickDeadZone, 0.25);
+    });
+
+    it('preserves a save in a fresh database client', async () => {
+        const storeName = `asteroid-rules-test-${randomString(32)}`;
+        const localDbClient = await LocalDbClient.createClient(saveStateDbShapes, {
+            storeName,
+        });
+
+        await localDbClient.set.saveState({
+            ...createSavedGameState(),
+            playerLevel: 10,
+            playerLevelExperience: 42,
+        });
+
+        const reloadedLocalDbClient = await LocalDbClient.createClient(saveStateDbShapes, {
+            storeName,
+        });
+
+        assert.deepEquals(
+            selectFrom(createGameSaveState(reloadedLocalDbClient.value.saveState), {
+                playerLevel: true,
+                playerLevelExperience: true,
+            }),
+            {
+                playerLevel: 10,
+                playerLevelExperience: 42,
+            },
+        );
+    });
+});
+
+describe('default save state', () => {
+    it('keeps the main menu hidden until a second rule unlocks', () => {
+        assert.isFalse(
+            checkIfMainMenuAllowed({
+                saveState: createGameSaveState(undefined),
+            }),
         );
     });
 });
@@ -64,6 +108,67 @@ describe(createGameSaveState.name, () => {
                 playerLevel: 10,
                 playerLevelExperience: 42,
             },
+        );
+    });
+});
+
+describe(autosaveMod.modName, () => {
+    it('persists each changed save state without waiting for the periodic autosave interval', async () => {
+        const savedGameStates: Parameters<SaveStateDbClient['set']['saveState']>[0][] = [];
+        const localDbClient = {
+            set: {
+                saveState(savedGameState) {
+                    savedGameStates.push(savedGameState);
+                    return Promise.resolve(savedGameState);
+                },
+            },
+        } satisfies SaveStateDbClient;
+        const engine = new AnthaEngine<AsteroidsGameEngineState & AutosaveModState>({
+            mods: [
+                autosaveMod,
+            ],
+        });
+        await engine.runSingleTick();
+        engine.state.hasFinishedLoadingSaveState = true;
+        engine.state.localDbClient = localDbClient;
+        engine.state.saveState = {
+            ...createGameSaveState(undefined),
+            playerLevel: 10,
+            playerLevelExperience: 42,
+        };
+
+        await engine.runSingleTick();
+        await wait({
+            milliseconds: 1,
+        });
+
+        engine.state.saveState = {
+            ...assertWrap.isDefined(engine.state.saveState),
+            playerLevelExperience: 43,
+        };
+
+        await engine.runSingleTick();
+        await wait({
+            milliseconds: 1,
+        });
+
+        assert.deepEquals(
+            savedGameStates.map((savedGameState) => {
+                return selectFrom(savedGameState, {
+                    playerLevel: true,
+                    playerLevelExperience: true,
+                });
+            }),
+            [
+                {
+                    playerLevel: 10,
+                    playerLevelExperience: 42,
+                },
+                {
+                    playerLevel: 10,
+                    playerLevelExperience: 43,
+                },
+            ],
         );
     });
 });

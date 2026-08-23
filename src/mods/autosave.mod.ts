@@ -74,7 +74,9 @@ export type SaveStateDbClient = Pick<LocalDbClient<typeof saveStateDbShapes>, 's
 
 export type AutosaveModState = {
     hasFinishedLoadingSaveState: boolean;
-    lastSavedAt: number | undefined;
+    isSavingSaveState: boolean;
+    lastSaveFailureAt: number | undefined;
+    lastSavedSaveState: AsteroidsSaveState | undefined;
     localDbClient: SaveStateDbClient | undefined;
 };
 
@@ -180,16 +182,60 @@ async function persistSaveState({
 }>) {
     try {
         await localDbClient.set.saveState(createSavedGameState(saveState));
+        return true;
     } catch (error) {
         engine.log.error(ensureErrorAndPrependMessage(error, 'Failed to save game state.'));
+        return false;
     }
+}
+
+function saveCurrentGameState({
+    engine,
+    state,
+}: Readonly<{
+    engine: AnthaEngine;
+    state: Partial<
+        Pick<
+            AutosaveModState & AsteroidsGameEngineState,
+            | 'isSavingSaveState'
+            | 'lastSaveFailureAt'
+            | 'lastSavedSaveState'
+            | 'localDbClient'
+            | 'saveState'
+        >
+    >;
+}>) {
+    const saveState = state.saveState;
+
+    if (
+        !state.localDbClient ||
+        !saveState ||
+        state.isSavingSaveState ||
+        state.lastSavedSaveState === saveState ||
+        (state.lastSaveFailureAt != undefined && Date.now() - state.lastSaveFailureAt < 2000)
+    ) {
+        return;
+    }
+
+    state.isSavingSaveState = true;
+    void persistSaveState({
+        engine,
+        localDbClient: state.localDbClient,
+        saveState,
+    }).then((didSave) => {
+        state.isSavingSaveState = false;
+        state.lastSaveFailureAt = didSave ? undefined : Date.now();
+        state.lastSavedSaveState = didSave ? saveState : state.lastSavedSaveState;
+    });
 }
 
 export const autosaveMod = defineAnthaMod<AsteroidsGameEngineState & AutosaveModState>({
     executeImmediately: true,
     initState: {
         hasFinishedLoadingSaveState: false,
-        lastSavedAt: undefined,
+        isSavingSaveState: false,
+        lastSaveFailureAt: undefined,
+        lastSavedSaveState: undefined,
         localDbClient: undefined,
     },
     modName: autosaveModName,
@@ -207,20 +253,10 @@ export const autosaveMod = defineAnthaMod<AsteroidsGameEngineState & AutosaveMod
             state.saveState = createDefaultAsteroidsSaveState();
         }
 
-        const currentTime = Date.now();
-
-        if (
-            state.localDbClient &&
-            state.saveState &&
-            (state.lastSavedAt == undefined || currentTime - state.lastSavedAt >= 2000)
-        ) {
-            state.lastSavedAt = currentTime;
-            void persistSaveState({
-                engine,
-                localDbClient: state.localDbClient,
-                saveState: state.saveState,
-            });
-        }
+        saveCurrentGameState({
+            engine,
+            state,
+        });
 
         return undefined;
     },

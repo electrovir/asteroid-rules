@@ -51,7 +51,6 @@ export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
             const localDbClient = await LocalDbClient.createClient(saveStateDbShapes, {
                 storeName: 'asteroid-rules',
             });
-
             incrementProgressCallback();
 
             return {

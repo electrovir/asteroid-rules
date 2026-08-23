@@ -2,7 +2,11 @@ import {nav} from '@antha/input';
 import {css, defineElement, html, nothing, testId} from 'element-vir';
 import {noNativeSpacing, viraTheme} from 'vira';
 import {GameAudio, gameAudioFiles} from '../../data/game-audio.js';
-import {updateMenuState, type AsteroidsGameEngineState} from '../../data/game-state.js';
+import {
+    checkIfMainMenuAllowed,
+    updateMenuState,
+    type AsteroidsGameEngineState,
+} from '../../data/game-state.js';
 import {resetMission} from '../../mods/mission/reset-mission.js';
 import {VirGameButton} from './vir-game-button.element.js';
 
@@ -72,9 +76,16 @@ export const VirGameOverMenu = defineElement<{
                                 resetMission({
                                     gameState: inputs.gameState,
                                 });
-                                updateMenuState(inputs.gameState, {
-                                    mainMenu: true,
-                                });
+                                updateMenuState(
+                                    inputs.gameState,
+                                    checkIfMainMenuAllowed({
+                                        saveState: inputs.gameState.saveState,
+                                    })
+                                        ? {
+                                              mainMenu: true,
+                                          }
+                                        : undefined,
+                                );
                             }
                         },
                     },

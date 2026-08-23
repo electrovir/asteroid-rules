@@ -479,6 +479,7 @@ export class PlayerEntity extends defineEntity({
     }
 
     protected enterGhostMode() {
+        this.deathAnimationRemainingMilliseconds = undefined;
         this.isGhost = true;
         this.view.alpha = ghostPlayerAlpha;
         this.view.scale.set(1);

@@ -5,6 +5,7 @@ import {NavController, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
 import {GameAudio, gameAudioFiles} from '../../data/game-audio.js';
 import {type AsteroidsGameEngineState} from '../../data/game-state.js';
+import {createDefaultAsteroidsSaveState} from '../../mods/autosave.mod.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameOverMenu} from './vir-game-over-menu.element.js';
 
@@ -22,10 +23,11 @@ describe(VirGameOverMenu.tagName, () => {
         const navController = new NavController(document.body, {
             alwaysRequireFocused: true,
         });
-        const gameState = {
+        const gameState: Partial<AsteroidsGameEngineState> = {
             audioPlayer,
             navController,
-        } satisfies Partial<AsteroidsGameEngineState>;
+            saveState: createDefaultAsteroidsSaveState(),
+        };
 
         try {
             const renderedElement = await testWeb.render(html`
@@ -45,6 +47,7 @@ describe(VirGameOverMenu.tagName, () => {
             assertWrap.isDefined(extractNavEntry(terminateMissionButton)).activate(true);
 
             assert.deepEquals(audioPlayer.stoppedFile, gameAudioFiles[GameAudio.PlayerDeathMusic]);
+            assert.isUndefined(gameState.menuState);
         } finally {
             await audioPlayer.destroy();
             testWeb.cleanupRender();

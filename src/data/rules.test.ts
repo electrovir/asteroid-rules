@@ -5,10 +5,15 @@ import {
     allGameRules,
     getGameRulesUnlockedAtLevel,
     playerTwoMenuNavigationRule,
+    timedXpRule,
     twoPlayersRule,
 } from './rules.js';
 
 describe(getGameRulesUnlockedAtLevel.name, () => {
+    it('only unlocks timed experience for a new player', () => {
+        assert.deepEquals(getGameRulesUnlockedAtLevel(1), [timedXpRule]);
+    });
+
     it('unlocks each added rule at a higher level than the prior added rule', () => {
         const addedRules = allGameRules.slice(2);
 

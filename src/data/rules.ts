@@ -4,7 +4,7 @@ import {type GameRule} from './game-rule.js';
 export const playerCardinalMovementRule: GameRule = {
     cost: 1,
     id: 'cardinal-move',
-    unlockLevel: 1,
+    unlockLevel: 2,
     ruleTitle: 'Cardinal Movement',
     description: 'The player can move in cardinal directions.',
     effects: {
@@ -28,7 +28,7 @@ export const timedXpRule: GameRule = {
 export const playerForwardGunRule: GameRule = {
     cost: 3,
     id: 'player-forward-gun',
-    unlockLevel: 2,
+    unlockLevel: 3,
     ruleTitle: 'Forward Gun',
     description: 'The player fires bullets from the front of their ship.',
     effects: {
@@ -40,7 +40,7 @@ export const playerForwardGunRule: GameRule = {
 export const twoPlayersRule: GameRule = {
     cost: 2,
     id: 'two-players',
-    unlockLevel: 3,
+    unlockLevel: 4,
     ruleTitle: 'Two Players',
     description: 'Two players can fight asteroids together.',
     effects: {
@@ -52,7 +52,7 @@ export const twoPlayersRule: GameRule = {
 export const playerTwoMenuNavigationRule: GameRule = {
     cost: 0,
     id: 'player-two-menu-navigation',
-    unlockLevel: 4,
+    unlockLevel: 5,
     ruleTitle: 'Baby Rule',
     description:
         'Only player one can navigate menus. After dying, player two becomes a ghost that can fly but not fire.',
@@ -66,7 +66,7 @@ export const playerTwoMenuNavigationRule: GameRule = {
 export const fasterAsteroidSpawningRule: GameRule = {
     cost: 2,
     id: 'faster-asteroid-spawning',
-    unlockLevel: 5,
+    unlockLevel: 6,
     ruleTitle: 'Rapid Asteroids',
     description: 'Asteroids spawn faster.',
     effects: {
@@ -104,7 +104,8 @@ export const strongerAsteroidsRule: GameRule = {
     id: 'stronger-asteroids',
     unlockLevel: 14,
     ruleTitle: 'Stronger Asteroids',
-    description: 'Asteroids have more health and grant more experience when Asteroid Kill XP is active.',
+    description:
+        'Asteroids have more health and grant more experience when Asteroid Kill XP is active.',
     effects: {
         strongerAsteroids: true,
     },
