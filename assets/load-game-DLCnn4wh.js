@@ -32637,7 +32637,7 @@ fn mainFragment(
         }
     `,render(){return D`
             <slot></slot>
-        `}});function GH({adjustment:e,gameState:t}){let n=k((t.deviceHandler?.globalDeadZone??t.saveState?.joystickDeadZone??.25)+e,{min:vH,max:1});t.deviceHandler&&(t.deviceHandler.globalDeadZone=n),t.saveState&&={...t.saveState,joystickDeadZone:n}}function KH({adjustment:e,gameState:t}){let n=k((t.audioPlayer?.gainNode.gain.value??t.saveState?.audioVolume??.8)+e,{min:0,max:1});t.saveState&&={...t.saveState,audioVolume:n}}var qH=x()({tagName:`vir-pause-menu`,testIds:[`decreaseJoystickDeadZoneButton`,`increaseJoystickDeadZoneButton`,`decreaseAudioVolumeButton`,`increaseAudioVolumeButton`,`restartMissionButton`,`endMissionButton`],state(){return{cleanup:void 0,showPauseMenu:!1}},hostClasses:{"vir-pause-menu-visible":({state:e})=>e.showPauseMenu},styles({hostClasses:e}){return E`
+        `}});function GH({adjustment:e,gameState:t}){let n=k((t.deviceHandler?.globalDeadZone??t.saveState?.joystickDeadZone??.25)+e,{min:0,max:1});t.deviceHandler&&(t.deviceHandler.globalDeadZone=n),t.saveState&&={...t.saveState,joystickDeadZone:n}}function KH({adjustment:e,gameState:t}){let n=k((t.saveState?.audioVolume??t.audioPlayer?.gainNode.gain.value??.8)+e,{min:0,max:1});t.saveState&&={...t.saveState,audioVolume:n}}var qH=x()({tagName:`vir-pause-menu`,testIds:[`decreaseJoystickDeadZoneButton`,`increaseJoystickDeadZoneButton`,`decreaseAudioVolumeButton`,`increaseAudioVolumeButton`,`restartMissionButton`,`endMissionButton`],state(){return{cleanup:void 0,showPauseMenu:!1}},hostClasses:{"vir-pause-menu-visible":({state:e})=>e.showPauseMenu},styles({hostClasses:e}){return E`
             :host {
                 align-items: center;
                 box-sizing: border-box;
@@ -32714,7 +32714,7 @@ fn mainFragment(
                 <div class="settings-control">
                     <p>
                         Volume:
-                        ${Math.round((t.gameState.audioPlayer?.gainNode.gain.value??t.gameState.saveState?.audioVolume??.8)*100)}%
+                        ${Math.round((t.gameState.saveState?.audioVolume??t.gameState.audioPlayer?.gainNode.gain.value??.8)*100)}%
                     </p>
                     <div class="settings-buttons">
                         <${$}
