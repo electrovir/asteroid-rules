@@ -43,6 +43,10 @@ describe(menuMod.modName, () => {
                     pendingExperienceSpent: 0,
                     players: {},
                     seededRandom: SeededRandom.fromSeed('menu-mod-test'),
+                    screenSize: {
+                        height: 600,
+                        width: 800,
+                    },
                 },
             },
             mods: [

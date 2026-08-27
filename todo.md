@@ -1,1 +1,0 @@
--   center player on screen no matter aspect ratio

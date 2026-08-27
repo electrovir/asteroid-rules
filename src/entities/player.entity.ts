@@ -40,12 +40,15 @@ import {type GameModifiers} from '../data/modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
 import {AsteroidEntity} from './asteroid.entity.js';
+import {
+    clampPlayerPositionToScreen,
+    playerHalfHeight,
+    playerHalfWidth,
+    playerSize,
+} from './player-bounds.js';
 import {PlayerBulletEntity} from './player-bullet.entity.js';
 import {PlayerExplosionParticleEntity} from './player-explosion-particle.entity.js';
 
-const playerSize = 24;
-const playerHalfWidth = playerSize * 0.8;
-const playerHalfHeight = playerSize;
 const playerDeathAnimationDurationMilliseconds = 500;
 const playerExplosionParticleCount = 20;
 const playerExplosionParticleLifetimeMilliseconds = 500;
@@ -561,6 +564,7 @@ export class PlayerEntity extends defineEntity({
         }
 
         const activeBindings = this.state.activeBindings[this.params.inputPlayerPosition];
+        const gameScreen = this.state.gameScreen || this.pixi.screen;
         const modifiers = this.state.saveState?.modifiers || {};
         const movement = modifiers.allowPlayerCardinalMovement
             ? calculatePlayerMovement({
@@ -570,7 +574,7 @@ export class PlayerEntity extends defineEntity({
                       ? getMouseMovementTarget({
                             canvas: this.state.pixi.canvas,
                             rawInputs: this.state.rawInputs,
-                            screen: this.pixi.screen,
+                            screen: gameScreen,
                         })
                       : undefined,
                   playerPosition: this.params,
@@ -582,26 +586,29 @@ export class PlayerEntity extends defineEntity({
             const rotation = Math.atan2(movement.y, movement.x) + Math.PI / 2;
             this.view.rotation = rotation;
             this.hitbox?.setAngle(rotation);
-            this.params.x = modifiers.phaseDrive
-                ? wrapPlayerPosition({
-                      maximum: this.pixi.screen.width + playerHalfWidth,
-                      minimum: -playerHalfWidth,
-                      value: this.params.x + movement.x,
-                  })
-                : clamp(this.params.x + movement.x, {
-                      min: playerHalfWidth,
-                      max: this.pixi.screen.width - playerHalfWidth,
-                  });
-            this.params.y = modifiers.phaseDrive
-                ? wrapPlayerPosition({
-                      maximum: this.pixi.screen.height + playerHalfHeight,
-                      minimum: -playerHalfHeight,
-                      value: this.params.y + movement.y,
-                  })
-                : clamp(this.params.y + movement.y, {
-                      min: playerHalfHeight,
-                      max: this.pixi.screen.height - playerHalfHeight,
-                  });
+            if (modifiers.phaseDrive) {
+                this.params.x = wrapPlayerPosition({
+                    maximum: gameScreen.width + playerHalfWidth,
+                    minimum: -playerHalfWidth,
+                    value: this.params.x + movement.x,
+                });
+                this.params.y = wrapPlayerPosition({
+                    maximum: gameScreen.height + playerHalfHeight,
+                    minimum: -playerHalfHeight,
+                    value: this.params.y + movement.y,
+                });
+            } else {
+                const playerPosition = clampPlayerPositionToScreen({
+                    playerPosition: {
+                        x: this.params.x + movement.x,
+                        y: this.params.y + movement.y,
+                    },
+                    screenSize: gameScreen,
+                });
+
+                this.params.x = playerPosition.x;
+                this.params.y = playerPosition.y;
+            }
         }
 
         const autoTurretTarget = modifiers.autoTurret

@@ -56,6 +56,10 @@ function createGameState({
             pendingExperienceSpent: 0,
             players: {},
             seededRandom: SeededRandom.fromSeed('pause-menu-test'),
+            screenSize: {
+                height: 600,
+                width: 800,
+            },
         },
         navController,
         router,

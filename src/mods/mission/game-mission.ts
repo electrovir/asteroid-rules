@@ -8,6 +8,39 @@ import {
     createAsteroidParams,
 } from '../../entities/asteroid.entity.js';
 import {PlayerEntity} from '../../entities/player.entity.js';
+import {shiftGameEntityPositions} from './mission-screen-size.js';
+
+function updateMissionScreenSize({
+    entityStore,
+    missionState,
+    screenSize,
+}: Readonly<{
+    entityStore: NonNullable<AsteroidsGameEngineState['entityStore']>;
+    missionState: NonNullable<AsteroidsGameEngineState['missionState']>;
+    screenSize: Readonly<{
+        height: number;
+        width: number;
+    }>;
+}>) {
+    if (
+        missionState.screenSize.width === screenSize.width &&
+        missionState.screenSize.height === screenSize.height
+    ) {
+        return missionState;
+    }
+
+    shiftGameEntityPositions({
+        entities: Array.from(entityStore.currentEntityInstances),
+        playerPosition: missionState.players[PlayerPosition['1']]?.params,
+        previousScreenSize: missionState.screenSize,
+        screenSize,
+    });
+
+    return {
+        ...missionState,
+        screenSize,
+    };
+}
 
 async function updateMissionPlayers({
     gameState,
@@ -15,10 +48,10 @@ async function updateMissionPlayers({
     gameState: Partial<AsteroidsGameEngineState>;
 }>) {
     const entityStore = gameState.entityStore;
+    const gameScreen = gameState.gameScreen;
     const missionState = gameState.missionState;
-    const pixiApplication = gameState.pixi?.pixiApplication;
 
-    if (!entityStore || !missionState || !pixiApplication) {
+    if (!entityStore || !gameScreen || !missionState) {
         return;
     }
 
@@ -28,8 +61,8 @@ async function updateMissionPlayers({
         const addedSecondPlayer = await entityStore.addEntity(PlayerEntity, {
             color: '#00aaff',
             inputPlayerPosition: PlayerPosition['2'],
-            x: pixiApplication.screen.width * 0.65,
-            y: pixiApplication.screen.height / 2,
+            x: gameScreen.width * 0.65,
+            y: gameScreen.height / 2,
         });
 
         gameState.missionState = {
@@ -60,20 +93,26 @@ export async function ensureGameMission({
     currentTime: number;
     gameState: Partial<AsteroidsGameEngineState>;
 }>) {
-    const pixiApplication = gameState.pixi?.pixiApplication;
     const entityStore = gameState.entityStore;
+    const gameScreen = gameState.gameScreen;
 
-    if (!entityStore || !pixiApplication) {
+    if (!entityStore || !gameScreen) {
         return false;
     }
 
-    if (!gameState.missionState) {
+    if (gameState.missionState) {
+        gameState.missionState = updateMissionScreenSize({
+            entityStore,
+            missionState: gameState.missionState,
+            screenSize: gameScreen,
+        });
+    } else {
         const players = {
             [PlayerPosition['1']]: await entityStore.addEntity(PlayerEntity, {
                 color: '#39ff14',
                 inputPlayerPosition: PlayerPosition['1'],
-                x: pixiApplication.screen.width / 2,
-                y: pixiApplication.screen.height / 2,
+                x: gameScreen.width / 2,
+                y: gameScreen.height / 2,
             }),
         };
         const asteroidSpawnInterval = getAsteroidSpawnInterval({
@@ -90,6 +129,7 @@ export async function ensureGameMission({
             pendingExperienceSpent: 0,
             players,
             seededRandom: createStableRandom(createCuid2()),
+            screenSize: gameScreen,
         };
     }
 
@@ -109,9 +149,9 @@ export async function updateMissionAsteroidSpawning({
 }>) {
     const missionState = gameState.missionState;
     const entityStore = gameState.entityStore;
-    const pixiApplication = gameState.pixi?.pixiApplication;
+    const gameScreen = gameState.gameScreen;
 
-    if (!missionState || !entityStore || !pixiApplication) {
+    if (!missionState || !entityStore || !gameScreen) {
         return;
     } else if (gameState.menuState) {
         gameState.missionState = {
@@ -146,7 +186,7 @@ export async function updateMissionAsteroidSpawning({
             createAsteroidParams({
                 health: getAsteroidHealth(gameState.saveState?.modifiers || {}),
                 random: missionState.seededRandom,
-                screen: pixiApplication.screen,
+                screen: gameScreen,
             }),
         );
     });
