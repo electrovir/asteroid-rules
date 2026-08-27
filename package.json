@@ -30,15 +30,15 @@
         "test:spelling": "virmator spellcheck"
     },
     "dependencies": {
-        "@antha/asset": "^0.4.3",
-        "@antha/audio": "^0.4.3",
-        "@antha/engine": "^0.4.3",
-        "@antha/entity-2d": "^0.4.3",
-        "@antha/fps": "^0.4.3",
-        "@antha/graphics-2d": "^0.4.3",
-        "@antha/input": "^0.4.3",
-        "@antha/multiplayer-p2p-lock-step": "^0.4.3",
-        "@antha/util": "^0.4.2",
+        "@antha/asset": "^0.6.1",
+        "@antha/audio": "^0.6.1",
+        "@antha/engine": "^0.6.1",
+        "@antha/entity-2d": "^0.6.1",
+        "@antha/fps": "^0.6.1",
+        "@antha/graphics-2d": "^0.6.1",
+        "@antha/input": "^0.6.1",
+        "@antha/multiplayer-p2p-lock-step": "^0.6.1",
+        "@antha/util": "^0.6.1",
         "@augment-vir/assert": "^32.2.3",
         "@augment-vir/common": "^32.2.3",
         "@augment-vir/web": "^32.2.3",
@@ -65,7 +65,7 @@
         "cspell": "^10.0.1",
         "dependency-cruiser": "^18.2.0",
         "esbuild": "^0.28.2",
-        "eslint": "^10.8.1",
+        "eslint": "^10.9.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-jsdoc": "^64.2.1",
         "eslint-plugin-playwright": "^2.11.0",
@@ -85,7 +85,7 @@
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.67.0",
         "virmator": "^14.32.0",
-        "vite": "^8.2.1"
+        "vite": "^8.2.2"
     },
     "engines": {
         "node": ">=22"

@@ -1,6 +1,7 @@
 import {nav} from '@antha/input';
-import {css, defineElement, html, nothing} from 'element-vir';
+import {css, defineElement, html, nothing, testId} from 'element-vir';
 import {noNativeSpacing} from 'vira';
+import {GameAudio, gameAudioFiles} from '../../data/game-audio.js';
 import {updateMenuState, type AsteroidsGameEngineState} from '../../data/game-state.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameRuleList} from './vir-game-rule-list.element.js';
@@ -9,6 +10,9 @@ export const VirRuleUnlockMenu = defineElement<{
     gameState: Partial<AsteroidsGameEngineState>;
 }>()({
     tagName: 'vir-rule-unlock-menu',
+    testIds: [
+        'resumeButton',
+    ],
     styles: css`
         :host {
             align-items: center;
@@ -35,7 +39,7 @@ export const VirRuleUnlockMenu = defineElement<{
             max-width: 100%;
         }
     `,
-    render({inputs}) {
+    render({inputs, testIds}) {
         const navController = inputs.gameState.navController;
 
         if (!navController) {
@@ -52,6 +56,7 @@ export const VirRuleUnlockMenu = defineElement<{
                     gameState: inputs.gameState,
                 })}></${VirGameRuleList}>
                 <${VirGameButton}
+                    ${testId(testIds.resumeButton)}
                     ${nav(navController, {
                         autoFocus: true,
                         height: Infinity,
@@ -60,6 +65,9 @@ export const VirRuleUnlockMenu = defineElement<{
                         listeners: {
                             activate: ({enabled}) => {
                                 if (enabled) {
+                                    inputs.gameState.audioPlayer?.stopFile(
+                                        gameAudioFiles[GameAudio.RuleUnlocked],
+                                    );
                                     if (inputs.gameState.saveState) {
                                         inputs.gameState.saveState.newGameRules = [];
                                     }

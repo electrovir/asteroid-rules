@@ -7,7 +7,8 @@ import {
 } from '@antha/entity-2d';
 import {Graphics} from '@antha/graphics-2d';
 import {StableMath, stableRandom, stableRandomInteger} from '@antha/util';
-import {clamp, createArray, type SeededRandom} from '@augment-vir/common';
+import {check} from '@augment-vir/assert';
+import {clamp, createArray, getObjectTypedValues, type SeededRandom} from '@augment-vir/common';
 import {Polygon} from 'detect-collisions';
 import {defineShape} from 'object-shape-tester';
 import {GameAudio, playGameAudio} from '../data/game-audio.js';
@@ -23,8 +24,7 @@ import {
     minimumAsteroidRadius,
 } from '../data/gameplay-modifiers.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
-import {PlayerBulletEntity} from './player-bullet.entity.js';
-import {PlayerEntity} from './player.entity.js';
+import {type PlayerEntity} from './player.entity.js';
 
 const asteroidOutlineColor = '#a3a3a3';
 const asteroidFillColor = '#3d3d3d';
@@ -58,13 +58,13 @@ function steerAsteroidTowardNearestPlayer({
     acceleration: number;
     asteroid: AsteroidEntity;
     msSinceLastUpdate: number;
-    players: ReadonlySet<PlayerEntity>;
+    players: ReadonlyArray<PlayerEntity>;
 }>) {
     if (!acceleration) {
         return;
     }
 
-    const closestPlayer = Array.from(players)
+    const closestPlayer = players
         .filter((player) => {
             return !player.isDestroyed && !player.isGhostMode;
         })
@@ -339,6 +339,9 @@ export function createAsteroidFragmentParams({
 }
 
 export class AsteroidEntity extends defineEntity({
+    collidesWith: {
+        collidesWithSelf: true,
+    },
     key: 'asteroids-asteroid',
     paramsMap: {
         ...position2dParamsMap,
@@ -449,18 +452,8 @@ export class AsteroidEntity extends defineEntity({
         );
     }
 
-    public override async collide(otherEntity: BaseEntity2d, collision: Readonly<Collision>) {
-        if (otherEntity instanceof PlayerBulletEntity) {
-            await otherEntity.damageAsteroid({
-                asteroid: this,
-            });
-            return;
-        } else if (otherEntity instanceof PlayerEntity) {
-            await otherEntity.handleAsteroidCollision({
-                asteroid: this,
-            });
-            return;
-        } else if (!(otherEntity instanceof AsteroidEntity)) {
+    public override collide(otherEntity: BaseEntity2d, collision: Readonly<Collision>) {
+        if (!(otherEntity instanceof AsteroidEntity)) {
             return;
         }
 
@@ -495,10 +488,6 @@ export class AsteroidEntity extends defineEntity({
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (this.state.menuState) {
-            return;
-        }
-
         const modifiers = this.state.saveState?.modifiers || {};
         const slowMovementSpeedMultiplier = getAsteroidSlowMovementSpeedMultiplier(
             this.params.slowRemainingMilliseconds,
@@ -512,7 +501,9 @@ export class AsteroidEntity extends defineEntity({
             acceleration: getAsteroidMagnetAcceleration(modifiers),
             asteroid: this,
             msSinceLastUpdate,
-            players: this.entityStore.getEntities(PlayerEntity),
+            players: getObjectTypedValues(this.state.missionState?.players || {}).filter(
+                check.isDefined,
+            ),
         });
         const movementSpeedMultiplier =
             getAsteroidMovementSpeedMultiplier(modifiers) * slowMovementSpeedMultiplier;

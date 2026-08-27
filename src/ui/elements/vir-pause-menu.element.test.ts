@@ -1,8 +1,10 @@
+import {AudioPlayer} from '@antha/audio';
 import {assert, assertWrap} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
 import {describe, it, testWeb} from '@augment-vir/test';
 import {NavController, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
+import {defaultGameAudioVolume, gameAudioVolumeStep} from '../../data/game-audio.js';
 import {type GameRule} from '../../data/game-rule.js';
 import {type FullGameState} from '../../data/game-state.js';
 import {defaultJoystickDeadZone, joystickDeadZoneStep} from '../../data/joystick-dead-zone.js';
@@ -12,7 +14,8 @@ import {VirGameButton} from './vir-game-button.element.js';
 import {VirPauseMenu} from './vir-pause-menu.element.js';
 
 type TestGameState = {
-    deviceHandler: Pick<FullGameState['deviceHandler'], 'globalDeadZone'>;
+    audioPlayer: AudioPlayer;
+    deviceHandler: FullGameState['deviceHandler'];
     menuState: FullGameState['menuState'];
     missionState: NonNullable<FullGameState['missionState']> | undefined;
     navController: NavController;
@@ -29,9 +32,16 @@ function createGameState({
     router: ReturnType<typeof createFrontendRouter>;
     unlockedGameRules: ReadonlyArray<GameRule>;
 }>): TestGameState {
+    const audioPlayer = new AudioPlayer();
+    audioPlayer.gainNode.gain.value = defaultGameAudioVolume;
+
     return {
+        audioPlayer,
         deviceHandler: {
             globalDeadZone: defaultJoystickDeadZone,
+            readAllDevices() {
+                return {};
+            },
         },
         menuState: {
             pause: true,
@@ -51,6 +61,7 @@ function createGameState({
         router,
         saveState: {
             activeRules: [],
+            audioVolume: defaultGameAudioVolume,
             joystickDeadZone: defaultJoystickDeadZone,
             modifiers: {},
             newGameRules: [],
@@ -128,6 +139,67 @@ describe(VirPauseMenu.tagName, () => {
             assert.strictEquals(gameState.deviceHandler.globalDeadZone, defaultJoystickDeadZone);
             assert.strictEquals(gameState.saveState.joystickDeadZone, defaultJoystickDeadZone);
         } finally {
+            await gameState.audioPlayer.destroy();
+            router.destroy();
+            testWeb.cleanupRender();
+        }
+    });
+
+    it('adjusts the audio volume', async () => {
+        const router = createFrontendRouter();
+        const navController = new NavController(document.body, {
+            alwaysRequireFocused: true,
+        });
+        const gameState = createGameState({
+            navController,
+            router,
+            unlockedGameRules: allGameRules,
+        });
+
+        try {
+            const pauseMenuElement = await renderPauseMenu(gameState);
+            const decreaseAudioVolumeButton = getPauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.decreaseAudioVolumeButton,
+            });
+            const increaseAudioVolumeButton = getPauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.increaseAudioVolumeButton,
+            });
+            const decreaseAudioVolumeNavEntry = assertWrap.isDefined(
+                extractNavEntry(decreaseAudioVolumeButton),
+            );
+            const increaseAudioVolumeNavEntry = assertWrap.isDefined(
+                extractNavEntry(increaseAudioVolumeButton),
+            );
+
+            increaseAudioVolumeNavEntry.activate(true);
+
+            assert.isApproximately(
+                gameState.audioPlayer.gainNode.gain.value,
+                defaultGameAudioVolume + gameAudioVolumeStep,
+                0.00001,
+            );
+            assert.isApproximately(
+                gameState.saveState.audioVolume,
+                defaultGameAudioVolume + gameAudioVolumeStep,
+                0.00001,
+            );
+
+            decreaseAudioVolumeNavEntry.activate(true);
+
+            assert.isApproximately(
+                gameState.audioPlayer.gainNode.gain.value,
+                defaultGameAudioVolume,
+                0.00001,
+            );
+            assert.isApproximately(
+                gameState.saveState.audioVolume,
+                defaultGameAudioVolume,
+                0.00001,
+            );
+        } finally {
+            await gameState.audioPlayer.destroy();
             router.destroy();
             testWeb.cleanupRender();
         }
@@ -169,6 +241,7 @@ describe(VirPauseMenu.tagName, () => {
             assert.isUndefined(gameState.missionState);
             assert.isUndefined(gameState.menuState);
         } finally {
+            await gameState.audioPlayer.destroy();
             router.destroy();
             testWeb.cleanupRender();
         }
@@ -207,6 +280,7 @@ describe(VirPauseMenu.tagName, () => {
                 mainMenu: true,
             });
         } finally {
+            await gameState.audioPlayer.destroy();
             router.destroy();
             testWeb.cleanupRender();
         }

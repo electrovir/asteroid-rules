@@ -412,6 +412,9 @@ function calculateTargetDirection({
 }
 
 export class PlayerEntity extends defineEntity({
+    collidesWith: {
+        collidesWithOtherEntities: [AsteroidEntity],
+    },
     key: 'asteroids-player',
     paramsMap: position2dParamsMap,
     paramsShape: defineShape({
@@ -477,7 +480,6 @@ export class PlayerEntity extends defineEntity({
 
         this.deathAnimationRemainingMilliseconds = playerDeathAnimationDurationMilliseconds;
         playGameAudio(this.state, GameAudio.PlayerDeath);
-        playGameAudio(this.state, GameAudio.PlayerDeathMusic);
     }
 
     protected enterGhostMode() {
@@ -535,9 +537,7 @@ export class PlayerEntity extends defineEntity({
     }
 
     public override async update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (this.state.menuState) {
-            return;
-        } else if (this.deathAnimationRemainingMilliseconds != undefined) {
+        if (this.deathAnimationRemainingMilliseconds != undefined) {
             await this.spawnDeathExplosion();
             this.deathAnimationRemainingMilliseconds = Math.max(
                 0,

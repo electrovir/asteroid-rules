@@ -55,12 +55,14 @@ describe(menuMod.modName, () => {
         assert.deepEquals(engine.state.menuState, {
             pause: true,
         });
+        assert.isTrue(engine.state.disableEntityUpdates);
 
         engine.state.activeBindings = createOpenPauseMenuBindings();
 
         await engine.runSingleTick();
 
         assert.isUndefined(engine.state.menuState);
+        assert.isFalse(engine.state.disableEntityUpdates ?? true);
         assert.isFalse(engine.state.isInMenu ?? true);
     });
 

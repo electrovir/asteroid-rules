@@ -13,6 +13,9 @@ import {defineEntity} from '../mods/game-entity.mod.js';
 import {AsteroidEntity} from './asteroid.entity.js';
 
 export class PlayerBulletEntity extends defineEntity({
+    collidesWith: {
+        collidesWithOtherEntities: [AsteroidEntity],
+    },
     key: 'asteroids-player-bullet',
     paramsMap: position2dParamsMap,
     paramsShape: defineShape({
@@ -181,10 +184,6 @@ export class PlayerBulletEntity extends defineEntity({
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (this.state.menuState) {
-            return;
-        }
-
         this.applyHoming({
             msSinceLastUpdate,
         });

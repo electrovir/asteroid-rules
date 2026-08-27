@@ -1,10 +1,9 @@
-import {createAnthaAssetMod} from '@antha/asset';
+import {createAnthaAssetMod, createAnthaBootstrapMod} from '@antha/asset';
 import {AnthaEngine, AnthaUi} from '@antha/engine';
 import {type EmptyFunction} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html} from 'element-vir';
 import {type AsteroidsGameEngineState} from '../../data/game-state.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
-import {createGameLoaderMod} from '../../mods/game-loader/game-loader.mod.js';
 
 const loadingScreenFadeMs = 500;
 
@@ -39,8 +38,20 @@ export const VirGame = defineElement<{
                 createAnthaAssetMod({
                     loadingScreenFadeMs,
                 }),
-                createGameLoaderMod({
-                    router: inputs.router,
+                createAnthaBootstrapMod<AsteroidsGameEngineState>()({
+                    assetName: 'Game code',
+                    async loadModule() {
+                        return await import('../../mods/game-loader/load-game.js');
+                    },
+                    bootstrap({assetLoader, engine, loadSession, module, state}) {
+                        return module.bootstrapGame({
+                            assetLoader,
+                            engine,
+                            loadSession,
+                            router: inputs.router,
+                            state,
+                        });
+                    },
                 }),
             ],
         });

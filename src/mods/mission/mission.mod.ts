@@ -1,4 +1,4 @@
-import {defineAnthaMod} from '@antha/engine';
+import {createEngineTime, defineAnthaMod} from '@antha/engine';
 import {StableMath} from '@antha/util';
 import {getObjectTypedValues} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
@@ -100,6 +100,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
             state.entityStore &&
             shouldShowGameOver(Array.from(state.entityStore.getEntities(PlayerEntity)))
         ) {
+            state.inputDisableEndsAt = createEngineTime(engine.totalMs + 1000);
             updateMenuState(state, {
                 youDied: true,
             });

@@ -1,7 +1,6 @@
 import {nav} from '@antha/input';
 import {css, defineElement, html, nothing, testId} from 'element-vir';
 import {noNativeSpacing, viraTheme} from 'vira';
-import {GameAudio, gameAudioFiles} from '../../data/game-audio.js';
 import {
     checkIfMainMenuAllowed,
     updateMenuState,
@@ -52,6 +51,9 @@ export const VirGameOverMenu = defineElement<{
     `,
     render({inputs, testIds}) {
         const navController = inputs.gameState.navController;
+        const mainMenuAllowed = checkIfMainMenuAllowed({
+            saveState: inputs.gameState.saveState,
+        });
 
         if (!navController) {
             return nothing;
@@ -70,17 +72,12 @@ export const VirGameOverMenu = defineElement<{
                     listeners: {
                         activate: ({enabled}) => {
                             if (enabled) {
-                                inputs.gameState.audioPlayer?.stopFile(
-                                    gameAudioFiles[GameAudio.PlayerDeathMusic],
-                                );
                                 resetMission({
                                     gameState: inputs.gameState,
                                 });
                                 updateMenuState(
                                     inputs.gameState,
-                                    checkIfMainMenuAllowed({
-                                        saveState: inputs.gameState.saveState,
-                                    })
+                                    mainMenuAllowed
                                         ? {
                                               mainMenu: true,
                                           }
@@ -91,7 +88,7 @@ export const VirGameOverMenu = defineElement<{
                     },
                 })}
             >
-                Terminate Mission
+                ${mainMenuAllowed ? 'Terminate Mission' : 'Start New Mission'}
             </${VirGameButton}>
         `;
     },

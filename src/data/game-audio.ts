@@ -2,6 +2,9 @@ import {type AudioPlayer, type AudioSetupParams} from '@antha/audio';
 import {getObjectTypedValues} from '@augment-vir/common';
 import {buildUrl} from 'url-vir';
 
+export const defaultGameAudioVolume = 0.8;
+export const gameAudioVolumeStep = 0.05;
+
 export enum GameAudio {
     AsteroidCollisionCrash = 'asteroidCollisionCrash',
     AsteroidCollisionMetalOne = 'asteroidCollisionMetalOne',
@@ -14,7 +17,6 @@ export enum GameAudio {
     GameMusic = 'gameMusic',
     MenuMusic = 'menuMusic',
     PlayerDeath = 'playerDeath',
-    PlayerDeathMusic = 'playerDeathMusic',
     RuleUnlocked = 'ruleUnlocked',
     Shoot = 'shoot',
 }
@@ -26,59 +28,55 @@ function createGameAudioSource(fileName: string) {
 export const gameAudioFiles = {
     [GameAudio.AsteroidCollisionCrash]: {
         sources: createGameAudioSource('asteroid-collision-0.ogg'),
-        volume: 0.03,
+        volume: 0.09,
     },
     [GameAudio.AsteroidCollisionMetalOne]: {
         sources: createGameAudioSource('asteroid-collision-1.ogg'),
-        volume: 0.08,
+        volume: 0.24,
     },
     [GameAudio.AsteroidCollisionMetalThree]: {
         sources: createGameAudioSource('asteroid-collision-3.ogg'),
-        volume: 0.08,
+        volume: 0.24,
     },
     [GameAudio.AsteroidCollisionMetalTwo]: {
         sources: createGameAudioSource('asteroid-collision-2.ogg'),
-        volume: 0.08,
+        volume: 0.24,
     },
     [GameAudio.AsteroidDeath]: {
         sources: createGameAudioSource('asteroid-death-0.ogg'),
-        volume: 0.12,
+        volume: 0.09,
     },
     [GameAudio.AsteroidDeathExplosionOne]: {
         sources: createGameAudioSource('asteroid-death-1.ogg'),
-        volume: 0.12,
+        volume: 0.09,
     },
     [GameAudio.AsteroidDeathExplosionThree]: {
         sources: createGameAudioSource('asteroid-death-3.ogg'),
-        volume: 0.12,
+        volume: 0.09,
     },
     [GameAudio.AsteroidDeathExplosionTwo]: {
         sources: createGameAudioSource('asteroid-death-2.ogg'),
-        volume: 0.12,
+        volume: 0.09,
     },
     [GameAudio.GameMusic]: {
         sources: createGameAudioSource('game-music.mp3'),
-        volume: 0.12,
+        volume: 0.4455,
     },
     [GameAudio.MenuMusic]: {
         sources: createGameAudioSource('menu-music.ogg'),
-        volume: 0.24,
+        volume: 1,
     },
     [GameAudio.PlayerDeath]: {
         sources: createGameAudioSource('player-death.ogg'),
-        volume: 0.35,
-    },
-    [GameAudio.PlayerDeathMusic]: {
-        sources: createGameAudioSource('player-death-music.ogg'),
-        volume: 0.1,
+        volume: 0.5,
     },
     [GameAudio.RuleUnlocked]: {
         sources: createGameAudioSource('rule-unlocked.ogg'),
-        volume: 0.3,
+        volume: 1,
     },
     [GameAudio.Shoot]: {
         sources: createGameAudioSource('shoot.ogg'),
-        volume: 0.12,
+        volume: 0.4,
     },
 } satisfies Record<GameAudio, AudioSetupParams>;
 

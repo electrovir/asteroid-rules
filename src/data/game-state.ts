@@ -3,6 +3,7 @@ import {type AnthaAudioState} from '@antha/audio';
 import {type AnthaEntity2dModState} from '@antha/entity-2d';
 import {
     type AnthaInputBindingsModState,
+    type AnthaReadRawInputModState,
     type InputDeviceHandler,
     type MenuNavModState,
 } from '@antha/input';
@@ -30,6 +31,7 @@ export type PlayerPosition = Values<typeof PlayerPosition>;
 
 export type AsteroidsSaveState = {
     activeRules: GameRule[];
+    audioVolume: number;
     joystickDeadZone: number;
     modifiers: GameModifiers;
     newGameRules: GameRule[];
@@ -114,6 +116,7 @@ export type FullGameState = {
           }
         | undefined;
 } & AnthaInputBindingsModState<GameInputAction> &
+    AnthaReadRawInputModState &
     AnthaAudioState &
     AnthaAssetModState &
     MenuNavModState & {

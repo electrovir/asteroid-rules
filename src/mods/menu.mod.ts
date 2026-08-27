@@ -1,4 +1,4 @@
-import {defineAnthaMod} from '@antha/engine';
+import {createEngineTime, defineAnthaMod} from '@antha/engine';
 import {MenuNavBinding} from '@antha/input';
 import {getEnumValues, omitObjectKeys} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
@@ -62,6 +62,7 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
             (!state.missionState?.levelUpAnimation ||
                 state.missionState.levelUpAnimation.endsAt <= engine.totalMs)
         ) {
+            state.inputDisableEndsAt = createEngineTime(engine.totalMs + 1000);
             updateMenuState(state, {
                 ruleUnlock: true,
             });
@@ -93,6 +94,7 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
         }
 
         state.isInMenu = !!state.menuState;
+        state.disableEntityUpdates = !!state.menuState;
 
         if (!state.menuState) {
             return nothing;

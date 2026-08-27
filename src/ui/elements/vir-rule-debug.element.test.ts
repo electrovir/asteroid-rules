@@ -4,6 +4,7 @@ import {describe, it, testWeb} from '@augment-vir/test';
 import {waitForAnimationFrame} from '@augment-vir/web';
 import {NavController, NavDirection, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
+import {defaultGameAudioVolume} from '../../data/game-audio.js';
 import {type FullGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
@@ -19,7 +20,7 @@ function getPauseMenuButtons(pauseMenuElement: Readonly<HTMLElement>) {
         pauseMenuElement.shadowRoot?.querySelectorAll<HTMLElement>(VirGameButton.tagName) || [],
     );
 
-    assert.isLengthExactly(buttons, 6);
+    assert.isLengthExactly(buttons, 8);
 
     return buttons;
 }
@@ -56,6 +57,7 @@ function createGameState({
         router,
         saveState: {
             activeRules: [],
+            audioVolume: defaultGameAudioVolume,
             joystickDeadZone: 0.01,
             modifiers: {},
             newGameRules: [],
@@ -71,6 +73,7 @@ function createRestrictedSaveState() {
         activeRules: [
             playerCardinalMovementRule,
         ],
+        audioVolume: defaultGameAudioVolume,
         joystickDeadZone: 0.01,
         modifiers: {
             allowPlayerCardinalMovement: true,
@@ -247,6 +250,8 @@ describe(VirRuleDebug.tagName, () => {
                 resumeButton,
                 decreaseJoystickDeadZoneButton,
                 increaseJoystickDeadZoneButton,
+                decreaseAudioVolumeButton,
+                increaseAudioVolumeButton,
                 debugButton,
                 restartMissionButton,
                 endMissionButton,
@@ -272,6 +277,26 @@ describe(VirRuleDebug.tagName, () => {
             assert.strictEquals(
                 navController.currentNavEntry.entry.element,
                 increaseJoystickDeadZoneButton,
+            );
+
+            navController.navigate({
+                allowWrapping: true,
+                blockPerpendicularNavigation: true,
+                direction: NavDirection.Down,
+            });
+            assert.strictEquals(
+                navController.currentNavEntry.entry.element,
+                increaseAudioVolumeButton,
+            );
+
+            navController.navigate({
+                allowWrapping: true,
+                blockPerpendicularNavigation: true,
+                direction: NavDirection.Left,
+            });
+            assert.strictEquals(
+                navController.currentNavEntry.entry.element,
+                decreaseAudioVolumeButton,
             );
 
             navController.navigate({

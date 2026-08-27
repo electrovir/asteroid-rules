@@ -2,6 +2,7 @@ import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
 import {ensureErrorAndPrependMessage, getObjectTypedEntries} from '@augment-vir/common';
 import {type LocalDbClient} from 'local-db-client';
 import {enumShape, nullableShape, partialShape} from 'object-shape-tester';
+import {defaultGameAudioVolume} from '../data/game-audio.js';
 import {createGameModifiers, limitGameRulesToPool} from '../data/game-rule.js';
 import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
 import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
@@ -58,6 +59,7 @@ const savedGameModifiersShape = partialShape({
 
 const savedGameStateShape = partialShape({
     activeRuleIds: [''],
+    audioVolume: nullableShape(0),
     joystickDeadZone: nullableShape(0),
     modifiers: savedGameModifiersShape,
     newGameRuleIds: nullableShape(['']),
@@ -93,6 +95,7 @@ export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
 
     return {
         activeRules,
+        audioVolume: defaultGameAudioVolume,
         joystickDeadZone: defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules: [],
@@ -148,6 +151,7 @@ export function createGameSaveState(
 
     return {
         activeRules,
+        audioVolume: savedGameState.audioVolume ?? defaultGameAudioVolume,
         joystickDeadZone: savedGameState.joystickDeadZone ?? defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules,
@@ -159,6 +163,7 @@ export function createGameSaveState(
 
 function createSavedGameState({
     activeRules,
+    audioVolume,
     joystickDeadZone,
     newGameRules,
     playerLevel,
@@ -167,6 +172,7 @@ function createSavedGameState({
 }: AsteroidsSaveState): SavedGameState {
     return {
         activeRuleIds: activeRules.map((rule) => rule.id),
+        audioVolume,
         joystickDeadZone,
         newGameRuleIds: newGameRules.map((rule) => rule.id),
         playerLevel,

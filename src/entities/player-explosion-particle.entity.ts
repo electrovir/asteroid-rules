@@ -60,10 +60,6 @@ export class PlayerExplosionParticleEntity extends defineEntity({
     }
 
     public override update({msSinceLastUpdate}: Readonly<EntityUpdateParams>) {
-        if (this.state.menuState) {
-            return;
-        }
-
         this.params.remainingLifetimeMilliseconds = Math.max(
             0,
             this.params.remainingLifetimeMilliseconds - msSinceLastUpdate,

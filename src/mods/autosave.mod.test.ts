@@ -4,6 +4,7 @@ import {randomString, selectFrom, wait} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {LocalDbClient} from 'local-db-client';
 import {checkValidShape, checkWrapValidShape} from 'object-shape-tester';
+import {defaultGameAudioVolume} from '../data/game-audio.js';
 import {checkIfMainMenuAllowed, type AsteroidsGameEngineState} from '../data/game-state.js';
 import {
     autosaveMod,
@@ -65,6 +66,25 @@ describe('saved joystick dead zone', () => {
                 playerLevel: 10,
                 playerLevelExperience: 42,
             },
+        );
+    });
+});
+
+describe('saved audio volume', () => {
+    it('loads the saved value', () => {
+        const savedGameState = {
+            ...createSavedGameState(),
+            audioVolume: 0.6,
+        };
+
+        assert.isTrue(checkValidShape(savedGameState, saveStateDbShapes.saveState.shape));
+        assert.strictEquals(createGameSaveState(savedGameState).audioVolume, 0.6);
+    });
+
+    it('defaults missing values from legacy saves to 80 percent', () => {
+        assert.strictEquals(
+            createGameSaveState(createSavedGameState()).audioVolume,
+            defaultGameAudioVolume,
         );
     });
 });

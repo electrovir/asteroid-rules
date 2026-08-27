@@ -1,6 +1,7 @@
-import {defineAsset} from '@antha/asset';
-import {createAnthaAudioMod, type AudioPlayer} from '@antha/audio';
-import {type AnthaEngine} from '@antha/engine';
+import {defineAsset, type AssetLoader, type AssetLoadSession} from '@antha/asset';
+import {AudioPlayer, createAnthaAudioMod} from '@antha/audio';
+import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
+import {loadAnthaAssets} from '@antha/entity-2d';
 import {createAnthaFpsMod} from '@antha/fps';
 import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
 import {
@@ -14,19 +15,25 @@ import {LocalDbClient} from 'local-db-client';
 import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {gameAudioFilesToLoad} from '../../data/game-audio.js';
 import {
+    checkIfMainMenuAllowed,
     updateMenuState,
     type AsteroidsGameEngineState,
     type AsteroidsSaveState,
 } from '../../data/game-state.js';
 import {isDeployed} from '../../data/is-deployed.js';
-import {defaultJoystickDeadZone} from '../../data/joystick-dead-zone.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
 import {GameZIndex} from '../../data/z-index.js';
+import {AsteroidEntity} from '../../entities/asteroid.entity.js';
+import {PlayerBulletEntity} from '../../entities/player-bullet.entity.js';
+import {PlayerExplosionParticleEntity} from '../../entities/player-explosion-particle.entity.js';
+import {PlayerEntity} from '../../entities/player.entity.js';
 import {
     autosaveMod,
+    createDefaultAsteroidsSaveState,
     createGameSaveState,
     saveStateDbShapes,
+    type AutosaveModState,
     type SaveStateDbClient,
 } from '../autosave.mod.js';
 import {gameAudioMod} from '../game-audio.mod.js';
@@ -34,8 +41,12 @@ import {gameEntityMod} from '../game-entity.mod.js';
 import {isOnDebugPage, menuMod} from '../menu.mod.js';
 import {missionMod} from '../mission/mission.mod.js';
 
-export {PlayerEntity} from '../../entities/player.entity.js';
-export {createDefaultAsteroidsSaveState} from '../autosave.mod.js';
+const gameEntityClasses = [
+    AsteroidEntity,
+    PlayerBulletEntity,
+    PlayerExplosionParticleEntity,
+    PlayerEntity,
+];
 
 type LoadedGameSaveState = {
     loadError: Error | undefined;
@@ -43,8 +54,8 @@ type LoadedGameSaveState = {
     saveState: AsteroidsSaveState;
 };
 
-export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
-    name: 'Game save state',
+const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
+    assetName: 'Game save state',
     maxProgress: 1,
     async load({incrementProgressCallback}) {
         try {
@@ -77,76 +88,157 @@ export const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
     },
 });
 
-export function createGameAudioAsset({audioPlayer}: Readonly<{audioPlayer: AudioPlayer}>) {
-    return defineAsset({
-        name: 'Game audio',
-        maxProgress: gameAudioFilesToLoad.length,
-        async load({incrementProgressCallback}) {
-            await audioPlayer.loadFiles(gameAudioFilesToLoad, {
-                progressCallback() {
-                    incrementProgressCallback();
-                },
-                serial: true,
-            });
+function createGameInitializationMod({
+    loadedSaveState,
+    router,
+}: Readonly<{
+    loadedSaveState: LoadedGameSaveState;
+    router: FrontendRouter;
+}>) {
+    return defineAnthaMod<
+        AsteroidsGameEngineState &
+            AutosaveModState & {
+                hasInitialized: boolean;
+            }
+    >({
+        modName: 'game-initialization',
+        execute({state}) {
+            if (state.hasInitialized) {
+                return;
+            }
 
-            return {
-                value: undefined,
-            };
+            state.localDbClient = loadedSaveState.localDbClient;
+            state.missionState = undefined;
+            state.router = router;
+            state.saveState = loadedSaveState.saveState;
+            state.hasFinishedLoadingSaveState = true;
+            updateMenuState(
+                state,
+                isOnDebugPage(router)
+                    ? {
+                          ruleDebug: true,
+                      }
+                    : checkIfMainMenuAllowed({
+                            saveState: loadedSaveState.saveState,
+                        })
+                      ? {
+                            mainMenu: true,
+                        }
+                      : undefined,
+            );
+            state.hasInitialized = true;
         },
     });
 }
 
-export function loadGame({
+async function loadInitialGameAssets({
+    assetLoader,
+    audioPlayer,
     engine,
-    router,
+    loadSession,
 }: Readonly<{
-    engine: AnthaEngine<AsteroidsGameEngineState>;
-    router: FrontendRouter;
+    assetLoader: AssetLoader;
+    audioPlayer: AudioPlayer;
+    engine: AnthaEngine;
+    loadSession: AssetLoadSession;
 }>) {
-    engine.state.bindingAssignments = defaultPlayerInputBindings;
-    updateMenuState(
-        engine.state,
-        isOnDebugPage(router)
-            ? {
-                  ruleDebug: true,
-              }
-            : {
-                  mainMenu: true,
-              },
-    );
-    engine.state.missionState = undefined;
-    engine.state.router = router;
+    try {
+        await loadAnthaAssets(
+            {
+                assetLoader,
+                assets: [gameSaveStateAsset],
+                audioFiles: {
+                    assetName: 'Game audio',
+                    audioPlayer,
+                    files: gameAudioFilesToLoad,
+                    serial: true,
+                },
+                entities: gameEntityClasses,
+            },
+            {
+                doNotUnload: true,
+                loadSession,
+            },
+        );
+        const loadedSaveState = await assetLoader.loadIndividualAsset({
+            asset: gameSaveStateAsset,
+        });
 
-    engine.currentMods.push(
-        autosaveMod,
-        createAnthaGraphics2dMod({
-            extraCanvasWrapperStyles: css`
-                z-index: ${GameZIndex.Game};
-            `,
-            pixiOptions: {
-                background: 'black',
-            },
-        }),
-        createAnthaAudioMod(),
-        createAnthaReadRawInputMod({
-            deviceHandlerOptions: {
-                globalDeadZone: defaultJoystickDeadZone,
-            },
-        }),
-        createAnthaInputBindingsMod<GameInputAction>(),
-        menuMod,
-        createAnthaMenuNavMod({
-            allowWrapping: true,
-            alwaysRequireFocused: true,
-            blockPerpendicularNavigation: true,
-        }),
-        gameEntityMod,
-        missionMod,
-        gameAudioMod,
-        ...(isDeployed
-            ? []
-            : [
-                  createAnthaFpsMod(),
-              ]),
-    );
+        if (loadedSaveState.loadError) {
+            engine.log.error(loadedSaveState.loadError);
+        }
+
+        return loadedSaveState;
+    } catch (error) {
+        engine.log.error(ensureErrorAndPrependMessage(error, 'Failed to load game save state.'));
+
+        return {
+            loadError: undefined,
+            localDbClient: undefined,
+            saveState: createDefaultAsteroidsSaveState(),
+        };
+    }
+}
+
+export async function bootstrapGame({
+    assetLoader,
+    engine,
+    loadSession,
+    router,
+    state,
+}: Readonly<{
+    assetLoader: AssetLoader;
+    engine: AnthaEngine;
+    loadSession: AssetLoadSession;
+    router: FrontendRouter;
+    state: Partial<AsteroidsGameEngineState>;
+}>) {
+    const audioPlayer = new AudioPlayer();
+    state.audioPlayer = audioPlayer;
+    state.bindingAssignments = defaultPlayerInputBindings;
+    const loadedSaveState = await loadInitialGameAssets({
+        assetLoader,
+        audioPlayer,
+        engine,
+        loadSession,
+    });
+
+    return {
+        mods: [
+            autosaveMod,
+            createAnthaGraphics2dMod({
+                extraCanvasWrapperStyles: css`
+                    z-index: ${GameZIndex.Game};
+                `,
+                pixiOptions: {
+                    background: 'black',
+                },
+            }),
+            createAnthaAudioMod(),
+            createAnthaReadRawInputMod({
+                deviceHandlerOptions: {
+                    globalDeadZone: loadedSaveState.saveState.joystickDeadZone,
+                },
+            }),
+            createAnthaInputBindingsMod<GameInputAction>(),
+            createGameInitializationMod({
+                loadedSaveState,
+                router,
+            }),
+            menuMod,
+            createAnthaMenuNavMod({
+                allowWrapping: true,
+                alwaysRequireFocused: true,
+                blockPerpendicularNavigation: true,
+            }),
+            gameEntityMod,
+            missionMod,
+            gameAudioMod,
+            ...(isDeployed
+                ? []
+                : [
+                      createAnthaFpsMod(),
+                  ]),
+        ],
+    };
 }
