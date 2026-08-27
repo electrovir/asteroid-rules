@@ -147,7 +147,7 @@ async function loadInitialGameAssets({
             {
                 assetLoader,
                 assets: [gameSaveStateAsset],
-                audioFiles: {
+                audio: {
                     assetName: 'Game audio',
                     audioPlayer,
                     files: gameAudioFilesToLoad,

@@ -28,7 +28,7 @@ function adjustJoystickDeadZone({
             gameState.saveState?.joystickDeadZone ??
             defaultJoystickDeadZone) + adjustment,
         {
-            min: defaultJoystickDeadZone,
+            min: 0,
             max: 1,
         },
     );
@@ -53,8 +53,8 @@ function adjustAudioVolume({
     gameState: Partial<AsteroidsGameEngineState>;
 }>) {
     const audioVolume = clamp(
-        (gameState.audioPlayer?.gainNode.gain.value ??
-            gameState.saveState?.audioVolume ??
+        (gameState.saveState?.audioVolume ??
+            gameState.audioPlayer?.gainNode.gain.value ??
             defaultGameAudioVolume) + adjustment,
         {
             min: 0,
@@ -249,8 +249,8 @@ export const VirPauseMenu = defineElement<{
                     <p>
                         Volume:
                         ${Math.round(
-                            (inputs.gameState.audioPlayer?.gainNode.gain.value ??
-                                inputs.gameState.saveState?.audioVolume ??
+                            (inputs.gameState.saveState?.audioVolume ??
+                                inputs.gameState.audioPlayer?.gainNode.gain.value ??
                                 defaultGameAudioVolume) * 100,
                         )}%
                     </p>

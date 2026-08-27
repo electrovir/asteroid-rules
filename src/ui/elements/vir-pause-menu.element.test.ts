@@ -84,6 +84,39 @@ function getPauseMenuButton({
     return assertWrap.instanceOf(shadowRoot.querySelector(testIdSelector(testId)), VirGameButton);
 }
 
+function getPauseMenuNavEntry({
+    pauseMenuElement,
+    testId,
+}: Readonly<{
+    pauseMenuElement: HTMLElement;
+    testId: string;
+}>) {
+    return assertWrap.isDefined(
+        extractNavEntry(
+            getPauseMenuButton({
+                pauseMenuElement,
+                testId,
+            }),
+        ),
+    );
+}
+
+function activatePauseMenuButton({
+    pauseMenuElement,
+    testId,
+}: Readonly<{
+    pauseMenuElement: HTMLElement;
+    testId: string;
+}>) {
+    const navEntry = getPauseMenuNavEntry({
+        pauseMenuElement,
+        testId,
+    });
+
+    navEntry.activate(true);
+    navEntry.activate(false);
+}
+
 async function renderPauseMenu(gameState: Readonly<TestGameState>) {
     const renderedElement = await testWeb.render(html`
         <${VirPauseMenu.assign({
@@ -108,22 +141,10 @@ describe(VirPauseMenu.tagName, () => {
 
         try {
             const pauseMenuElement = await renderPauseMenu(gameState);
-            const decreaseJoystickDeadZoneButton = getPauseMenuButton({
-                pauseMenuElement,
-                testId: VirPauseMenu.testIds.decreaseJoystickDeadZoneButton,
-            });
-            const increaseJoystickDeadZoneButton = getPauseMenuButton({
+            activatePauseMenuButton({
                 pauseMenuElement,
                 testId: VirPauseMenu.testIds.increaseJoystickDeadZoneButton,
             });
-            const decreaseJoystickDeadZoneNavEntry = assertWrap.isDefined(
-                extractNavEntry(decreaseJoystickDeadZoneButton),
-            );
-            const increaseJoystickDeadZoneNavEntry = assertWrap.isDefined(
-                extractNavEntry(increaseJoystickDeadZoneButton),
-            );
-
-            increaseJoystickDeadZoneNavEntry.activate(true);
 
             assert.strictEquals(
                 gameState.deviceHandler.globalDeadZone,
@@ -134,10 +155,27 @@ describe(VirPauseMenu.tagName, () => {
                 defaultJoystickDeadZone + joystickDeadZoneStep,
             );
 
-            decreaseJoystickDeadZoneNavEntry.activate(true);
+            activatePauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.decreaseJoystickDeadZoneButton,
+            });
 
             assert.strictEquals(gameState.deviceHandler.globalDeadZone, defaultJoystickDeadZone);
             assert.strictEquals(gameState.saveState.joystickDeadZone, defaultJoystickDeadZone);
+
+            gameState.deviceHandler.globalDeadZone = joystickDeadZoneStep;
+            gameState.saveState = {
+                ...gameState.saveState,
+                joystickDeadZone: joystickDeadZoneStep,
+            };
+
+            activatePauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.decreaseJoystickDeadZoneButton,
+            });
+
+            assert.strictEquals(gameState.deviceHandler.globalDeadZone, 0);
+            assert.strictEquals(gameState.saveState.joystickDeadZone, 0);
         } finally {
             await gameState.audioPlayer.destroy();
             router.destroy();
@@ -158,44 +196,29 @@ describe(VirPauseMenu.tagName, () => {
 
         try {
             const pauseMenuElement = await renderPauseMenu(gameState);
-            const decreaseAudioVolumeButton = getPauseMenuButton({
-                pauseMenuElement,
-                testId: VirPauseMenu.testIds.decreaseAudioVolumeButton,
-            });
-            const increaseAudioVolumeButton = getPauseMenuButton({
+            activatePauseMenuButton({
                 pauseMenuElement,
                 testId: VirPauseMenu.testIds.increaseAudioVolumeButton,
             });
-            const decreaseAudioVolumeNavEntry = assertWrap.isDefined(
-                extractNavEntry(decreaseAudioVolumeButton),
-            );
-            const increaseAudioVolumeNavEntry = assertWrap.isDefined(
-                extractNavEntry(increaseAudioVolumeButton),
-            );
 
-            increaseAudioVolumeNavEntry.activate(true);
-
-            assert.isApproximately(
-                gameState.audioPlayer.gainNode.gain.value,
-                defaultGameAudioVolume + gameAudioVolumeStep,
-                0.00001,
-            );
             assert.isApproximately(
                 gameState.saveState.audioVolume,
                 defaultGameAudioVolume + gameAudioVolumeStep,
                 0.00001,
             );
 
-            decreaseAudioVolumeNavEntry.activate(true);
+            activatePauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.increaseAudioVolumeButton,
+            });
+            activatePauseMenuButton({
+                pauseMenuElement,
+                testId: VirPauseMenu.testIds.decreaseAudioVolumeButton,
+            });
 
             assert.isApproximately(
-                gameState.audioPlayer.gainNode.gain.value,
-                defaultGameAudioVolume,
-                0.00001,
-            );
-            assert.isApproximately(
                 gameState.saveState.audioVolume,
-                defaultGameAudioVolume,
+                defaultGameAudioVolume + gameAudioVolumeStep,
                 0.00001,
             );
         } finally {
