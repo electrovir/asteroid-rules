@@ -1,11 +1,8 @@
 import {css, defineElement, html, listen, nothing} from 'element-vir';
 import {noUserSelect, viraTheme, ViraThemeClient, ViraThemeSelection} from 'vira';
-import {readInjectedViteData} from '../../data/global-vite-data.js';
 import {defaultFrontendRoute} from '../../data/routing/frontend-route.js';
 import {createFrontendRouter} from '../../data/routing/frontend-router.js';
 import {VirGame} from './vir-game.element.js';
-
-const buildCommitHash = readInjectedViteData().commitHash;
 
 export const VirApp = defineElement()({
     tagName: 'vir-app',
@@ -17,17 +14,6 @@ export const VirApp = defineElement()({
             width: 100%;
             font-family: sans-serif;
             ${noUserSelect}
-        }
-
-        .build-commit {
-            bottom: 8px;
-            color: ${viraTheme.colors['theme-default'].foreground.value};
-            font-size: 10px;
-            left: 8px;
-            opacity: 0.35;
-            pointer-events: none;
-            position: fixed;
-            z-index: 2;
         }
     `,
     state() {
@@ -68,7 +54,6 @@ export const VirApp = defineElement()({
                 : html`
                       <slot></slot>
                   `}
-            <span class="build-commit">${buildCommitHash}</span>
         `;
     },
 });

@@ -10,7 +10,7 @@ import {
     createAnthaReadRawInputMod,
 } from '@antha/input';
 import {ensureErrorAndPrependMessage} from '@augment-vir/common';
-import {css} from 'element-vir';
+import {css, html} from 'element-vir';
 import {LocalDbClient} from 'local-db-client';
 import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {gameAudioFilesToLoad} from '../../data/game-audio.js';
@@ -28,6 +28,7 @@ import {AsteroidEntity} from '../../entities/asteroid.entity.js';
 import {PlayerBulletEntity} from '../../entities/player-bullet.entity.js';
 import {PlayerExplosionParticleEntity} from '../../entities/player-explosion-particle.entity.js';
 import {PlayerEntity} from '../../entities/player.entity.js';
+import {VirGameBuildCommit} from '../../ui/elements/vir-game-build-commit.element.js';
 import {
     autosaveMod,
     createDefaultAsteroidsSaveState,
@@ -51,6 +52,15 @@ const gameEntityClasses = [
     PlayerExplosionParticleEntity,
     PlayerEntity,
 ];
+
+const buildCommitMod = defineAnthaMod<AsteroidsGameEngineState>({
+    modName: 'game-build-commit',
+    execute() {
+        return html`
+            <${VirGameBuildCommit}></${VirGameBuildCommit}>
+        `;
+    },
+});
 
 type LoadedGameSaveState = {
     loadError: Error | undefined;
@@ -214,6 +224,7 @@ export async function bootstrapGame({
 
     return {
         mods: [
+            buildCommitMod,
             autosaveMod,
             createAnthaGraphics2dMod({
                 extraCanvasWrapperStyles: css`

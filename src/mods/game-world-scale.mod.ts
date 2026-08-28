@@ -88,7 +88,6 @@ function updateVirtualViewportHostElement({
     hostElement: HTMLElement;
     virtualViewport: VirtualViewport;
 }>) {
-    hostElement.style.removeProperty('zoom');
     hostElement.style.height = `${100 / virtualViewport.scale}%`;
     hostElement.style.transform = `scale(${virtualViewport.scale})`;
     hostElement.style.transformOrigin = 'top left';
@@ -137,9 +136,7 @@ export function createAnthaVirtualViewportMod({
                 !hasSameVirtualViewport({
                     previousVirtualViewport: state.virtualViewport,
                     virtualViewport,
-                }) ||
-                !!hostElement.style.zoom ||
-                hostElement.style.transform !== `scale(${virtualViewport.scale})`;
+                }) || hostElement.style.transform !== `scale(${virtualViewport.scale})`;
 
             if (hasViewportChanged) {
                 updateVirtualViewportHostElement({
