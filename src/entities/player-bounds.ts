@@ -1,4 +1,5 @@
 import {clamp} from '@augment-vir/common';
+import {type VirtualViewportSize} from '../mods/game-world-scale.mod.js';
 
 export const playerSize = 24;
 export const playerHalfWidth = playerSize * 0.8;
@@ -12,10 +13,7 @@ export function clampPlayerPositionToScreen({
         x: number;
         y: number;
     }>;
-    screenSize: Readonly<{
-        height: number;
-        width: number;
-    }>;
+    screenSize: Readonly<VirtualViewportSize>;
 }>) {
     return {
         x: clamp(playerPosition.x, {

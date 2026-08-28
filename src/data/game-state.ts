@@ -16,8 +16,11 @@ import {
     type Values,
 } from '@augment-vir/common';
 import {type PlayerEntity} from '../entities/player.entity.js';
+import {
+    type AnthaVirtualViewportModState,
+    type VirtualViewportSize,
+} from '../mods/game-world-scale.mod.js';
 import {createGameModifiers, type GameRule} from './game-rule.js';
-import {type GameScreen} from './game-screen.js';
 import {type GameModifiers} from './modifiers.js';
 import {type GameInputAction} from './player-action.js';
 import {type FrontendRouter} from './routing/frontend-router.js';
@@ -93,7 +96,6 @@ export function updateAsteroidsSaveStateRules({
 }
 
 export type FullGameState = {
-    gameScreen: GameScreen | undefined;
     isPlayerFiringAllowed: boolean;
     isMouseMovementAllowed: boolean;
     menuState: GameMenuState | undefined;
@@ -115,13 +117,11 @@ export type FullGameState = {
               pendingExperienceGained: number;
               pendingExperienceSpent: number;
               players: PartialWithUndefined<Record<PlayerPosition, PlayerEntity>>;
-              screenSize: {
-                  height: number;
-                  width: number;
-              };
+              screenSize: VirtualViewportSize;
           }
         | undefined;
-} & AnthaInputBindingsModState<GameInputAction> &
+} & AnthaVirtualViewportModState &
+    AnthaInputBindingsModState<GameInputAction> &
     AnthaReadRawInputModState &
     AnthaAudioState &
     AnthaAssetModState &

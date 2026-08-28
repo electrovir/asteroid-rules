@@ -151,9 +151,9 @@ export class PlayerBulletEntity extends defineEntity({
     }
 
     protected bounceFromArenaEdge() {
-        const gameScreen = this.state.gameScreen || this.pixi.screen;
-        const bouncedHorizontally = this.params.x < 0 || this.params.x > gameScreen.width;
-        const bouncedVertically = this.params.y < 0 || this.params.y > gameScreen.height;
+        const virtualViewport = this.state.virtualViewport || this.pixi.screen;
+        const bouncedHorizontally = this.params.x < 0 || this.params.x > virtualViewport.width;
+        const bouncedVertically = this.params.y < 0 || this.params.y > virtualViewport.height;
 
         if (!this.params.remainingBounces || (!bouncedHorizontally && !bouncedVertically)) {
             return false;
@@ -161,11 +161,11 @@ export class PlayerBulletEntity extends defineEntity({
 
         this.params.x = clamp(this.params.x, {
             min: 0,
-            max: gameScreen.width,
+            max: virtualViewport.width,
         });
         this.params.y = clamp(this.params.y, {
             min: 0,
-            max: gameScreen.height,
+            max: virtualViewport.height,
         });
         this.params.velocityX = bouncedHorizontally
             ? -this.params.velocityX

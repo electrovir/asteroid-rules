@@ -38,7 +38,10 @@ import {
 } from '../autosave.mod.js';
 import {gameAudioMod} from '../game-audio.mod.js';
 import {gameEntityMod} from '../game-entity.mod.js';
-import {gameWorldScaleMod} from '../game-world-scale.mod.js';
+import {
+    createAnthaVirtualViewportMod,
+    createVirtualViewportPixiOptions,
+} from '../game-world-scale.mod.js';
 import {isOnDebugPage, menuMod} from '../menu.mod.js';
 import {missionMod} from '../mission/mission.mod.js';
 
@@ -194,6 +197,11 @@ export async function bootstrapGame({
     router: FrontendRouter;
     state: Partial<AsteroidsGameEngineState>;
 }>) {
+    engine.currentMods.push(
+        createAnthaVirtualViewportMod({
+            virtualWidth: 2560,
+        }),
+    );
     const audioPlayer = new AudioPlayer();
     state.audioPlayer = audioPlayer;
     state.bindingAssignments = defaultPlayerInputBindings;
@@ -212,12 +220,10 @@ export async function bootstrapGame({
                     z-index: ${GameZIndex.Game};
                 `,
                 pixiOptions: {
-                    autoDensity: true,
                     background: 'black',
-                    resolution: globalThis.devicePixelRatio || 1,
+                    ...createVirtualViewportPixiOptions(),
                 },
             }),
-            gameWorldScaleMod,
             createAnthaAudioMod(),
             createAnthaReadRawInputMod({
                 deviceHandlerOptions: {

@@ -8,6 +8,7 @@ import {
     createAsteroidParams,
 } from '../../entities/asteroid.entity.js';
 import {PlayerEntity} from '../../entities/player.entity.js';
+import {type VirtualViewportSize} from '../game-world-scale.mod.js';
 import {shiftGameEntityPositions} from './mission-screen-size.js';
 
 function updateMissionScreenSize({
@@ -17,10 +18,7 @@ function updateMissionScreenSize({
 }: Readonly<{
     entityStore: NonNullable<AsteroidsGameEngineState['entityStore']>;
     missionState: NonNullable<AsteroidsGameEngineState['missionState']>;
-    screenSize: Readonly<{
-        height: number;
-        width: number;
-    }>;
+    screenSize: Readonly<VirtualViewportSize>;
 }>) {
     if (
         missionState.screenSize.width === screenSize.width &&
@@ -48,10 +46,10 @@ async function updateMissionPlayers({
     gameState: Partial<AsteroidsGameEngineState>;
 }>) {
     const entityStore = gameState.entityStore;
-    const gameScreen = gameState.gameScreen;
+    const virtualViewport = gameState.virtualViewport;
     const missionState = gameState.missionState;
 
-    if (!entityStore || !gameScreen || !missionState) {
+    if (!entityStore || !virtualViewport || !missionState) {
         return;
     }
 
@@ -61,8 +59,8 @@ async function updateMissionPlayers({
         const addedSecondPlayer = await entityStore.addEntity(PlayerEntity, {
             color: '#00aaff',
             inputPlayerPosition: PlayerPosition['2'],
-            x: gameScreen.width * 0.65,
-            y: gameScreen.height / 2,
+            x: virtualViewport.width * 0.65,
+            y: virtualViewport.height / 2,
         });
 
         gameState.missionState = {
@@ -94,9 +92,9 @@ export async function ensureGameMission({
     gameState: Partial<AsteroidsGameEngineState>;
 }>) {
     const entityStore = gameState.entityStore;
-    const gameScreen = gameState.gameScreen;
+    const virtualViewport = gameState.virtualViewport;
 
-    if (!entityStore || !gameScreen) {
+    if (!entityStore || !virtualViewport) {
         return false;
     }
 
@@ -104,15 +102,15 @@ export async function ensureGameMission({
         gameState.missionState = updateMissionScreenSize({
             entityStore,
             missionState: gameState.missionState,
-            screenSize: gameScreen,
+            screenSize: virtualViewport,
         });
     } else {
         const players = {
             [PlayerPosition['1']]: await entityStore.addEntity(PlayerEntity, {
                 color: '#39ff14',
                 inputPlayerPosition: PlayerPosition['1'],
-                x: gameScreen.width / 2,
-                y: gameScreen.height / 2,
+                x: virtualViewport.width / 2,
+                y: virtualViewport.height / 2,
             }),
         };
         const asteroidSpawnInterval = getAsteroidSpawnInterval({
@@ -129,7 +127,7 @@ export async function ensureGameMission({
             pendingExperienceSpent: 0,
             players,
             seededRandom: createStableRandom(createCuid2()),
-            screenSize: gameScreen,
+            screenSize: virtualViewport,
         };
     }
 
@@ -149,9 +147,9 @@ export async function updateMissionAsteroidSpawning({
 }>) {
     const missionState = gameState.missionState;
     const entityStore = gameState.entityStore;
-    const gameScreen = gameState.gameScreen;
+    const virtualViewport = gameState.virtualViewport;
 
-    if (!missionState || !entityStore || !gameScreen) {
+    if (!missionState || !entityStore || !virtualViewport) {
         return;
     } else if (gameState.menuState) {
         gameState.missionState = {
@@ -186,7 +184,7 @@ export async function updateMissionAsteroidSpawning({
             createAsteroidParams({
                 health: getAsteroidHealth(gameState.saveState?.modifiers || {}),
                 random: missionState.seededRandom,
-                screen: gameScreen,
+                screen: virtualViewport,
             }),
         );
     });

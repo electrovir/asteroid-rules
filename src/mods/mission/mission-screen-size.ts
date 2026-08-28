@@ -1,4 +1,5 @@
 import {clampPlayerPositionToScreen} from '../../entities/player-bounds.js';
+import {type VirtualViewportSize} from '../game-world-scale.mod.js';
 
 function calculateGameEntityPositionShift({
     playerPosition,
@@ -11,14 +12,8 @@ function calculateGameEntityPositionShift({
               y: number;
           }>
         | undefined;
-    previousScreenSize: Readonly<{
-        height: number;
-        width: number;
-    }>;
-    screenSize: Readonly<{
-        height: number;
-        width: number;
-    }>;
+    previousScreenSize: Readonly<VirtualViewportSize>;
+    screenSize: Readonly<VirtualViewportSize>;
 }>) {
     const centeredXOffset = (screenSize.width - previousScreenSize.width) / 2;
     const centeredYOffset = (screenSize.height - previousScreenSize.height) / 2;
@@ -62,14 +57,8 @@ export function shiftGameEntityPositions({
               y: number;
           }>
         | undefined;
-    previousScreenSize: Readonly<{
-        height: number;
-        width: number;
-    }>;
-    screenSize: Readonly<{
-        height: number;
-        width: number;
-    }>;
+    previousScreenSize: Readonly<VirtualViewportSize>;
+    screenSize: Readonly<VirtualViewportSize>;
 }>) {
     const positionShift = calculateGameEntityPositionShift({
         playerPosition,

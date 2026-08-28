@@ -39,6 +39,10 @@ import {
 import {type GameModifiers} from '../data/modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
+import {
+    calculateVirtualViewportPoint,
+    type VirtualViewportSize,
+} from '../mods/game-world-scale.mod.js';
 import {AsteroidEntity} from './asteroid.entity.js';
 import {
     clampPlayerPositionToScreen,
@@ -135,14 +139,11 @@ export function calculatePlayerMovement({
 export function getMouseMovementTarget({
     canvas,
     rawInputs,
-    screen,
+    virtualViewport,
 }: Readonly<{
     canvas: HTMLCanvasElement | undefined;
     rawInputs: RawInputs | undefined;
-    screen: Readonly<{
-        height: number;
-        width: number;
-    }>;
+    virtualViewport: Readonly<VirtualViewportSize>;
 }>) {
     const mouseInputs = rawInputs?.[InputDeviceKey.Mouse];
     const mouseX = mouseInputs?.[createAxeName('x')]?.inputValue;
@@ -157,16 +158,14 @@ export function getMouseMovementTarget({
         return undefined;
     }
 
-    const canvasBounds = canvas.getBoundingClientRect();
-
-    if (!canvasBounds.width || !canvasBounds.height) {
-        return undefined;
-    }
-
-    return {
-        x: ((mouseX - canvasBounds.left) / canvasBounds.width) * screen.width,
-        y: ((mouseY - canvasBounds.top) / canvasBounds.height) * screen.height,
-    };
+    return calculateVirtualViewportPoint({
+        canvasBounds: canvas.getBoundingClientRect(),
+        clientPoint: {
+            x: mouseX,
+            y: mouseY,
+        },
+        virtualViewport,
+    });
 }
 
 export function isPrimaryMouseButtonHeld(rawInputs: RawInputs | undefined) {
@@ -564,7 +563,7 @@ export class PlayerEntity extends defineEntity({
         }
 
         const activeBindings = this.state.activeBindings[this.params.inputPlayerPosition];
-        const gameScreen = this.state.gameScreen || this.pixi.screen;
+        const virtualViewport = this.state.virtualViewport || this.pixi.screen;
         const modifiers = this.state.saveState?.modifiers || {};
         const movement = modifiers.allowPlayerCardinalMovement
             ? calculatePlayerMovement({
@@ -574,7 +573,7 @@ export class PlayerEntity extends defineEntity({
                       ? getMouseMovementTarget({
                             canvas: this.state.pixi.canvas,
                             rawInputs: this.state.rawInputs,
-                            screen: gameScreen,
+                            virtualViewport,
                         })
                       : undefined,
                   playerPosition: this.params,
@@ -588,12 +587,12 @@ export class PlayerEntity extends defineEntity({
             this.hitbox?.setAngle(rotation);
             if (modifiers.phaseDrive) {
                 this.params.x = wrapPlayerPosition({
-                    maximum: gameScreen.width + playerHalfWidth,
+                    maximum: virtualViewport.width + playerHalfWidth,
                     minimum: -playerHalfWidth,
                     value: this.params.x + movement.x,
                 });
                 this.params.y = wrapPlayerPosition({
-                    maximum: gameScreen.height + playerHalfHeight,
+                    maximum: virtualViewport.height + playerHalfHeight,
                     minimum: -playerHalfHeight,
                     value: this.params.y + movement.y,
                 });
@@ -603,7 +602,7 @@ export class PlayerEntity extends defineEntity({
                         x: this.params.x + movement.x,
                         y: this.params.y + movement.y,
                     },
-                    screenSize: gameScreen,
+                    screenSize: virtualViewport,
                 });
 
                 this.params.x = playerPosition.x;

@@ -24,6 +24,7 @@ import {
     minimumAsteroidRadius,
 } from '../data/gameplay-modifiers.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
+import {type VirtualViewportSize} from '../mods/game-world-scale.mod.js';
 import {type PlayerEntity} from './player.entity.js';
 
 const asteroidOutlineColor = '#a3a3a3';
@@ -239,10 +240,7 @@ export function createAsteroidParams({
 }: Readonly<{
     health: number;
     random: SeededRandom;
-    screen: Readonly<{
-        height: number;
-        width: number;
-    }>;
+    screen: Readonly<VirtualViewportSize>;
 }>) {
     const radius = stableRandomInteger({
         random,
