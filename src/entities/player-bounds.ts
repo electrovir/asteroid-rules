@@ -1,5 +1,5 @@
+import {type VirtualViewportSize} from '@antha/graphics-2d';
 import {clamp} from '@augment-vir/common';
-import {type VirtualViewportSize} from '../mods/game-world-scale.mod.js';
 
 export const playerSize = 24;
 export const playerHalfWidth = playerSize * 0.8;

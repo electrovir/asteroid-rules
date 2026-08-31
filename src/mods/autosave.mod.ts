@@ -1,11 +1,18 @@
 import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
-import {ensureErrorAndPrependMessage, getObjectTypedEntries} from '@augment-vir/common';
+import {filterToAllowedActions, playersBindingAssignmentsShape} from '@antha/input';
+import {
+    ensureErrorAndPrependMessage,
+    getEnumValues,
+    getObjectTypedEntries,
+} from '@augment-vir/common';
 import {type LocalDbClient} from 'local-db-client';
 import {enumShape, nullableShape, partialShape} from 'object-shape-tester';
+import {createDefaultPlayerInputBindings} from '../data/default-bindings.js';
 import {defaultGameAudioVolume} from '../data/game-audio.js';
 import {createGameModifiers, limitGameRulesToPool} from '../data/game-rule.js';
 import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
 import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
+import {GameInputAction} from '../data/player-action.js';
 import {allGameRules, getGameRulesUnlockedAtLevel} from '../data/rules.js';
 
 export enum SavedGameStateVersion {
@@ -60,6 +67,7 @@ const savedGameModifiersShape = partialShape({
 const savedGameStateShape = partialShape({
     activeRuleIds: [''],
     audioVolume: nullableShape(0),
+    bindingAssignments: playersBindingAssignmentsShape,
     joystickDeadZone: nullableShape(0),
     modifiers: savedGameModifiersShape,
     newGameRuleIds: nullableShape(['']),
@@ -96,6 +104,7 @@ export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
     return {
         activeRules,
         audioVolume: defaultGameAudioVolume,
+        bindingAssignments: createDefaultPlayerInputBindings(),
         joystickDeadZone: defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules: [],
@@ -103,6 +112,19 @@ export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
         playerLevelExperience: 0,
         unlockedGameRules,
     };
+}
+
+function createSavedBindingAssignments(
+    savedBindingAssignments: typeof playersBindingAssignmentsShape.runtimeType | undefined,
+) {
+    if (!savedBindingAssignments) {
+        return createDefaultPlayerInputBindings();
+    }
+
+    return filterToAllowedActions({
+        allowedBindingNames: getEnumValues(GameInputAction),
+        bindingAssignments: savedBindingAssignments,
+    });
 }
 
 function getActiveRuleIdsFromModifiers(savedGameState: SavedGameState) {
@@ -152,6 +174,7 @@ export function createGameSaveState(
     return {
         activeRules,
         audioVolume: savedGameState.audioVolume ?? defaultGameAudioVolume,
+        bindingAssignments: createSavedBindingAssignments(savedGameState.bindingAssignments),
         joystickDeadZone: savedGameState.joystickDeadZone ?? defaultJoystickDeadZone,
         modifiers: createGameModifiers(activeRules),
         newGameRules,
@@ -164,6 +187,7 @@ export function createGameSaveState(
 function createSavedGameState({
     activeRules,
     audioVolume,
+    bindingAssignments,
     joystickDeadZone,
     newGameRules,
     playerLevel,
@@ -173,6 +197,7 @@ function createSavedGameState({
     return {
         activeRuleIds: activeRules.map((rule) => rule.id),
         audioVolume,
+        bindingAssignments,
         joystickDeadZone,
         newGameRuleIds: newGameRules.map((rule) => rule.id),
         playerLevel,

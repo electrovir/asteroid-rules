@@ -1,11 +1,17 @@
 import {AnthaEngine} from '@antha/engine';
+import {InputDeviceKey, InputDirection} from '@antha/input';
 import {assert, assertWrap} from '@augment-vir/assert';
 import {randomString, selectFrom, wait} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {LocalDbClient} from 'local-db-client';
 import {checkValidShape, checkWrapValidShape} from 'object-shape-tester';
 import {defaultGameAudioVolume} from '../data/game-audio.js';
-import {checkIfMainMenuAllowed, type AsteroidsGameEngineState} from '../data/game-state.js';
+import {
+    checkIfMainMenuAllowed,
+    type AsteroidsGameEngineState,
+    type AsteroidsSaveState,
+} from '../data/game-state.js';
+import {PlayerAction} from '../data/player-action.js';
 import {
     autosaveMod,
     createGameSaveState,
@@ -24,6 +30,20 @@ function createSavedGameState() {
         unlockedGameRuleIds: [],
         version: SavedGameStateVersion.Initial,
     } satisfies NonNullable<Parameters<typeof createGameSaveState>[0]>;
+}
+
+function createCustomizedBindingAssignments() {
+    return {
+        '1': {
+            [PlayerAction.Fire]: [
+                {
+                    deviceKey: InputDeviceKey.Keyboard,
+                    direction: InputDirection.Positive,
+                    inputName: 'button-KeyF',
+                },
+            ],
+        },
+    } satisfies AsteroidsSaveState['bindingAssignments'];
 }
 
 describe('saved joystick dead zone', () => {
@@ -85,6 +105,21 @@ describe('saved audio volume', () => {
         assert.strictEquals(
             createGameSaveState(createSavedGameState()).audioVolume,
             defaultGameAudioVolume,
+        );
+    });
+});
+
+describe('saved input bindings', () => {
+    it('loads a customized binding', () => {
+        const savedGameState = {
+            ...createSavedGameState(),
+            bindingAssignments: createCustomizedBindingAssignments(),
+        };
+
+        assert.isTrue(checkValidShape(savedGameState, saveStateDbShapes.saveState.shape));
+        assert.deepEquals(
+            createGameSaveState(savedGameState).bindingAssignments,
+            createCustomizedBindingAssignments(),
         );
     });
 });
@@ -153,6 +188,7 @@ describe(autosaveMod.modName, () => {
         engine.state.localDbClient = localDbClient;
         engine.state.saveState = {
             ...createGameSaveState(undefined),
+            bindingAssignments: createCustomizedBindingAssignments(),
             playerLevel: 10,
             playerLevelExperience: 42,
         };
@@ -175,16 +211,19 @@ describe(autosaveMod.modName, () => {
         assert.deepEquals(
             savedGameStates.map((savedGameState) => {
                 return selectFrom(savedGameState, {
+                    bindingAssignments: true,
                     playerLevel: true,
                     playerLevelExperience: true,
                 });
             }),
             [
                 {
+                    bindingAssignments: createCustomizedBindingAssignments(),
                     playerLevel: 10,
                     playerLevelExperience: 42,
                 },
                 {
+                    bindingAssignments: createCustomizedBindingAssignments(),
                     playerLevel: 10,
                     playerLevelExperience: 43,
                 },

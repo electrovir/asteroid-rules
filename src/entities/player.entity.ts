@@ -4,7 +4,11 @@ import {
     type BaseEntity2d,
     type EntityUpdateParams,
 } from '@antha/entity-2d';
-import {Graphics} from '@antha/graphics-2d';
+import {
+    calculateVirtualViewportPoint,
+    Graphics,
+    type VirtualViewportSize,
+} from '@antha/graphics-2d';
 import {
     createAxeName,
     createButtonName,
@@ -39,10 +43,6 @@ import {
 import {type GameModifiers} from '../data/modifiers.js';
 import {PlayerAction, type GameInputAction} from '../data/player-action.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
-import {
-    calculateVirtualViewportPoint,
-    type VirtualViewportSize,
-} from '../mods/game-world-scale.mod.js';
 import {AsteroidEntity} from './asteroid.entity.js';
 import {
     clampPlayerPositionToScreen,
@@ -138,10 +138,12 @@ export function calculatePlayerMovement({
 
 export function getMouseMovementTarget({
     canvas,
+    inputPlayerPosition,
     rawInputs,
     virtualViewport,
 }: Readonly<{
     canvas: HTMLCanvasElement | undefined;
+    inputPlayerPosition: PlayerPosition;
     rawInputs: RawInputs | undefined;
     virtualViewport: Readonly<VirtualViewportSize>;
 }>) {
@@ -150,6 +152,7 @@ export function getMouseMovementTarget({
     const mouseY = mouseInputs?.[createAxeName('y')]?.inputValue;
 
     if (
+        inputPlayerPosition !== PlayerPosition['1'] ||
         !canvas ||
         !isPrimaryMouseButtonHeld(rawInputs) ||
         mouseX == undefined ||
@@ -169,17 +172,9 @@ export function getMouseMovementTarget({
 }
 
 export function isPrimaryMouseButtonHeld(rawInputs: RawInputs | undefined) {
-    return !!rawInputs?.[InputDeviceKey.Mouse]?.[createButtonName(0)]?.inputValue;
-}
+    const primaryMouseInput = rawInputs?.[InputDeviceKey.Mouse]?.[createButtonName(0)];
 
-export function updatePlayerFiringAllowed({
-    isFireButtonHeld,
-    wasFiringAllowed,
-}: Readonly<{
-    isFireButtonHeld: boolean;
-    wasFiringAllowed: boolean;
-}>) {
-    return wasFiringAllowed || !isFireButtonHeld;
+    return !!primaryMouseInput?.inputValue && !primaryMouseInput.isIgnoredByConsumer;
 }
 
 export function createPlayerBulletParams({
@@ -318,7 +313,7 @@ function calculateMouseMovement({
 function createMovementInput(activeBinding: ActiveBinding | undefined) {
     return {
         durationMs: activeBinding?.holdDuration.milliseconds ?? Infinity,
-        value: clamp(activeBinding?.value || 0, {
+        value: clamp(activeBinding?.value ?? 0, {
             min: 0,
             max: 1,
         }),
@@ -569,13 +564,12 @@ export class PlayerEntity extends defineEntity({
             ? calculatePlayerMovement({
                   activeBindings,
                   msSinceLastUpdate,
-                  mouseMovementTarget: this.state.isMouseMovementAllowed
-                      ? getMouseMovementTarget({
-                            canvas: this.state.pixi.canvas,
-                            rawInputs: this.state.rawInputs,
-                            virtualViewport,
-                        })
-                      : undefined,
+                  mouseMovementTarget: getMouseMovementTarget({
+                      canvas: this.state.pixi.canvas,
+                      inputPlayerPosition: this.params.inputPlayerPosition,
+                      rawInputs: this.state.rawInputs,
+                      virtualViewport,
+                  }),
                   playerPosition: this.params,
                   speedMultiplier: getPlayerMovementSpeedMultiplier(modifiers),
               })
@@ -625,10 +619,7 @@ export class PlayerEntity extends defineEntity({
         const isFireButtonHeld = !!activeBindings?.[PlayerAction.Fire]?.value;
         const gunCount = getPlayerGunCount(modifiers);
         const isFiring =
-            !this.isGhostMode &&
-            this.state.isPlayerFiringAllowed &&
-            isFireButtonHeld &&
-            (gunCount > 0 || !!autoTurretDirection);
+            !this.isGhostMode && isFireButtonHeld && (gunCount > 0 || !!autoTurretDirection);
 
         this.shotCooldownMilliseconds = isFiring
             ? Math.max(0, this.shotCooldownMilliseconds - msSinceLastUpdate)

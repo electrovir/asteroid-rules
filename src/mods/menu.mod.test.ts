@@ -1,9 +1,16 @@
 import {AnthaEngine} from '@antha/engine';
-import {MenuNavBinding} from '@antha/input';
+import {
+    InputDeviceKey,
+    InputDeviceType,
+    InputDirection,
+    MenuNavBinding,
+    type RawInput,
+} from '@antha/input';
 import {assert, assertWrap} from '@augment-vir/assert';
 import {SeededRandom} from '@augment-vir/common';
 import {describe, it} from '@augment-vir/test';
 import {type AsteroidsGameEngineState} from '../data/game-state.js';
+import {InputConsumer} from '../data/input-consumer.js';
 import {PlayerAction} from '../data/player-action.js';
 import {createDefaultAsteroidsSaveState} from '../mods/autosave.mod.js';
 import {menuMod} from './menu.mod.js';
@@ -19,6 +26,9 @@ function createOpenPauseMenuBindings() {
                 lastActDuration: {
                     milliseconds: 0,
                 },
+                rawInputs: [
+                    createRawInput(),
+                ],
                 value: 1,
             },
         },
@@ -26,6 +36,27 @@ function createOpenPauseMenuBindings() {
         3: {},
         4: {},
     } satisfies AsteroidsGameEngineState['activeBindings'];
+}
+
+function createRawInput(inputName = 'button-Escape'): RawInput {
+    return {
+        consumedBy: undefined,
+        deviceKey: InputDeviceKey.Keyboard,
+        deviceName: 'keyboard',
+        deviceType: InputDeviceType.Keyboard,
+        direction: InputDirection.Positive,
+        duration: {
+            milliseconds: 0,
+        },
+        inputName,
+        inputValue: 1,
+        isIgnoredByConsumer: false,
+        mapped: {
+            deviceName: 'keyboard',
+            gamepadBrand: undefined,
+            inputName,
+        },
+    } satisfies RawInput;
 }
 
 describe(menuMod.modName, () => {
@@ -60,17 +91,30 @@ describe(menuMod.modName, () => {
             pause: true,
         });
         assert.isTrue(engine.state.disableEntityUpdates);
+        assert.deepEquals(
+            {
+                rawInputConsumer: engine.state.rawInputConsumer,
+            },
+            {
+                rawInputConsumer: InputConsumer.Menu,
+            },
+        );
 
         engine.state.activeBindings = createOpenPauseMenuBindings();
 
         await engine.runSingleTick();
 
         assert.isUndefined(engine.state.menuState);
-        assert.isFalse(engine.state.disableEntityUpdates ?? true);
+        assert.isTrue(engine.state.disableEntityUpdates);
         assert.isFalse(engine.state.isInMenu ?? true);
+        assert.strictEquals(engine.state.rawInputConsumer, InputConsumer.Game);
+
+        await engine.runSingleTick();
+
+        assert.isFalse(engine.state.disableEntityUpdates ?? true);
     });
 
-    it('prevents player two from navigating menus while preserving player two actions', async () => {
+    it('prevents player two from navigating menus without modifying player two bindings', async () => {
         const engine = new AnthaEngine<AsteroidsGameEngineState>({
             initState: {
                 activeBindings: {
@@ -84,6 +128,9 @@ describe(menuMod.modName, () => {
                             lastActDuration: {
                                 milliseconds: 0,
                             },
+                            rawInputs: [
+                                createRawInput(),
+                            ],
                             value: 1,
                         },
                         [PlayerAction.Fire]: {
@@ -94,6 +141,9 @@ describe(menuMod.modName, () => {
                             lastActDuration: {
                                 milliseconds: 0,
                             },
+                            rawInputs: [
+                                createRawInput(),
+                            ],
                             value: 1,
                         },
                         [PlayerAction.MoveUp]: {
@@ -104,6 +154,9 @@ describe(menuMod.modName, () => {
                             lastActDuration: {
                                 milliseconds: 0,
                             },
+                            rawInputs: [
+                                createRawInput(),
+                            ],
                             value: 1,
                         },
                     },
@@ -125,10 +178,14 @@ describe(menuMod.modName, () => {
         await engine.runSingleTick();
 
         assert.isUndefined(engine.state.menuState);
-        assert.isUndefined(
+        assert.deepEquals(engine.state.allowedPlayerMenuNavigation, {
+            1: true,
+        });
+        assert.strictEquals(
             assertWrap.isDefined(assertWrap.isDefined(engine.state.activeBindings)['2'])[
                 MenuNavBinding.OpenPauseMenu
-            ],
+            ]?.actCount,
+            0,
         );
         assert.isDefined(
             assertWrap.isDefined(assertWrap.isDefined(engine.state.activeBindings)['2'])[

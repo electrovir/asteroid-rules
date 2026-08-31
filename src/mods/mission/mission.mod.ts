@@ -1,6 +1,5 @@
 import {createEngineTime, defineAnthaMod} from '@antha/engine';
 import {StableMath} from '@antha/util';
-import {getObjectTypedValues} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
 import {GameAudio, playGameAudio} from '../../data/game-audio.js';
 import {type AsteroidsGameEngineState, updateMenuState} from '../../data/game-state.js';
@@ -8,17 +7,12 @@ import {
     calculateExperienceMultiplier,
     getTimedExperienceMultiplier,
 } from '../../data/gameplay-modifiers.js';
-import {PlayerAction} from '../../data/player-action.js';
 import {
     calculateExperienceRequiredToReachLevel,
     levelUpPresentationDurationMilliseconds,
 } from '../../data/player-level.js';
 import {getGameRulesUnlockedAtLevel} from '../../data/rules.js';
-import {
-    isPrimaryMouseButtonHeld,
-    PlayerEntity,
-    updatePlayerFiringAllowed,
-} from '../../entities/player.entity.js';
+import {PlayerEntity} from '../../entities/player.entity.js';
 import {VirMissionHud} from '../../ui/elements/vir-mission-hud.element.js';
 import {ensureGameMission, updateMissionAsteroidSpawning} from './game-mission.js';
 import {shouldShowGameOver} from './should-show-game-over.js';
@@ -60,30 +54,8 @@ function applyExperience({
 }
 
 export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
-    initState: {
-        isPlayerFiringAllowed: false,
-        isMouseMovementAllowed: false,
-    },
     modName: 'mission',
     async execute({engine, state}) {
-        const isFireButtonHeld = getObjectTypedValues(state.activeBindings || {}).some(
-            (bindings) => {
-                return !!bindings[PlayerAction.Fire]?.value;
-            },
-        );
-
-        /** Don't allow player firing until after the button has been lifted after exiting a menu. */
-        state.isPlayerFiringAllowed = state.menuState
-            ? false
-            : updatePlayerFiringAllowed({
-                  isFireButtonHeld,
-                  wasFiringAllowed: state.isPlayerFiringAllowed || false,
-              });
-        state.isMouseMovementAllowed = state.menuState
-            ? false
-            : /** Don't allow player movement until after the mouse button has been lifted _after_ exiting a menu. */
-              !isPrimaryMouseButtonHeld(state.rawInputs) || state.isMouseMovementAllowed || false;
-
         if (state.saveState && !state.menuState) {
             await ensureGameMission({
                 currentTime: engine.totalMs,

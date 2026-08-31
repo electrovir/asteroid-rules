@@ -72,7 +72,7 @@ export const VirGameRuleList = defineElement<{
         const saveState = inputs.gameState.saveState;
         const activeRules = saveState?.activeRules || [];
         const activeRulePoolCost = calculateGameRulePoolCost(activeRules);
-        const availableRules = inputs.showAllRules
+        const availableRules: ReadonlyArray<GameRule> = inputs.showAllRules
             ? allGameRules
             : saveState?.unlockedGameRules || [];
         const navController = inputs.gameState.navController;

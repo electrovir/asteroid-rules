@@ -1,5 +1,5 @@
+import {type VirtualViewportSize} from '@antha/graphics-2d';
 import {clampPlayerPositionToScreen} from '../../entities/player-bounds.js';
-import {type VirtualViewportSize} from '../game-world-scale.mod.js';
 
 function calculateGameEntityPositionShift({
     playerPosition,

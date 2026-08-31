@@ -3,7 +3,11 @@ import {AudioPlayer, createAnthaAudioMod} from '@antha/audio';
 import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
 import {loadAnthaAssets} from '@antha/entity-2d';
 import {createAnthaFpsMod} from '@antha/fps';
-import {createAnthaGraphics2dMod} from '@antha/graphics-2d';
+import {
+    createAnthaGraphics2dMod,
+    createAnthaVirtualViewportMod,
+    createVirtualViewportPixiOptions,
+} from '@antha/graphics-2d';
 import {
     createAnthaInputBindingsMod,
     createAnthaMenuNavMod,
@@ -12,7 +16,6 @@ import {
 import {ensureErrorAndPrependMessage} from '@augment-vir/common';
 import {css, html} from 'element-vir';
 import {LocalDbClient} from 'local-db-client';
-import {defaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {gameAudioFilesToLoad} from '../../data/game-audio.js';
 import {
     checkIfMainMenuAllowed,
@@ -20,6 +23,7 @@ import {
     type AsteroidsGameEngineState,
     type AsteroidsSaveState,
 } from '../../data/game-state.js';
+import {InputConsumer} from '../../data/input-consumer.js';
 import {isDeployed} from '../../data/is-deployed.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
@@ -39,10 +43,6 @@ import {
 } from '../autosave.mod.js';
 import {gameAudioMod} from '../game-audio.mod.js';
 import {gameEntityMod} from '../game-entity.mod.js';
-import {
-    createAnthaVirtualViewportMod,
-    createVirtualViewportPixiOptions,
-} from '../game-world-scale.mod.js';
 import {isOnDebugPage, menuMod} from '../menu.mod.js';
 import {missionMod} from '../mission/mission.mod.js';
 
@@ -59,6 +59,15 @@ const buildCommitMod = defineAnthaMod<AsteroidsGameEngineState>({
         return html`
             <${VirGameBuildCommit}></${VirGameBuildCommit}>
         `;
+    },
+});
+
+const gameInputBindingsMod = defineAnthaMod<AsteroidsGameEngineState>({
+    modName: 'game-input-bindings',
+    execute({state}) {
+        if (state.saveState) {
+            state.bindingAssignments = state.saveState.bindingAssignments;
+        }
     },
 });
 
@@ -214,7 +223,6 @@ export async function bootstrapGame({
     );
     const audioPlayer = new AudioPlayer();
     state.audioPlayer = audioPlayer;
-    state.bindingAssignments = defaultPlayerInputBindings;
     const loadedSaveState = await loadInitialGameAssets({
         assetLoader,
         audioPlayer,
@@ -240,12 +248,14 @@ export async function bootstrapGame({
                 deviceHandlerOptions: {
                     globalDeadZone: loadedSaveState.saveState.joystickDeadZone,
                 },
+                startRawInputConsumer: InputConsumer.Game,
             }),
-            createAnthaInputBindingsMod<GameInputAction>(),
             createGameInitializationMod({
                 loadedSaveState,
                 router,
             }),
+            gameInputBindingsMod,
+            createAnthaInputBindingsMod<GameInputAction>(),
             menuMod,
             createAnthaMenuNavMod({
                 allowWrapping: true,

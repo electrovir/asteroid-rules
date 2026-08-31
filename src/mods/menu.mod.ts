@@ -1,9 +1,14 @@
 import {createEngineTime, defineAnthaMod} from '@antha/engine';
-import {MenuNavBinding} from '@antha/input';
-import {getEnumValues, omitObjectKeys} from '@augment-vir/common';
+import {isPlayerMenuNavigationAllowed, MenuNavBinding} from '@antha/input';
+import {getObjectTypedEntries} from '@augment-vir/common';
 import {html, nothing} from 'element-vir';
 import {routeHasPaths} from 'spa-router-vir';
-import {type AsteroidsGameEngineState, updateMenuState} from '../data/game-state.js';
+import {
+    PlayerPosition,
+    updateMenuState,
+    type AsteroidsGameEngineState,
+} from '../data/game-state.js';
+import {InputConsumer} from '../data/input-consumer.js';
 import {frontendPathTree} from '../data/routing/frontend-path-tree.js';
 import {type FrontendRouter} from '../data/routing/frontend-router.js';
 import {VirGameOverMenu} from '../ui/elements/vir-game-over-menu.element.js';
@@ -26,29 +31,16 @@ export function isOnDebugPage(router: FrontendRouter | undefined): boolean {
     );
 }
 
-function preventPlayerTwoMenuNavigation({
-    state,
-}: Readonly<{
-    state: Partial<AsteroidsGameEngineState>;
-}>) {
-    const playerTwoActiveBindings = state.activeBindings?.['2'];
-
-    if (!state.saveState?.modifiers.onlyPlayerOneMenuNavigation || !playerTwoActiveBindings) {
-        return;
-    }
-
-    state.activeBindings = {
-        ...state.activeBindings,
-        2: omitObjectKeys(playerTwoActiveBindings, getEnumValues(MenuNavBinding)),
-    };
-}
-
 export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
     modName: 'menu',
     execute({engine, state}) {
-        preventPlayerTwoMenuNavigation({
-            state,
-        });
+        const wasInMenu = !!state.isInMenu;
+
+        state.allowedPlayerMenuNavigation = state.saveState?.modifiers.onlyPlayerOneMenuNavigation
+            ? {
+                  [PlayerPosition['1']]: true,
+              }
+            : undefined;
 
         if (isOnDebugPage(state.router)) {
             updateMenuState(state, {
@@ -71,16 +63,34 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
         const pauseWasTriggered: boolean =
             (!state.menuState || !!state.menuState.pause) &&
             !!state.missionState &&
-            Object.values(state.activeBindings || {}).reduce((hasPauseRequest, bindings) => {
-                const openPauseMenuBinding = bindings[MenuNavBinding.OpenPauseMenu];
+            getObjectTypedEntries(state.activeBindings || {}).reduce(
+                (
+                    hasPauseRequest,
+                    [
+                        playerPosition,
+                        bindings,
+                    ],
+                ) => {
+                    if (
+                        !isPlayerMenuNavigationAllowed({
+                            allowedPlayerMenuNavigation: state.allowedPlayerMenuNavigation,
+                            playerPosition,
+                        })
+                    ) {
+                        return hasPauseRequest;
+                    }
 
-                if (openPauseMenuBinding && !openPauseMenuBinding.actCount) {
-                    openPauseMenuBinding.actCount = 1;
-                    return true;
-                }
+                    const openPauseMenuBinding = bindings[MenuNavBinding.OpenPauseMenu];
 
-                return hasPauseRequest;
-            }, false);
+                    if (openPauseMenuBinding && !openPauseMenuBinding.actCount) {
+                        openPauseMenuBinding.actCount = 1;
+                        return true;
+                    }
+
+                    return hasPauseRequest;
+                },
+                false,
+            );
 
         if (pauseWasTriggered) {
             updateMenuState(
@@ -94,7 +104,12 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
         }
 
         state.isInMenu = !!state.menuState;
-        state.disableEntityUpdates = !!state.menuState;
+        /**
+         * Prevent updates until we are cleanly out of a menu, to prevent entity updates from
+         * starting before menu inputs are finished being consumed.
+         */
+        state.disableEntityUpdates = wasInMenu || state.isInMenu;
+        state.rawInputConsumer = state.isInMenu ? InputConsumer.Menu : InputConsumer.Game;
 
         if (!state.menuState) {
             return nothing;

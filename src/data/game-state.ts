@@ -1,11 +1,13 @@
 import {type AnthaAssetModState} from '@antha/asset';
 import {type AnthaAudioState} from '@antha/audio';
 import {type AnthaEntity2dModState} from '@antha/entity-2d';
+import {type AnthaVirtualViewportModState, type VirtualViewportSize} from '@antha/graphics-2d';
 import {
     type AnthaInputBindingsModState,
     type AnthaReadRawInputModState,
     type InputDeviceHandler,
     type MenuNavModState,
+    type PlayersBindingAssignments,
 } from '@antha/input';
 import {check} from '@augment-vir/assert';
 import {
@@ -16,10 +18,6 @@ import {
     type Values,
 } from '@augment-vir/common';
 import {type PlayerEntity} from '../entities/player.entity.js';
-import {
-    type AnthaVirtualViewportModState,
-    type VirtualViewportSize,
-} from '../mods/game-world-scale.mod.js';
 import {createGameModifiers, type GameRule} from './game-rule.js';
 import {type GameModifiers} from './modifiers.js';
 import {type GameInputAction} from './player-action.js';
@@ -36,6 +34,7 @@ export type PlayerPosition = Values<typeof PlayerPosition>;
 export type AsteroidsSaveState = {
     activeRules: GameRule[];
     audioVolume: number;
+    bindingAssignments: PlayersBindingAssignments<GameInputAction>;
     joystickDeadZone: number;
     modifiers: GameModifiers;
     newGameRules: GameRule[];
@@ -96,8 +95,6 @@ export function updateAsteroidsSaveStateRules({
 }
 
 export type FullGameState = {
-    isPlayerFiringAllowed: boolean;
-    isMouseMovementAllowed: boolean;
     menuState: GameMenuState | undefined;
     router: FrontendRouter;
     saveState: AsteroidsSaveState | undefined;

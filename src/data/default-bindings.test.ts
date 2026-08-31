@@ -34,30 +34,22 @@ describe('default player input bindings', () => {
         );
     });
 
-    it('reserves Space for player-one firing', () => {
+    it('maps Space to player-one firing and menu activation', () => {
         const playerOneBindings = assertWrap.isDefined(defaultPlayerInputBindings['1']);
 
-        assert.isTrue(
-            assertWrap.isDefined(playerOneBindings[PlayerAction.Fire]).some((binding) => {
-                return binding.inputName === 'button-Space';
-            }),
-        );
-        assert.isFalse(
+        assert.deepEquals(
             [
-                MenuNavBinding.MenuDown,
+                PlayerAction.Fire,
                 MenuNavBinding.MenuEnter,
-                MenuNavBinding.MenuExit,
-                MenuNavBinding.MenuLeft,
-                MenuNavBinding.MenuRight,
-                MenuNavBinding.MenuSectionNext,
-                MenuNavBinding.MenuSectionPrevious,
-                MenuNavBinding.MenuUp,
-                MenuNavBinding.OpenPauseMenu,
-            ].some((menuAction) => {
-                return assertWrap.isDefined(playerOneBindings[menuAction]).some((binding) => {
+            ].map((bindingName) => {
+                return assertWrap.isDefined(playerOneBindings[bindingName]).some((binding) => {
                     return binding.inputName === 'button-Space';
                 });
             }),
+            [
+                true,
+                true,
+            ],
         );
     });
 });

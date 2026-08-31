@@ -4,6 +4,7 @@ import {describe, it, testWeb} from '@augment-vir/test';
 import {waitForAnimationFrame} from '@augment-vir/web';
 import {NavController, NavDirection, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
+import {createDefaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {defaultGameAudioVolume} from '../../data/game-audio.js';
 import {type FullGameState} from '../../data/game-state.js';
 import {frontendPathTree} from '../../data/routing/frontend-path-tree.js';
@@ -62,6 +63,7 @@ function createGameState({
         saveState: {
             activeRules: [],
             audioVolume: defaultGameAudioVolume,
+            bindingAssignments: createDefaultPlayerInputBindings(),
             joystickDeadZone: 0.01,
             modifiers: {},
             newGameRules: [],
@@ -78,6 +80,7 @@ function createRestrictedSaveState() {
             playerCardinalMovementRule,
         ],
         audioVolume: defaultGameAudioVolume,
+        bindingAssignments: createDefaultPlayerInputBindings(),
         joystickDeadZone: 0.01,
         modifiers: {
             allowPlayerCardinalMovement: true,

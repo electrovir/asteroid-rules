@@ -6,7 +6,7 @@ import {
     type BindingAssignments,
     type PlayersBindingAssignments,
 } from '@antha/input';
-import {mapObjectValuesSync} from '@augment-vir/common';
+import {deepCopy, mapObjectValuesSync} from '@augment-vir/common';
 import {PlayerAction, type GameInputAction} from './player-action.js';
 
 const playerTwoGamepadKeys = [
@@ -200,6 +200,11 @@ export const defaultPlayerInputBindings: Readonly<PlayersBindingAssignments<Game
                 deviceKey: 'keyboard',
                 direction: InputDirection.Positive,
                 inputName: 'button-NumpadEnter',
+            },
+            {
+                deviceKey: 'keyboard',
+                direction: InputDirection.Positive,
+                inputName: 'button-Space',
             },
         ],
         [MenuNavBinding.MenuExit]: [
@@ -590,3 +595,7 @@ export const defaultPlayerInputBindings: Readonly<PlayersBindingAssignments<Game
         },
     }),
 };
+
+export function createDefaultPlayerInputBindings() {
+    return deepCopy(defaultPlayerInputBindings);
+}

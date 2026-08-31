@@ -5,7 +5,7 @@ import {
     type Collision,
     type EntityUpdateParams,
 } from '@antha/entity-2d';
-import {Graphics} from '@antha/graphics-2d';
+import {Graphics, type VirtualViewportSize} from '@antha/graphics-2d';
 import {StableMath, stableRandom, stableRandomInteger} from '@antha/util';
 import {check} from '@augment-vir/assert';
 import {clamp, createArray, getObjectTypedValues, type SeededRandom} from '@augment-vir/common';
@@ -24,7 +24,6 @@ import {
     minimumAsteroidRadius,
 } from '../data/gameplay-modifiers.js';
 import {defineEntity} from '../mods/game-entity.mod.js';
-import {type VirtualViewportSize} from '../mods/game-world-scale.mod.js';
 import {type PlayerEntity} from './player.entity.js';
 
 const asteroidOutlineColor = '#a3a3a3';

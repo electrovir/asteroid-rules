@@ -4,6 +4,7 @@ import {SeededRandom} from '@augment-vir/common';
 import {describe, it, testWeb} from '@augment-vir/test';
 import {NavController, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
+import {createDefaultPlayerInputBindings} from '../../data/default-bindings.js';
 import {defaultGameAudioVolume, gameAudioVolumeStep} from '../../data/game-audio.js';
 import {type GameRule} from '../../data/game-rule.js';
 import {type FullGameState} from '../../data/game-state.js';
@@ -66,6 +67,7 @@ function createGameState({
         saveState: {
             activeRules: [],
             audioVolume: defaultGameAudioVolume,
+            bindingAssignments: createDefaultPlayerInputBindings(),
             joystickDeadZone: defaultJoystickDeadZone,
             modifiers: {},
             newGameRules: [],

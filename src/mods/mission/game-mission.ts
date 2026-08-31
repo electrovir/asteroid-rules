@@ -1,3 +1,4 @@
+import {type VirtualViewportSize} from '@antha/graphics-2d';
 import {createStableRandom, StableMath} from '@antha/util';
 import {createCuid2, executeCount} from '@augment-vir/common';
 import {PlayerPosition, type AsteroidsGameEngineState} from '../../data/game-state.js';
@@ -8,7 +9,6 @@ import {
     createAsteroidParams,
 } from '../../entities/asteroid.entity.js';
 import {PlayerEntity} from '../../entities/player.entity.js';
-import {type VirtualViewportSize} from '../game-world-scale.mod.js';
 import {shiftGameEntityPositions} from './mission-screen-size.js';
 
 function updateMissionScreenSize({
