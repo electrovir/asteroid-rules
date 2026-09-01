@@ -5,8 +5,6 @@ export function resetMission({
 }: Readonly<{
     gameState: Partial<AsteroidsGameEngineState>;
 }>) {
-    gameState.entityStore?.currentEntityInstances.forEach((entity) => {
-        entity.immediatelyDestroy();
-    });
+    gameState.entityStore?.destroyAllEntities();
     gameState.missionState = undefined;
 }
