@@ -1,4 +1,4 @@
-import {defineAsset, type AssetLoader, type AssetLoadSession} from '@antha/asset';
+import {type AssetLoader, type AssetLoadSession, type SaveGameLoadResult} from '@antha/asset';
 import {AudioPlayer, createAnthaAudioMod} from '@antha/audio';
 import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
 import {loadAnthaAssets} from '@antha/entity-2d';
@@ -15,7 +15,6 @@ import {
 } from '@antha/input';
 import {ensureErrorAndPrependMessage} from '@augment-vir/common';
 import {css, html} from 'element-vir';
-import {LocalDbClient} from 'local-db-client';
 import {gameAudioFilesToLoad} from '../../data/game-audio.js';
 import {
     checkIfMainMenuAllowed,
@@ -27,20 +26,13 @@ import {InputConsumer} from '../../data/input-consumer.js';
 import {isDeployed} from '../../data/is-deployed.js';
 import {type GameInputAction} from '../../data/player-action.js';
 import {type FrontendRouter} from '../../data/routing/frontend-router.js';
+import {createDefaultAsteroidsSaveState, saveDataSuite} from '../../data/save-data.js';
 import {GameZIndex} from '../../data/z-index.js';
 import {AsteroidEntity} from '../../entities/asteroid.entity.js';
 import {PlayerBulletEntity} from '../../entities/player-bullet.entity.js';
 import {PlayerExplosionParticleEntity} from '../../entities/player-explosion-particle.entity.js';
 import {PlayerEntity} from '../../entities/player.entity.js';
 import {VirGameBuildCommit} from '../../ui/elements/vir-game-build-commit.element.js';
-import {
-    autosaveMod,
-    createDefaultAsteroidsSaveState,
-    createGameSaveState,
-    saveStateDbShapes,
-    type AutosaveModState,
-    type SaveStateDbClient,
-} from '../autosave.mod.js';
 import {gameAudioMod} from '../game-audio.mod.js';
 import {gameEntityMod} from '../game-entity.mod.js';
 import {isOnDebugPage, menuMod} from '../menu.mod.js';
@@ -71,70 +63,23 @@ const gameInputBindingsMod = defineAnthaMod<AsteroidsGameEngineState>({
     },
 });
 
-type LoadedGameSaveState = {
-    loadError: Error | undefined;
-    localDbClient: SaveStateDbClient | undefined;
-    saveState: AsteroidsSaveState;
-};
-
-const gameSaveStateAsset = defineAsset<LoadedGameSaveState>({
-    assetName: 'Game save state',
-    maxProgress: 1,
-    async load({incrementProgressCallback}) {
-        try {
-            const localDbClient = await LocalDbClient.createClient(saveStateDbShapes, {
-                storeName: 'asteroid-rules',
-            });
-            incrementProgressCallback();
-
-            return {
-                value: {
-                    loadError: undefined,
-                    localDbClient,
-                    saveState: createGameSaveState(localDbClient.value.saveState),
-                },
-            };
-        } catch (error) {
-            incrementProgressCallback();
-
-            return {
-                value: {
-                    loadError: ensureErrorAndPrependMessage(
-                        error,
-                        'Failed to load game save state.',
-                    ),
-                    localDbClient: undefined,
-                    saveState: createGameSaveState(undefined),
-                },
-            };
-        }
-    },
-});
-
 function createGameInitializationMod({
     loadedSaveState,
     router,
 }: Readonly<{
-    loadedSaveState: LoadedGameSaveState;
+    loadedSaveState: SaveGameLoadResult<AsteroidsSaveState>;
     router: FrontendRouter;
 }>) {
-    return defineAnthaMod<
-        AsteroidsGameEngineState &
-            AutosaveModState & {
-                hasInitialized: boolean;
-            }
-    >({
+    return defineAnthaMod<AsteroidsGameEngineState & {hasInitialized: boolean}>({
         modName: 'game-initialization',
         execute({state}) {
             if (state.hasInitialized) {
                 return;
             }
 
-            state.localDbClient = loadedSaveState.localDbClient;
             state.missionState = undefined;
             state.router = router;
             state.saveState = loadedSaveState.saveState;
-            state.hasFinishedLoadingSaveState = true;
             updateMenuState(
                 state,
                 isOnDebugPage(router)
@@ -169,7 +114,7 @@ async function loadInitialGameAssets({
         await loadAnthaAssets(
             {
                 assetLoader,
-                assets: [gameSaveStateAsset],
+                assets: [saveDataSuite.loadSaveDataAsset],
                 audio: {
                     assetName: 'Game audio',
                     audioPlayer,
@@ -184,7 +129,7 @@ async function loadInitialGameAssets({
             },
         );
         const loadedSaveState = await assetLoader.loadIndividualAsset({
-            asset: gameSaveStateAsset,
+            asset: saveDataSuite.loadSaveDataAsset,
         });
 
         if (loadedSaveState.loadError) {
@@ -196,8 +141,7 @@ async function loadInitialGameAssets({
         engine.log.error(ensureErrorAndPrependMessage(error, 'Failed to load game save state.'));
 
         return {
-            loadError: undefined,
-            localDbClient: undefined,
+            loadError: ensureErrorAndPrependMessage(error, 'Failed to load game save state.'),
             saveState: createDefaultAsteroidsSaveState(),
         };
     }
@@ -233,7 +177,7 @@ export async function bootstrapGame({
     return {
         mods: [
             buildCommitMod,
-            autosaveMod,
+            saveDataSuite.anthaAutosaveMod,
             createAnthaGraphics2dMod({
                 extraCanvasWrapperStyles: css`
                     z-index: ${GameZIndex.Game};

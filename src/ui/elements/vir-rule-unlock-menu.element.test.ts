@@ -5,7 +5,7 @@ import {NavController, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
 import {GameAudio, gameAudioFiles} from '../../data/game-audio.js';
 import {type AsteroidsGameEngineState} from '../../data/game-state.js';
-import {createDefaultAsteroidsSaveState} from '../../mods/autosave.mod.js';
+import {createDefaultAsteroidsSaveState} from '../../data/save-data.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirRuleUnlockMenu} from './vir-rule-unlock-menu.element.js';
 

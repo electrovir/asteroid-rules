@@ -52,9 +52,11 @@ export const menuMod = defineAnthaMod<AsteroidsGameEngineState>({
             state.saveState?.newGameRules.length &&
             !state.menuState &&
             (!state.missionState?.levelUpAnimation ||
-                state.missionState.levelUpAnimation.endsAt <= engine.totalMs)
+                state.missionState.levelUpAnimation.endsAt <= engine.engineTime)
         ) {
-            state.inputDisableEndsAt = createEngineTime(engine.totalMs + 1000);
+            state.inputDisableEndsAt = createEngineTime({
+                milliseconds: engine.engineTime + 1000,
+            });
             updateMenuState(state, {
                 ruleUnlock: true,
             });

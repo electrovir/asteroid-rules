@@ -4,7 +4,7 @@ import {assert} from '@augment-vir/assert';
 import {describe, it} from '@augment-vir/test';
 import {GameAudio} from '../data/game-audio.js';
 import {type AsteroidsGameEngineState} from '../data/game-state.js';
-import {createDefaultAsteroidsSaveState} from './autosave.mod.js';
+import {createDefaultAsteroidsSaveState} from '../data/save-data.js';
 import {
     gameAudioMod,
     selectBackgroundGameAudio,

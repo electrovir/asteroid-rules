@@ -58,7 +58,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
     async execute({engine, state}) {
         if (state.saveState && !state.menuState) {
             await ensureGameMission({
-                currentTime: engine.totalMs,
+                currentTime: engine.engineTime,
                 gameState: state,
             });
         }
@@ -72,7 +72,9 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
             state.entityStore &&
             shouldShowGameOver(Array.from(state.entityStore.getEntities(PlayerEntity)))
         ) {
-            state.inputDisableEndsAt = createEngineTime(engine.totalMs + 1000);
+            state.inputDisableEndsAt = createEngineTime({
+                milliseconds: engine.engineTime + 1000,
+            });
             updateMenuState(state, {
                 youDied: true,
             });
@@ -81,14 +83,15 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
         const saveState = state.saveState;
         const missionState = state.missionState;
         const activeLevelUpAnimation =
-            missionState.levelUpAnimation && missionState.levelUpAnimation.endsAt > engine.totalMs
+            missionState.levelUpAnimation &&
+            missionState.levelUpAnimation.endsAt > engine.engineTime
                 ? missionState.levelUpAnimation
                 : undefined;
 
         const timedExperienceIntervals = Math.max(
             0,
             Math.floor(
-                StableMath.round(engine.totalMs - missionState.lastTimedExperienceEarnedAt) /
+                StableMath.round(engine.engineTime - missionState.lastTimedExperienceEarnedAt) /
                     timedExperienceIntervalMilliseconds,
             ),
         );
@@ -106,7 +109,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
         const experienceChange =
             experienceGained *
                 calculateExperienceMultiplier({
-                    currentTime: engine.totalMs,
+                    currentTime: engine.engineTime,
                     missionStartedAt: missionState.missionStartedAt,
                     modifiers: saveState.modifiers,
                 }) -
@@ -147,7 +150,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
                 : missionState.experienceEarned,
             lastTimedExperienceEarnedAt:
                 state.menuState || !saveState.modifiers.timedXp
-                    ? StableMath.round(engine.totalMs)
+                    ? StableMath.round(engine.engineTime)
                     : StableMath.round(
                           missionState.lastTimedExperienceEarnedAt +
                               timedExperienceIntervals * timedExperienceIntervalMilliseconds,
@@ -156,7 +159,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
                 updatedExperience.playerLevel > saveState.playerLevel
                     ? {
                           endsAt: StableMath.round(
-                              engine.totalMs + levelUpPresentationDurationMilliseconds,
+                              engine.engineTime + levelUpPresentationDurationMilliseconds,
                           ),
                           playerLevel: saveState.playerLevel,
                       }
@@ -170,7 +173,7 @@ export const missionMod = defineAnthaMod<AsteroidsGameEngineState>({
         };
 
         await updateMissionAsteroidSpawning({
-            currentTime: engine.totalMs,
+            currentTime: engine.engineTime,
             gameState: state,
         });
 

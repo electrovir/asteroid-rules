@@ -12,7 +12,7 @@ import {describe, it} from '@augment-vir/test';
 import {type AsteroidsGameEngineState} from '../data/game-state.js';
 import {InputConsumer} from '../data/input-consumer.js';
 import {PlayerAction} from '../data/player-action.js';
-import {createDefaultAsteroidsSaveState} from '../mods/autosave.mod.js';
+import {createDefaultAsteroidsSaveState} from '../data/save-data.js';
 import {menuMod} from './menu.mod.js';
 
 function createOpenPauseMenuBindings() {

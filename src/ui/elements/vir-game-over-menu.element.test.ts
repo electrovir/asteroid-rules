@@ -3,7 +3,7 @@ import {describe, it, testWeb} from '@augment-vir/test';
 import {NavController, extractNavEntry} from 'device-navigation';
 import {html, testIdSelector} from 'element-vir';
 import {type AsteroidsGameEngineState} from '../../data/game-state.js';
-import {createDefaultAsteroidsSaveState} from '../../mods/autosave.mod.js';
+import {createDefaultAsteroidsSaveState} from '../../data/save-data.js';
 import {VirGameButton} from './vir-game-button.element.js';
 import {VirGameOverMenu} from './vir-game-over-menu.element.js';
 

@@ -1,19 +1,14 @@
-import {defineAnthaMod, type AnthaEngine} from '@antha/engine';
+import {createSaveGameSuite} from '@antha/asset';
 import {filterToAllowedActions, playersBindingAssignmentsShape} from '@antha/input';
-import {
-    ensureErrorAndPrependMessage,
-    getEnumValues,
-    getObjectTypedEntries,
-} from '@augment-vir/common';
-import {type LocalDbClient} from 'local-db-client';
+import {getEnumValues, getObjectTypedEntries} from '@augment-vir/common';
 import {enumShape, nullableShape, partialShape} from 'object-shape-tester';
-import {createDefaultPlayerInputBindings} from '../data/default-bindings.js';
-import {defaultGameAudioVolume} from '../data/game-audio.js';
-import {createGameModifiers, limitGameRulesToPool} from '../data/game-rule.js';
-import {type AsteroidsGameEngineState, type AsteroidsSaveState} from '../data/game-state.js';
-import {defaultJoystickDeadZone} from '../data/joystick-dead-zone.js';
-import {GameInputAction} from '../data/player-action.js';
-import {allGameRules, getGameRulesUnlockedAtLevel} from '../data/rules.js';
+import {createDefaultPlayerInputBindings} from './default-bindings.js';
+import {defaultGameAudioVolume} from './game-audio.js';
+import {createGameModifiers, limitGameRulesToPool} from './game-rule.js';
+import {type AsteroidsSaveState} from './game-state.js';
+import {defaultJoystickDeadZone} from './joystick-dead-zone.js';
+import {GameInputAction} from './player-action.js';
+import {allGameRules, getGameRulesUnlockedAtLevel} from './rules.js';
 
 export enum SavedGameStateVersion {
     Initial = 1,
@@ -78,24 +73,6 @@ const savedGameStateShape = partialShape({
 });
 
 type SavedGameState = typeof savedGameStateShape.runtimeType;
-
-export const saveStateDbShapes = {
-    saveState: {
-        shape: savedGameStateShape,
-    },
-};
-
-export type SaveStateDbClient = Pick<LocalDbClient<typeof saveStateDbShapes>, 'set'>;
-
-export type AutosaveModState = {
-    hasFinishedLoadingSaveState: boolean;
-    isSavingSaveState: boolean;
-    lastSaveFailureAt: number | undefined;
-    lastSavedSaveState: AsteroidsSaveState | undefined;
-    localDbClient: SaveStateDbClient | undefined;
-};
-
-export const autosaveModName = 'autosave';
 
 export function createDefaultAsteroidsSaveState(): AsteroidsSaveState {
     const activeRules = getGameRulesUnlockedAtLevel(0);
@@ -207,93 +184,9 @@ function createSavedGameState({
     };
 }
 
-async function persistSaveState({
-    engine,
-    localDbClient,
-    saveState,
-}: Readonly<{
-    engine: AnthaEngine;
-    localDbClient: SaveStateDbClient;
-    saveState: AsteroidsSaveState;
-}>) {
-    try {
-        await localDbClient.set.saveState(createSavedGameState(saveState));
-        return true;
-    } catch (error) {
-        engine.log.error(ensureErrorAndPrependMessage(error, 'Failed to save game state.'));
-        return false;
-    }
-}
-
-function saveCurrentGameState({
-    engine,
-    state,
-}: Readonly<{
-    engine: AnthaEngine;
-    state: Partial<
-        Pick<
-            AutosaveModState & AsteroidsGameEngineState,
-            | 'isSavingSaveState'
-            | 'lastSaveFailureAt'
-            | 'lastSavedSaveState'
-            | 'localDbClient'
-            | 'saveState'
-        >
-    >;
-}>) {
-    const saveState = state.saveState;
-
-    if (
-        !state.localDbClient ||
-        !saveState ||
-        state.isSavingSaveState ||
-        state.lastSavedSaveState === saveState ||
-        (state.lastSaveFailureAt != undefined && Date.now() - state.lastSaveFailureAt < 2000)
-    ) {
-        return;
-    }
-
-    state.isSavingSaveState = true;
-    void persistSaveState({
-        engine,
-        localDbClient: state.localDbClient,
-        saveState,
-    }).then((didSave) => {
-        state.isSavingSaveState = false;
-        state.lastSaveFailureAt = didSave ? undefined : Date.now();
-        state.lastSavedSaveState = didSave ? saveState : state.lastSavedSaveState;
-    });
-}
-
-export const autosaveMod = defineAnthaMod<AsteroidsGameEngineState & AutosaveModState>({
-    executeImmediately: true,
-    initState: {
-        hasFinishedLoadingSaveState: false,
-        isSavingSaveState: false,
-        lastSaveFailureAt: undefined,
-        lastSavedSaveState: undefined,
-        localDbClient: undefined,
-    },
-    modName: autosaveModName,
-    async cleanup({engine, state}) {
-        if (state.localDbClient && state.saveState) {
-            await persistSaveState({
-                engine,
-                localDbClient: state.localDbClient,
-                saveState: state.saveState,
-            });
-        }
-    },
-    execute({engine, state}) {
-        if (state.hasFinishedLoadingSaveState && !state.saveState) {
-            state.saveState = createDefaultAsteroidsSaveState();
-        }
-
-        saveCurrentGameState({
-            engine,
-            state,
-        });
-
-        return undefined;
-    },
+export const saveDataSuite = createSaveGameSuite({
+    fallbackState: createDefaultAsteroidsSaveState,
+    deserialize: createGameSaveState,
+    serialize: createSavedGameState,
+    storedSaveStateShape: savedGameStateShape,
 });
